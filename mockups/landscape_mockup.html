@@ -150,7 +150,7 @@
     /* TOP DECK: PAY TABLE & HOLD LIST                          */
     /* ======================================================== */
     .top-deck {
-      height: 136px;
+      height: 134px;
       display: flex;
       padding: 6px 12px 2px 12px;
       gap: 12px;
@@ -160,7 +160,7 @@
     /* Single Column Pay Table (Learn & Practice) */
     .pay-single {
       width: 380px;
-      height: 132px;
+      height: 130px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
@@ -176,7 +176,7 @@
       align-items: center;
       font-size: 11px;
       font-weight: 700;
-      line-height: 11.2px;
+      line-height: 11px;
       color: var(--t-paytxt, var(--pay-text));
       padding: 0 4px;
       border-radius: 2px;
@@ -213,7 +213,7 @@
     /* Casino Mode 5-Column Pay Table */
     .pay-casino {
       flex: 1;
-      height: 132px;
+      height: 130px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
@@ -229,7 +229,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 10px;
-      line-height: 10.5px;
+      line-height: 10px;
     }
 
     .c-table th {
@@ -282,7 +282,7 @@
     /* ======================================================== */
     .hold-panel {
       flex: 1;
-      height: 132px;
+      height: 130px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
@@ -398,7 +398,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding-top: 8px;
+      padding-top: 6px;
       position: relative;
     }
 
@@ -414,11 +414,11 @@
       box-shadow: var(--t-hnbsh);
       text-shadow: var(--t-hnsh);
       text-transform: uppercase;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       z-index: 2;
     }
 
-    /* 5 Cards Row - shifted down to avoid ANY overlap with Two Pair plaque */
+    /* 5 Cards Row - clear gap below plaque */
     .cards-row {
       display: flex;
       gap: 15px;
@@ -428,8 +428,8 @@
     }
 
     .card-slot {
-      width: 100px;
-      height: 140px;
+      width: 98px;
+      height: 138px;
       position: relative;
       cursor: pointer;
       transition: transform 0.12s ease;
@@ -491,14 +491,15 @@
     .dot.c3 { background: var(--c3); }
 
     /* ======================================================== */
-    /* BOTTOM DECK: STATUS, BUTTONS, FOOTER                     */
+    /* BOTTOM DECK: STATUS, BUTTONS, FOOTER (ZERO OVERLAP!)     */
     /* ======================================================== */
     .bot-deck {
-      height: 94px;
+      height: 106px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end;
       padding: 0 12px 6px 12px;
+      gap: 6px;
       position: relative;
     }
 
@@ -507,7 +508,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 26px;
+      height: 24px;
       padding: 0 4px;
       font-family: var(--t-serifv, Arial);
     }
@@ -520,7 +521,7 @@
       display: flex;
       align-items: baseline;
       gap: 5px;
-      padding: 2px 6px;
+      padding: 1px 6px;
       border-radius: 4px;
       transition: background 0.15s ease;
       color: var(--t-stlab, var(--yellow));
@@ -544,7 +545,7 @@
       background: none;
       border: 0;
       cursor: pointer;
-      padding: 2px 6px;
+      padding: 1px 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -565,7 +566,7 @@
     .vol-popup {
       position: absolute;
       left: 310px;
-      bottom: 74px;
+      bottom: 80px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 20px;
@@ -587,17 +588,18 @@
       cursor: pointer;
     }
 
-    /* Button Strip */
+    /* Button Strip: Clean 38px height with balanced widths */
     .btn-strip {
       display: flex;
-      gap: 8px;
-      height: 44px;
+      gap: 10px;
+      height: 38px;
       align-items: center;
+      justify-content: space-between;
     }
 
     .btn-strip button {
-      height: 42px;
-      border-radius: 8px;
+      height: 38px;
+      border-radius: 7px;
       font-family: var(--t-sansv, Arial);
       font-weight: 800;
       font-size: 11px;
@@ -621,40 +623,41 @@
       filter: brightness(1.2);
     }
 
-    /* Button widths */
-    #bHelp { width: 68px; }
-    #bMore { width: 110px; }
-    #bOptions { width: 88px; }
-    #bPays { width: 88px; }
-    #bSpeed { width: 102px; }
-    #bOne { width: 56px; }
-    #bMax { width: 56px; }
+    /* Individual Button Widths - Balanced & Comfortable */
+    #bHelp { width: 72px; }
+    #bMore { width: 118px; }
+    #bOptions { width: 94px; }
+    #bPays { width: 94px; }
+    #bSpeed { width: 108px; }
+    #bOne { width: 74px; }
+    #bMax { width: 74px; }
     
     /* Authentic Circular Coin Button */
     .coin-btn {
-      width: 44px !important;
-      height: 44px !important;
+      width: 42px !important;
+      height: 42px !important;
       border-radius: 50% !important;
       border: 3px solid var(--t-goldd, #7a5a00) !important;
       background: radial-gradient(circle at 35% 30%, var(--t-coin1, #fff2a0), var(--t-coin2, #e5b800)) !important;
       color: var(--t-cointxt, #3a2a00) !important;
       font-weight: 900 !important;
-      font-size: 14px !important;
+      font-size: 13.5px !important;
       padding: 0 !important;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6) !important;
+      flex-shrink: 0;
     }
 
-    /* Deal / Draw button */
+    /* Deal / Draw button - balanced width, not overly gigantic */
     .btn-deal {
-      flex: 1;
+      width: 146px !important;
       background: var(--t-dbg, var(--deal-btn)) !important;
       border-color: var(--t-dedge, var(--deal-edge)) !important;
       color: var(--t-dtxt, #ffffff) !important;
-      font-size: 16px !important;
+      font-size: 15px !important;
       letter-spacing: 1.5px !important;
     }
 
-    /* Footer Row */
+    /* Footer Row: Clean dedicated space below buttons, zero overlap */
     .footer-bar {
       height: 14px;
       display: flex;
@@ -665,6 +668,7 @@
       font-weight: 700;
       letter-spacing: 0.5px;
       font-family: var(--t-sansv, Arial);
+      line-height: 14px;
     }
 
     /* ======================================================== */
@@ -704,29 +708,18 @@
       filter: brightness(1.15);
     }
 
-    /* 1. Authentic Arcade HELP */
+    /* 1. Authentic Arcade HELP (Header removed as requested!) */
     .help-box {
       position: absolute;
-      inset: 16px 20px 65px;
+      inset: 20px 24px 65px;
       background: #000000;
       border: 5px solid var(--red);
       box-shadow: 0 0 0 3px var(--yellow);
       color: #ffffff;
-      padding: 12px 20px;
-      font-size: 12px;
-      line-height: 1.45;
+      padding: 18px 24px;
+      font-size: 12.5px;
+      line-height: 1.5;
       overflow-y: auto;
-    }
-
-    .help-box h3 {
-      margin: 4px auto 10px;
-      background: var(--yellow);
-      color: #000;
-      width: max-content;
-      padding: 3px 24px;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing: 1px;
     }
 
     /* 2. Authentic MORE GAMES Grid */
@@ -1183,7 +1176,7 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- BOTTOM DECK: STATUS ROW, BUTTON STRIP, FOOTER              -->
+    <!-- BOTTOM DECK: STATUS ROW, BUTTON STRIP, FOOTER (ZERO OVERLAP) -->
     <!-- ========================================================== -->
     <div class="bot-deck">
       
@@ -1220,20 +1213,20 @@
         <span id="volNum" style="font-size:11px; font-weight:800; width:28px;">80%</span>
       </div>
 
-      <!-- Button Strip (Exact requested order) -->
+      <!-- Button Strip: Exact requested order, clean 38px height, balanced widths -->
       <div class="btn-strip">
         <button id="bHelp" onclick="openOverlay('help')">HELP</button>
         <button id="bMore" onclick="openOverlay('more')">MORE GAMES</button>
         <button id="bOptions" onclick="openOverlay('options')">OPTIONS</button>
         <button id="bPays" onclick="openOverlay('pays')">SEE PAYS</button>
         <button id="bSpeed" onclick="cycleSpeed()">SPEED <span id="speedTxt">&#9654;&#9654;&#9654;</span></button>
-        <button class="btn-sm" id="bOne" onclick="betOne()">BET<br>ONE</button>
-        <button class="btn-sm" id="bMax" onclick="betMax()">BET<br>MAX</button>
+        <button id="bOne" onclick="betOne()">BET<br>ONE</button>
+        <button id="bMax" onclick="betMax()">BET<br>MAX</button>
         <button class="coin-btn" id="bDenom" onclick="openOverlay('denom')" title="Tap to select coin denomination">25&cent;</button>
         <button class="btn-deal" id="bDeal" onclick="onDealDraw()">DRAW</button>
       </div>
 
-      <!-- Footer Bar -->
+      <!-- Footer Bar: Clean spacing, no overlapping with buttons -->
       <div class="footer-bar">
         <span id="gameVariantLabel">Double Bonus (10/7) &bull; 100.17%</span>
         <span id="handCounterLabel">Hands: 12 &bull; Hands at 25&cent;: 12</span>
@@ -1245,10 +1238,9 @@
     <!-- OVERLAYS                                                   -->
     <!-- ========================================================== -->
 
-    <!-- 1. Authentic Arcade HELP -->
+    <!-- 1. Authentic Arcade HELP (Header icon/pill removed as requested!) -->
     <div class="overlay" id="oHelp">
       <div class="help-box">
-        <h3>POKER HELP</h3>
         To start the game, make your bet and touch DEAL. Then hold or discard any of the 5 cards and touch DRAW. Win amounts are paid based on the ending hand. The game uses one standard 52 card deck.<br><br>
         In the middle of a game your options are:<br>
         &bull; Touch any card to hold or discard cards. Touch the card again to cancel.<br>
