@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pixel 10 Pro Landscape Video Poker (1024x460 True Fit)</title>
+  <title>Pixel 10 Pro Landscape Video Poker (1024x460 with Options)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,7 +14,7 @@
     }
 
     body {
-      background: #000;
+      background: #06070a;
       color: #fff;
       font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
       min-height: 100vh;
@@ -26,7 +26,7 @@
       padding: 10px;
     }
 
-    /* Controls Bar above the phone frame */
+    /* Top info bar */
     .toolbar {
       width: 1024px;
       margin-bottom: 8px;
@@ -36,29 +36,22 @@
       background: #141720;
       border: 1px solid #2b3040;
       border-radius: 8px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       font-size: 12px;
     }
     .toolbar .device-badge {
       color: #f5c518;
       font-weight: bold;
     }
-    .thm-btn {
-      background: #232838;
-      color: #ccc;
-      border: 1px solid #3e4760;
+    .toggle-opt-btn {
+      background: #2e364a;
+      color: #ffd700;
+      border: 1px solid #f5c518;
       border-radius: 4px;
-      padding: 3px 7px;
+      padding: 3px 10px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      margin-left: 2px;
-    }
-    .thm-btn.active {
-      background: #394466;
-      border-color: #f5c518;
-      color: #fff;
-      outline: 1px solid #f5c518;
     }
 
     /* Exact Pixel 10 Pro Landscape Phone Viewport (1024 x 460) */
@@ -73,7 +66,7 @@
       padding: 6px 10px 4px 10px;
       border: 3px solid #333;
       border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.95);
       background: #0a0aa0;
     }
 
@@ -87,6 +80,7 @@
       --btn-edge: #8a6d00;
       --btn-ink: #201800;
       --panel: #0a0aa0;
+      --set-bg: #07075c;
       background: radial-gradient(circle at 50% 45%, #0f15c4 0%, #080a8c 70%, #030452 100%);
     }
     .theme-brass {
@@ -98,6 +92,7 @@
       --btn-edge: #6e4f16;
       --btn-ink: #1f1406;
       --panel: #20110b;
+      --set-bg: #1c100b;
       background: radial-gradient(circle at 50% 45%, #422416 0%, #24140e 70%, #120906 100%);
     }
     .theme-lounge {
@@ -109,6 +104,7 @@
       --btn-edge: #7a5a1e;
       --btn-ink: #1a150c;
       --panel: #1a1614;
+      --set-bg: #14110f;
       background: radial-gradient(circle at 50% 45%, #2a221c 0%, #171310 70%, #0b0907 100%);
     }
     .theme-noir {
@@ -120,6 +116,7 @@
       --btn-edge: #6e5420;
       --btn-ink: #141108;
       --panel: #0e1a16;
+      --set-bg: #08100e;
       background: radial-gradient(circle at 50% 45%, #182c25 0%, #0c1713 70%, #040807 100%);
     }
     .theme-penthouse {
@@ -131,6 +128,7 @@
       --btn-edge: #754b32;
       --btn-ink: #1e130c;
       --panel: #332e2a;
+      --set-bg: #211e1c;
       background: radial-gradient(circle at 50% 45%, #47403b 0%, #2b2724 70%, #171513 100%);
     }
     .theme-autumn {
@@ -142,6 +140,7 @@
       --btn-edge: #943d12;
       --btn-ink: #1f0b03;
       --panel: #24181a;
+      --set-bg: #140d0f;
       background: radial-gradient(circle at 50% 45%, #381f23 0%, #1c1113 70%, #0d0708 100%);
     }
     .theme-parchment {
@@ -153,6 +152,7 @@
       --btn-edge: #8f6a32;
       --btn-ink: #2a1a10;
       --panel: #ecdaba;
+      --set-bg: #e2ceab;
       background: radial-gradient(circle at 50% 45%, #faf2e3 0%, #eedfc5 70%, #dec8a7 100%);
       color: #2a1a10;
     }
@@ -165,6 +165,7 @@
       --btn-edge: #827553;
       --btn-ink: #26050b;
       --panel: #3d0c15;
+      --set-bg: #21050a;
       background: radial-gradient(circle at 50% 45%, #59111f 0%, #330911 70%, #1a0408 100%);
     }
 
@@ -176,7 +177,7 @@
       gap: 10px;
     }
 
-    /* Pay Table: Compact, exactly 11 rows, dot leaders */
+    /* Pay Table */
     .pay-table {
       height: 100%;
       border: 2px solid var(--felt-line, #e9c500);
@@ -229,7 +230,7 @@
       50% { opacity: 0.5; }
     }
 
-    /* Hold List Panel: Right Beside Paytable (Where Bingo Card was) */
+    /* Hold List Panel */
     .hold-panel {
       height: 100%;
       border: 2px solid var(--felt-line, #e9c500);
@@ -313,7 +314,7 @@
       white-space: nowrap;
     }
 
-    /* MIDDLE SECTION: 2 PAIR Banner + 5 Large Playing Cards - Exactly 195px Height */
+    /* MIDDLE SECTION: 2 PAIR Banner + 5 Real PNG Cards */
     .cards-deck {
       height: 195px;
       position: relative;
@@ -379,7 +380,7 @@
       z-index: 4;
     }
 
-    /* BOTTOM SECTION: Status row (Meters) + Button bar + Footer - Exactly 95px */
+    /* BOTTOM SECTION: Status row with Speaker/Volume + Buttons + Footer */
     .bottom-deck {
       height: 95px;
       display: flex;
@@ -387,7 +388,7 @@
       justify-content: space-between;
     }
 
-    /* Status row with click-to-toggle meters (NEVER both in parens) */
+    /* Status row */
     .status-row {
       display: flex;
       justify-content: space-between;
@@ -414,11 +415,30 @@
     }
     .win-val { color: var(--red, #c4000b); }
     .win-val b { color: var(--yellow, #ffe21a); margin-left: 4px; }
+    
+    .mid-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .snd-btn {
+      background: none;
+      border: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+    .snd-btn svg {
+      width: 22px;
+      height: 22px;
+    }
     .bet-val { color: #fff; }
+    
     .cash-val { color: var(--red, #c4000b); }
     .cash-val b { color: var(--yellow, #ffe21a); margin-left: 6px; }
 
-    /* Button Strip (Example 2 layout) */
+    /* Button Strip (with HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW) */
     .btn-strip {
       display: flex;
       gap: 6px;
@@ -468,7 +488,7 @@
       letter-spacing: 1px;
     }
 
-    /* Footer: Game Name + Hand Counts */
+    /* Footer */
     .footer-bar {
       display: flex;
       justify-content: space-between;
@@ -478,28 +498,208 @@
       color: var(--yellow, #ffe21a);
       padding: 0 4px;
     }
+
+    /* ========================================================= */
+    /* OPTIONS / SETTINGS OVERLAY MODAL (Shown open per Dave)    */
+    /* ========================================================= */
+    .options-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .options-overlay.hidden {
+      display: none;
+    }
+
+    .options-window {
+      width: 780px;
+      max-height: 420px;
+      background: var(--set-bg, #07075c);
+      border: 3px solid var(--felt-line, #e9c500);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.9);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: #fff;
+      overflow-y: auto;
+    }
+
+    .opt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--felt-line, #e9c500);
+      padding-bottom: 8px;
+    }
+    .opt-header h2 {
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--yellow, #ffe21a);
+      font-weight: 900;
+    }
+    .opt-close-btn {
+      background: var(--btn, #f2cf1b);
+      color: var(--btn-ink, #201800);
+      border: 2px solid var(--btn-edge, #8a6d00);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 14px;
+      cursor: pointer;
+    }
+
+    .opt-section-title {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #d1d5e0;
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 8 Theme Grid inside Options */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .theme-opt-btn {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.1s ease;
+    }
+    .theme-opt-btn.active {
+      border-color: var(--felt-line, #e9c500);
+      background: rgba(255,215,0,0.2);
+      outline: 2px solid var(--felt-line, #e9c500);
+    }
+    .theme-opt-btn i {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Mode segment inside Options */
+    .mode-segment {
+      display: flex;
+      border: 1px solid var(--felt-line, #e9c500);
+      border-radius: 6px;
+      overflow: hidden;
+      width: fit-content;
+    }
+    .mode-btn {
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      border: 0;
+      padding: 6px 18px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border-right: 1px solid var(--felt-line, #e9c500);
+    }
+    .mode-btn:last-child {
+      border-right: 0;
+    }
+    .mode-btn.active {
+      background: var(--felt-line, #e9c500);
+      color: #000;
+    }
+
+    /* Keyboard / Sound shortcuts */
+    .opt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Top Toolbar: Theme Switcher & Info -->
+  <!-- Top Info Toolbar -->
   <div class="toolbar">
-    <div class="device-badge">Pixel 10 Pro / Pro XL &mdash; True 1024x460 Landscape Viewport (Zero Scroll)</div>
-    <div class="theme-picker">
-      <span style="color:#8890a0; font-size:11px; margin-right:4px;">Theme:</span>
-      <button class="thm-btn active" onclick="setThm('classic')">Classic Blue</button>
-      <button class="thm-btn" onclick="setThm('brass')">Smoke & Brass</button>
-      <button class="thm-btn" onclick="setThm('lounge')">High Roller</button>
-      <button class="thm-btn" onclick="setThm('noir')">Noir Ace</button>
-      <button class="thm-btn" onclick="setThm('penthouse')">Penthouse</button>
-      <button class="thm-btn" onclick="setThm('autumn')">Autumn</button>
-      <button class="thm-btn" onclick="setThm('parchment')">Parchment</button>
-      <button class="thm-btn" onclick="setThm('ruby')">Ruby</button>
-    </div>
+    <div class="device-badge">Pixel 10 Pro Landscape Viewport (1024x460) &mdash; Settings / Options Integration</div>
+    <button class="toggle-opt-btn" onclick="toggleOptions()">Toggle Options Overlay</button>
   </div>
 
-  <!-- The Actual Landscape Phone Screen (1024 x 460) -->
+  <!-- The Landscape Phone Screen (1024 x 460) -->
   <div class="viewport theme-classic" id="screenView">
+
+    <!-- ======================================================== -->
+    <!-- OPTIONS / SETTINGS MODAL OVERLAY (Open on screen)        -->
+    <!-- ======================================================== -->
+    <div class="options-overlay" id="optionsOverlay">
+      <div class="options-window">
+        
+        <div class="opt-header">
+          <h2>SETTINGS &bull; OPTIONS</h2>
+          <button class="opt-close-btn" onclick="toggleOptions()">CLOSE &times;</button>
+        </div>
+
+        <!-- 1. Theme Selector (All 8 Themes) -->
+        <div class="opt-section-title">
+          <span>Theme (Remembered on this device)</span>
+          <span style="font-size:10px; opacity:0.7;">Tap to change live</span>
+        </div>
+        <div class="theme-grid">
+          <button class="theme-opt-btn active" onclick="setThm('classic', this)"><i style="background:#0a0aa0"></i>Classic Blue</button>
+          <button class="theme-opt-btn" onclick="setThm('brass', this)"><i style="background:linear-gradient(135deg,#8a4b24 50%,#c9a24d 50%)"></i>Smoke & Brass</button>
+          <button class="theme-opt-btn" onclick="setThm('lounge', this)"><i style="background:linear-gradient(135deg,#1c1a18 50%,#d8b25e 50%)"></i>High Roller</button>
+          <button class="theme-opt-btn" onclick="setThm('noir', this)"><i style="background:linear-gradient(135deg,#0f1a16 50%,#c9a45a 50%)"></i>Noir Ace</button>
+          <button class="theme-opt-btn" onclick="setThm('penthouse', this)"><i style="background:linear-gradient(135deg,#403b38 50%,#c98f6b 50%)"></i>Penthouse</button>
+          <button class="theme-opt-btn" onclick="setThm('autumn', this)"><i style="background:linear-gradient(135deg,#0d0b0c 50%,#ff8a4c 50%)"></i>Autumn</button>
+          <button class="theme-opt-btn" onclick="setThm('parchment', this)"><i style="background:linear-gradient(135deg,#f1e4cf 50%,#c8451d 50%)"></i>Parchment</button>
+          <button class="theme-opt-btn" onclick="setThm('ruby', this)"><i style="background:linear-gradient(135deg,#e6dabb 50%,#c3162f 50%)"></i>Ruby</button>
+        </div>
+
+        <!-- 2. Training Level Selection -->
+        <div class="opt-section-title">Training Level Mode</div>
+        <div class="mode-segment">
+          <button class="mode-btn active" id="mLearn" onclick="setMode('learn')">Learn</button>
+          <button class="mode-btn" id="mPractice" onclick="setMode('practice')">Practice</button>
+          <button class="mode-btn" id="mCasino" onclick="setMode('casino')">Casino</button>
+        </div>
+
+        <!-- 3. Audio & Speed Controls -->
+        <div class="opt-section-title">Sound & Game Speed</div>
+        <div class="opt-row">
+          <span>Game Audio</span>
+          <button class="opt-close-btn" style="padding:2px 10px; font-size:11px;" id="sndToggle" onclick="toggleSnd()">Sound: ON</button>
+        </div>
+        <div class="opt-row">
+          <span>Dealing Speed</span>
+          <span style="color:var(--yellow); font-weight:bold;">SPEED 3 (Fastest ▶▶▶)</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- GAME SCREEN (Underneath)                                 -->
+    <!-- ======================================================== -->
 
     <!-- TOP SECTION: Collapsed Paytable (Left) + Hold List (Right) -->
     <div class="top-deck">
@@ -603,20 +803,27 @@
       </div>
     </div>
 
-    <!-- BOTTOM SECTION: Status Meters (Tappable) + Button Bar + Footer -->
+    <!-- BOTTOM SECTION: Status Meters + Button Bar + Footer -->
     <div class="bottom-deck">
       
-      <!-- Status Row: Click to toggle (NEVER both in parens) -->
+      <!-- Status Row: With Volume/Speaker button, and tap-to-toggle meters -->
       <div class="status-row">
         <button class="status-btn win-val" onclick="toggleWin()">WIN<b id="winDisplay">10</b></button>
-        <button class="status-btn bet-val" onclick="toggleBet()"><span id="betDisplay">BET 5</span></button>
+        
+        <div class="mid-status">
+          <button class="snd-btn" id="sndBtn" onclick="toggleSnd()" title="Sound On / Off">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--red,#c4000b);stroke:var(--red,#c4000b)"/><path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13"/></svg>
+          </button>
+          <button class="status-btn bet-val" onclick="toggleBet()"><span id="betDisplay">BET 5</span></button>
+        </div>
+
         <button class="status-btn cash-val" onclick="toggleCash()"><span id="cashLabel">CASH</span><b id="cashDisplay">$41.25</b></button>
       </div>
 
-      <!-- Button Bar -->
+      <!-- Button Bar: HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW -->
       <div class="btn-strip">
-        <button id="bMenu">MENU</button>
-        <button id="bOptions">OPTIONS</button>
+        <button id="bHelp" onclick="alert('POKER HELP\n\nMake bet and deal. Hold or discard any of the 5 cards and draw.\n\nLearn: Shows optimal hold list\nPractice: You pick holds first, then review\nCasino: Pure casino play')">HELP</button>
+        <button id="bOptions" onclick="toggleOptions()">OPTIONS</button>
         <button id="bSpeed">SPEED ▶▶▶</button>
         <button class="coin-btn" id="bDenom">25&cent;</button>
         <button class="btn-sm" id="bOne">BET<br>ONE</button>
@@ -635,21 +842,51 @@
   </div>
 
   <script>
-    // 1. Theme Switcher
-    const screenView = document.getElementById('screenView');
-    function setThm(themeName) {
-      screenView.className = 'viewport theme-' + themeName;
-      document.querySelectorAll('.thm-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+    // 1. Toggle Options Overlay
+    const overlay = document.getElementById('optionsOverlay');
+    function toggleOptions() {
+      overlay.classList.toggle('hidden');
     }
 
-    // 2. Card Hold Toggles
+    // 2. Theme Switcher
+    const screenView = document.getElementById('screenView');
+    function setThm(themeName, btn) {
+      screenView.className = 'viewport theme-' + themeName;
+      document.querySelectorAll('.theme-opt-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    // 3. Training Level Modes
+    function setMode(mode) {
+      ['mLearn', 'mPractice', 'mCasino'].forEach(id => document.getElementById(id).classList.remove('active'));
+      const panel = document.getElementById('holdListPanel');
+      if (mode === 'learn') {
+        document.getElementById('mLearn').classList.add('active');
+        panel.style.display = 'flex';
+      } else if (mode === 'practice') {
+        document.getElementById('mPractice').classList.add('active');
+        panel.style.display = 'flex';
+      } else {
+        document.getElementById('mCasino').classList.add('active');
+        panel.style.display = 'none';
+      }
+    }
+
+    // 4. Sound Toggle
+    let soundOn = true;
+    function toggleSnd() {
+      soundOn = !soundOn;
+      document.getElementById('sndToggle').textContent = soundOn ? 'Sound: ON' : 'Sound: OFF';
+      document.getElementById('sndBtn').style.opacity = soundOn ? '1' : '0.4';
+    }
+
+    // 5. Card Hold Toggles
     function toggleHold(idx) {
       const el = document.getElementById('h' + idx);
       el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
 
-    // 3. Status Meter Toggles (Click to switch between credits and dollars cleanly)
+    // 6. Status Meter Toggles (Click to switch between credits and dollars cleanly)
     let winModeDollars = false;
     function toggleWin() {
       winModeDollars = !winModeDollars;
