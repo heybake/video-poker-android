@@ -147,46 +147,88 @@
     }
 
     /* ======================================================== */
-    /* TOP DECK: PAY TABLE & HOLD LIST (EXPANDED TO 148px)      */
+    /* TOP DECK: EXACT AUTHENTIC GRID-BASED PAY TABLE & HOLD LIST */
     /* ======================================================== */
     .top-deck {
-      height: 148px;
+      height: 156px;
       display: flex;
       padding: 6px 12px 2px 12px;
       gap: 12px;
       position: relative;
     }
 
-    /* Single Column Pay Table: Fits all 11 rows cleanly with no overflow */
-    .pay-single {
+    /* The authentic VP_Player .pay component (Grid-based, NO table!) */
+    .pay-box {
       width: 380px;
-      height: 144px;
+      height: 150px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 4px 8px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      padding: 5px 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-content: space-between;
+      font-family: var(--t-serifv, Arial);
       overflow: hidden;
     }
 
-    .pay-row {
-      display: flex;
-      align-items: center;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 12px;
-      color: var(--t-paytxt, var(--pay-text));
-      padding: 0 4px;
-      border-radius: 2px;
-      font-family: var(--t-serifv, Arial);
+    /* When in casino mode: expands to 100% width and 6 columns */
+    .top-deck.casino-mode .pay-box {
+      width: 100%;
+      grid-template-columns: 1fr repeat(5, 13.5%);
+      padding: 5px 10px;
     }
 
-    .pay-row.cur {
+    .top-deck.casino-mode .hold-panel {
+      display: none !important;
+    }
+
+    /* Grid Items inside .pay-box matching play_base.css */
+    .pay-box .n {
+      color: var(--t-paytxt, var(--pay-text));
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 12.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      padding-left: 2px;
+      display: flex;
+      align-items: center;
+    }
+
+    .pay-box .n .dots-fill {
+      flex: 1;
+      border-bottom: 1px dotted var(--t-grid, rgba(255, 255, 255, 0.3));
+      margin: 0 4px 1px 4px;
+      height: 1px;
+    }
+
+    .pay-box .v {
+      color: var(--t-paytxt, var(--pay-text));
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 12.2px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      padding: 0 4px;
+    }
+
+    /* Casino columns have borders between values */
+    .top-deck.casino-mode .pay-box .v {
+      border-left: 1px solid var(--t-grid, rgba(255,255,255,0.12));
+    }
+
+    /* Highlight current bet column in casino mode */
+    .top-deck.casino-mode .pay-box .v.cur {
+      background: var(--t-col, rgba(255, 234, 0, 0.15));
+      color: var(--t-gold, var(--yellow));
+    }
+
+    /* Winning row highlighting across hand name and values */
+    .pay-box .n.win, .pay-box .v.win {
       background: var(--t-cur, var(--pay-win));
-      color: var(--t-curtxt, #ffffff);
+      color: var(--t-curtxt, #ffffff) !important;
       animation: flashRow 0.6s steps(1) infinite;
     }
 
@@ -194,97 +236,12 @@
       50% { background: var(--t-flash, #ff2222); color: var(--t-flashtxt, #ffffff); }
     }
 
-    .pay-row .hand {
-      white-space: nowrap;
-      letter-spacing: 0.4px;
-    }
-
-    .pay-row .dots {
-      flex: 1;
-      border-bottom: 1px dotted var(--t-grid, rgba(255, 255, 255, 0.35));
-      margin: 0 4px 2px 4px;
-      height: 1px;
-    }
-
-    .pay-row .val {
-      font-variant-numeric: tabular-nums;
-      font-weight: 800;
-    }
-
-    /* Casino Mode 5-Column Pay Table */
-    .pay-casino {
-      flex: 1;
-      height: 144px;
-      background: var(--t-panel, var(--panel));
-      border: 1.5px solid var(--t-gold, var(--panel-border));
-      border-radius: 8px;
-      box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 3px 8px;
-      display: none;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      font-family: var(--t-serifv, Arial);
-    }
-
-    .c-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 10.5px;
-      line-height: 11px;
-    }
-
-    .c-table th {
-      color: var(--t-gold, var(--yellow));
-      font-weight: 800;
-      text-align: right;
-      padding: 2px 4px;
-      font-size: 10px;
-      border-bottom: 1px solid var(--t-grid, #444);
-    }
-
-    .c-table th:first-child {
-      text-align: left;
-    }
-
-    .c-table td {
-      padding: 1px 4px;
-      font-variant-numeric: tabular-nums;
-      text-align: right;
-      color: var(--t-paytxt, #fff);
-      font-weight: 700;
-      border-left: 1px solid var(--t-grid, rgba(255,255,255,0.1));
-    }
-
-    .c-table td:first-child {
-      text-align: left;
-      font-weight: 800;
-      white-space: nowrap;
-      border-left: none;
-    }
-
-    .c-table th.cur-bet, .c-table td.cur-bet {
-      background: var(--t-col, rgba(255, 234, 0, 0.15));
-      color: var(--t-gold, var(--yellow));
-      font-weight: 900;
-    }
-
-    .c-table tr.win-row {
-      background: var(--t-cur, var(--pay-win));
-      color: var(--t-curtxt, #ffffff);
-      animation: flashRow 0.6s steps(1) infinite;
-    }
-
-    .c-table tr.win-row td {
-      color: var(--t-curtxt, #ffffff) !important;
-    }
-
     /* ======================================================== */
-    /* HOLD LIST PANEL (EXPANDED TO 144px, ROOMY & CLEAN)       */
+    /* HOLD LIST PANEL (150px HEIGHT, ROOMY, CRISP MINI CARDS)  */
     /* ======================================================== */
     .hold-panel {
       flex: 1;
-      height: 144px;
+      height: 150px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
@@ -392,7 +349,7 @@
     }
 
     /* ======================================================== */
-    /* MIDDLE DECK: TWO PAIR PLAQUE & CARDS MOVED DOWN SLIGHTLY */
+    /* MIDDLE DECK: TWO PAIR PLAQUE & CARDS (ZERO OVERLAP!)     */
     /* ======================================================== */
     .mid-deck {
       flex: 1;
@@ -400,7 +357,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding-top: 10px;
+      padding-top: 8px;
       position: relative;
     }
 
@@ -408,7 +365,7 @@
     .hname {
       background: var(--t-hnbg);
       color: var(--t-hntxt);
-      font: 800 15px/1 var(--t-serifv, Georgia, serif);
+      font: 800 14.5px/1 var(--t-serifv, Georgia, serif);
       letter-spacing: .14em;
       padding: 4px 22px;
       border-radius: 5px;
@@ -416,7 +373,7 @@
       box-shadow: var(--t-hnbsh);
       text-shadow: var(--t-hnsh);
       text-transform: uppercase;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       z-index: 2;
     }
 
@@ -430,8 +387,8 @@
     }
 
     .card-slot {
-      width: 98px;
-      height: 138px;
+      width: 96px;
+      height: 134px;
       position: relative;
       cursor: pointer;
       transition: transform 0.12s ease;
@@ -665,7 +622,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 8px;
+      padding: 0 10px;
       font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -675,7 +632,7 @@
     }
 
     #handCounterLabel {
-      padding-right: 4px;
+      padding-right: 2px;
       white-space: nowrap;
     }
 
@@ -1058,20 +1015,13 @@
   <div class="phone" id="phoneContainer">
 
     <!-- ========================================================== -->
-    <!-- TOP DECK: PAY TABLE & HOLD LIST (EXPANDED TO 148px)      -->
+    <!-- TOP DECK: EXACT GRID-BASED PAY TABLE & HOLD LIST           -->
     <!-- ========================================================== -->
-    <div class="top-deck">
+    <div class="top-deck" id="topDeck">
       
-      <!-- Single Column Pay Table (Learn & Practice) -->
-      <div class="pay-single" id="paySingle">
-        <!-- Rows injected dynamically based on current game & bet -->
-      </div>
-
-      <!-- Casino 5-Column Pay Table (Casino Mode) -->
-      <div class="pay-casino" id="payCasino">
-        <table class="c-table" id="casinoTable">
-          <!-- Populated dynamically -->
-        </table>
+      <!-- Authentic Grid Pay Component (Dynamically 2 cols or 6 cols) -->
+      <div class="pay-box" id="payBox">
+        <!-- Rendered dynamically by renderPayTable() -->
       </div>
 
       <!-- Hold List Panel (Learn & Practice Mode) - Clean without header line! -->
@@ -1228,8 +1178,8 @@
         <button id="bOptions" onclick="openOverlay('options')">OPTIONS</button>
         <button id="bPays" onclick="openOverlay('pays')">SEE PAYS</button>
         <button id="bSpeed" onclick="cycleSpeed()">SPEED <span id="speedTxt">&#9654;&#9654;&#9654;</span></button>
-        <button id="bOne" onclick="betOne()">BET<br>ONE</button>
-        <button id="bMax" onclick="betMax()">BET<br>MAX</button>
+        <button class="btn-sm" id="bOne" onclick="betOne()">BET<br>ONE</button>
+        <button class="btn-sm" id="bMax" onclick="betMax()">BET<br>MAX</button>
         <button class="coin-btn" id="bDenom" onclick="openOverlay('denom')" title="Tap to select coin denomination">25&cent;</button>
         <button class="btn-deal" id="bDeal" onclick="onDealDraw()">DRAW</button>
       </div>
@@ -7964,6 +7914,46 @@
       updateGameUI();
     }
 
+    // --- Render Authentic Pay Component (playTable from play.js) ---
+    function renderPayComponent() {
+      const g = getCurrentGame();
+      const box = document.getElementById('payBox');
+      box.innerHTML = '';
+      const isCasino = (currentMode === 'casino');
+
+      g.payTable.rows.forEach((r, idx) => {
+        const isWin = (r.key === 'two_pair');
+
+        // Hand Name cell (Col 1)
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'n' + (isWin ? ' win' : '');
+        if (isCasino) {
+          nameDiv.textContent = r.label;
+        } else {
+          nameDiv.innerHTML = `<span>${r.label}</span><span class="dots-fill"></span>`;
+        }
+        box.appendChild(nameDiv);
+
+        // Value cells
+        if (isCasino) {
+          // 5 Columns in Casino Mode
+          for (let c = 1; c <= 5; c++) {
+            const valDiv = document.createElement('div');
+            const isCurCol = (c === currentBet);
+            valDiv.className = 'v' + (isCurCol ? ' cur' : '') + (isWin && isCurCol ? ' win' : '');
+            valDiv.textContent = r.values[c - 1];
+            box.appendChild(valDiv);
+          }
+        } else {
+          // 1 Column in Learn & Practice Mode
+          const valDiv = document.createElement('div');
+          valDiv.className = 'v' + (isWin ? ' win' : '');
+          valDiv.textContent = r.values[currentBet - 1];
+          box.appendChild(valDiv);
+        }
+      });
+    }
+
     // --- Update Main Screen UI ---
     function updateGameUI() {
       const g = getCurrentGame();
@@ -7979,37 +7969,8 @@
       updateStatusDisplays();
       renderSoundIcon();
 
-      // 1. Single Column Pay Table (ONLY winning row flashes / lights up red!)
-      const singleEl = document.getElementById('paySingle');
-      singleEl.innerHTML = '';
-      g.payTable.rows.forEach(r => {
-        const rowDiv = document.createElement('div');
-        const isWin = (r.key === 'two_pair');
-        rowDiv.className = 'pay-row' + (isWin ? ' cur' : '');
-        const val = r.values[currentBet - 1];
-        rowDiv.innerHTML = `<span class="hand">${r.label}</span><span class="dots"></span><span class="val">${val}</span>`;
-        singleEl.appendChild(rowDiv);
-      });
-
-      // 2. Casino Table
-      const casinoEl = document.getElementById('casinoTable');
-      let cHtml = '<thead><tr><th style="width:160px;">HAND</th>';
-      for (let c = 1; c <= 5; c++) {
-        const isCur = (c === currentBet) ? ' class="cur-bet"' : '';
-        cHtml += `<th${isCur}>${c} COIN${c > 1 ? 'S' : ''}</th>`;
-      }
-      cHtml += '</tr></thead><tbody>';
-      g.payTable.rows.forEach(r => {
-        const isWin = (r.key === 'two_pair');
-        cHtml += `<tr${isWin ? ' class="win-row"' : ''}><td>${r.label}</td>`;
-        r.values.forEach((val, idx) => {
-          const isCurCol = (idx + 1 === currentBet);
-          cHtml += `<td${isCurCol ? ' class="cur-bet"' : ''}>${val}</td>`;
-        });
-        cHtml += '</tr>';
-      });
-      cHtml += '</tbody>';
-      casinoEl.innerHTML = cHtml;
+      // Render Pay Table (Learn 1-col or Casino 5-col)
+      renderPayComponent();
     }
 
     function updateStatusDisplays() {
@@ -8129,15 +8090,15 @@
       if (mode === 'casino') document.getElementById('btnModeCasino').classList.add('active');
 
       const isCasino = (mode === 'casino');
-      document.getElementById('paySingle').style.display = isCasino ? 'none' : 'flex';
-      document.getElementById('holdPanel').style.display = isCasino ? 'none' : 'flex';
-      document.getElementById('payCasino').style.display = isCasino ? 'flex' : 'none';
+      document.getElementById('topDeck').classList.toggle('casino-mode', isCasino);
 
       // Learn mode dots on cards visibility
       const showDots = (mode === 'learn');
       document.querySelectorAll('.card-dots').forEach(el => {
         el.style.display = showDots ? 'flex' : 'none';
       });
+
+      renderPayComponent();
     }
 
     // Initialize
