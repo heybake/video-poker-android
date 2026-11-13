@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pixel 10 Pro Landscape Video Poker (1024x460 with Options)</title>
+  <title>Pixel 10 Pro Landscape Video Poker (Exact 1024x460)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -26,7 +26,7 @@
       padding: 10px;
     }
 
-    /* Top info bar */
+    /* Top helper toolbar */
     .toolbar {
       width: 1024px;
       margin-bottom: 8px;
@@ -48,7 +48,7 @@
       color: #ffd700;
       border: 1px solid #f5c518;
       border-radius: 4px;
-      padding: 3px 10px;
+      padding: 4px 12px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
@@ -70,7 +70,7 @@
       background: #0a0aa0;
     }
 
-    /* Themes */
+    /* All 8 Themes with Exact VP_Player dark felt & accents */
     .theme-classic {
       --felt: #0a0aa0;
       --felt-line: #e9c500;
@@ -143,45 +143,51 @@
       --set-bg: #140d0f;
       background: radial-gradient(circle at 50% 45%, #381f23 0%, #1c1113 70%, #0d0708 100%);
     }
+    /* Parchment: Exact dark charcoal-umber felt with aged warm gold trim */
     .theme-parchment {
-      --felt: #f4e8d3;
-      --felt-line: #c8451d;
-      --yellow: #2a1a10;
+      --felt: #1b1415;
+      --felt-line: #b98a3a;
+      --yellow: #f6ecdc;
       --red: #b83a14;
-      --btn: #e6c99a;
-      --btn-edge: #8f6a32;
-      --btn-ink: #2a1a10;
-      --panel: #ecdaba;
-      --set-bg: #e2ceab;
-      background: radial-gradient(circle at 50% 45%, #faf2e3 0%, #eedfc5 70%, #dec8a7 100%);
-      color: #2a1a10;
+      --btn: #b98a3a;
+      --btn-edge: #6e4f16;
+      --btn-ink: #1a0b05;
+      --panel: #241c1e;
+      --set-bg: #1b1415;
+      background: radial-gradient(ellipse at 50% 30%, #241c1e 0%, #120d0f 55%, #070506 100%);
     }
+    /* Ruby: Exact deep emerald velvet with ruby and heirloom gold */
     .theme-ruby {
-      --felt: #2e0910;
-      --felt-line: #e6dabb;
+      --felt: #0f1d1a;
+      --felt-line: #d9b45a;
       --yellow: #f0e2b6;
-      --red: #ff2a44;
-      --btn: #e6dabb;
-      --btn-edge: #827553;
-      --btn-ink: #26050b;
-      --panel: #3d0c15;
-      --set-bg: #21050a;
-      background: radial-gradient(circle at 50% 45%, #59111f 0%, #330911 70%, #1a0408 100%);
+      --red: #c3162f;
+      --btn: #d9b45a;
+      --btn-edge: #7a5a14;
+      --btn-ink: #2a2216;
+      --panel: #15423a;
+      --set-bg: #0f1d1a;
+      background: radial-gradient(ellipse at 50% 30%, #15423a 0%, #0b231e 55%, #051210 100%);
     }
 
-    /* TOP SECTION: Paytable (Left) + Hold List (Right) - Exactly 150px Height */
+    /* TOP SECTION: 152px Height */
     .top-deck {
       height: 152px;
       display: grid;
       grid-template-columns: 370px 1fr;
       gap: 10px;
+      transition: all 0.2s ease;
+    }
+    /* In Casino view, paytable spans 100% of the top deck */
+    .top-deck.casino-mode {
+      grid-template-columns: 1fr;
     }
 
-    /* Pay Table */
-    .pay-table {
+    /* Pay Table: Learn/Practice view (single column) */
+    .pay-table-single {
       height: 100%;
       border: 2px solid var(--felt-line, #e9c500);
-      background: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.45);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -226,6 +232,58 @@
       color: #fff;
       animation: fl 0.6s steps(1) infinite;
     }
+
+    /* ======================================================== */
+    /* FULL 5-COLUMN CASINO PAY TABLE (Full width in Casino mode)*/
+    /* ======================================================== */
+    .pay-table-full {
+      height: 100%;
+      border: 2px solid var(--felt-line, #e9c500);
+      background: rgba(0,0,0,0.45);
+      display: grid;
+      grid-template-columns: 1fr repeat(5, 11%);
+      padding: 2px 4px;
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--yellow, #ffe21a);
+      line-height: 1.18;
+      font-family: "Arial Narrow", Arial, sans-serif;
+      align-items: center;
+    }
+    .pay-table-full .col-hdr {
+      text-align: center;
+      color: #fff;
+      font-size: 10px;
+      border-bottom: 1px solid var(--felt-line);
+      padding-bottom: 1px;
+    }
+    .pay-table-full .col-hdr.active-col {
+      background: var(--red, #c4000b);
+      font-weight: 900;
+      border-radius: 2px 2px 0 0;
+    }
+    .pay-table-full .n {
+      white-space: nowrap;
+      overflow: hidden;
+      padding-left: 4px;
+    }
+    .pay-table-full .v {
+      text-align: right;
+      padding-right: 6px;
+      border-left: 1px solid rgba(233,197,0,0.3);
+      color: #fff;
+    }
+    .pay-table-full .v.cur-bet {
+      background: var(--red, #c4000b);
+      font-weight: 900;
+    }
+    .pay-table-full .win-row {
+      color: #fff;
+    }
+    .pay-table-full .win-row .cur-bet {
+      animation: fl 0.6s steps(1) infinite;
+    }
+
     @keyframes fl {
       50% { opacity: 0.5; }
     }
@@ -234,7 +292,7 @@
     .hold-panel {
       height: 100%;
       border: 2px solid var(--felt-line, #e9c500);
-      background: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.45);
       border-radius: 4px;
       padding: 6px 10px;
       display: flex;
@@ -380,7 +438,7 @@
       z-index: 4;
     }
 
-    /* BOTTOM SECTION: Status row with Speaker/Volume + Buttons + Footer */
+    /* BOTTOM SECTION: Status row with Sound Slider + Buttons + Footer */
     .bottom-deck {
       height: 95px;
       display: flex;
@@ -419,7 +477,7 @@
     .mid-status {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
     }
     .snd-btn {
       background: none;
@@ -433,12 +491,50 @@
       width: 22px;
       height: 22px;
     }
+
+    /* Exact Sound Slider Bar (from VP_Player: #vsl, #vfi, #vkn) */
+    .vsl {
+      position: relative;
+      width: 80px;
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin: 0 6px;
+      transition: opacity 0.2s ease;
+    }
+    .vsl .vfi {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 60%;
+      border-radius: 5px;
+      background: var(--red, #c4000b);
+      pointer-events: none;
+    }
+    .vsl .vkn {
+      position: absolute;
+      top: 50%;
+      left: 60%;
+      width: 14px;
+      height: 14px;
+      margin-top: -7px;
+      margin-left: -7px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--red, #c4000b);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
     .bet-val { color: #fff; }
-    
     .cash-val { color: var(--red, #c4000b); }
     .cash-val b { color: var(--yellow, #ffe21a); margin-left: 6px; }
 
-    /* Button Strip (with HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW) */
+    /* Button Strip: HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW */
     .btn-strip {
       display: flex;
       gap: 6px;
@@ -499,9 +595,7 @@
       padding: 0 4px;
     }
 
-    /* ========================================================= */
-    /* OPTIONS / SETTINGS OVERLAY MODAL (Shown open per Dave)    */
-    /* ========================================================= */
+    /* OPTIONS / SETTINGS MODAL OVERLAY */
     .options-overlay {
       position: absolute;
       inset: 0;
@@ -626,7 +720,6 @@
       color: #000;
     }
 
-    /* Keyboard / Sound shortcuts */
     .opt-row {
       display: flex;
       justify-content: space-between;
@@ -639,17 +732,19 @@
 </head>
 <body>
 
-  <!-- Top Info Toolbar -->
+  <!-- Top Helper Toolbar -->
   <div class="toolbar">
-    <div class="device-badge">Pixel 10 Pro Landscape Viewport (1024x460) &mdash; Settings / Options Integration</div>
-    <button class="toggle-opt-btn" onclick="toggleOptions()">Toggle Options Overlay</button>
+    <div class="device-badge">Pixel 10 Pro Landscape Viewport (1024x460) &mdash; Casino Mode (5 Columns) & Volume Slider</div>
+    <div style="display:flex; gap:8px;">
+      <button class="toggle-opt-btn" onclick="toggleOptions()">Toggle Options Overlay</button>
+    </div>
   </div>
 
   <!-- The Landscape Phone Screen (1024 x 460) -->
   <div class="viewport theme-classic" id="screenView">
 
     <!-- ======================================================== -->
-    <!-- OPTIONS / SETTINGS MODAL OVERLAY (Open on screen)        -->
+    <!-- OPTIONS / SETTINGS MODAL OVERLAY                         -->
     <!-- ======================================================== -->
     <div class="options-overlay" id="optionsOverlay">
       <div class="options-window">
@@ -659,7 +754,7 @@
           <button class="opt-close-btn" onclick="toggleOptions()">CLOSE &times;</button>
         </div>
 
-        <!-- 1. Theme Selector (All 8 Themes) -->
+        <!-- 1. Theme Selector (All 8 Themes with Exact Dark Felts) -->
         <div class="opt-section-title">
           <span>Theme (Remembered on this device)</span>
           <span style="font-size:10px; opacity:0.7;">Tap to change live</span>
@@ -671,12 +766,15 @@
           <button class="theme-opt-btn" onclick="setThm('noir', this)"><i style="background:linear-gradient(135deg,#0f1a16 50%,#c9a45a 50%)"></i>Noir Ace</button>
           <button class="theme-opt-btn" onclick="setThm('penthouse', this)"><i style="background:linear-gradient(135deg,#403b38 50%,#c98f6b 50%)"></i>Penthouse</button>
           <button class="theme-opt-btn" onclick="setThm('autumn', this)"><i style="background:linear-gradient(135deg,#0d0b0c 50%,#ff8a4c 50%)"></i>Autumn</button>
-          <button class="theme-opt-btn" onclick="setThm('parchment', this)"><i style="background:linear-gradient(135deg,#f1e4cf 50%,#c8451d 50%)"></i>Parchment</button>
-          <button class="theme-opt-btn" onclick="setThm('ruby', this)"><i style="background:linear-gradient(135deg,#e6dabb 50%,#c3162f 50%)"></i>Ruby</button>
+          <button class="theme-opt-btn" onclick="setThm('parchment', this)"><i style="background:linear-gradient(135deg,#241c1e 50%,#b98a3a 50%)"></i>Parchment</button>
+          <button class="theme-opt-btn" onclick="setThm('ruby', this)"><i style="background:linear-gradient(135deg,#15423a 50%,#c3162f 50%)"></i>Ruby</button>
         </div>
 
-        <!-- 2. Training Level Selection -->
-        <div class="opt-section-title">Training Level Mode</div>
+        <!-- 2. Training Level Selection (Switching to Casino shows all 5 columns!) -->
+        <div class="opt-section-title">
+          <span>Training Level Mode</span>
+          <span style="font-size:10px; color:#f5c518;">Casino mode expands to all 5 columns!</span>
+        </div>
         <div class="mode-segment">
           <button class="mode-btn active" id="mLearn" onclick="setMode('learn')">Learn</button>
           <button class="mode-btn" id="mPractice" onclick="setMode('practice')">Practice</button>
@@ -701,11 +799,11 @@
     <!-- GAME SCREEN (Underneath)                                 -->
     <!-- ======================================================== -->
 
-    <!-- TOP SECTION: Collapsed Paytable (Left) + Hold List (Right) -->
-    <div class="top-deck">
+    <!-- TOP SECTION: Paytable + Hold List -->
+    <div class="top-deck" id="topDeck">
       
-      <!-- Left: Entire 11-row paytable for active 5-coin bet -->
-      <div class="pay-table">
+      <!-- 1. Single-Column Pay Table (Shown in Learn and Practice) -->
+      <div class="pay-table-single" id="paySingle">
         <div class="pay-row"><span>ROYAL FLUSH</span><span class="dots">................................</span><span class="val cur">4000</span></div>
         <div class="pay-row"><span>STRAIGHT FLUSH</span><span class="dots">................................</span><span class="val cur">250</span></div>
         <div class="pay-row"><span>4 ACES</span><span class="dots">................................</span><span class="val cur">800</span></div>
@@ -719,7 +817,24 @@
         <div class="pay-row"><span>JACKS OR BETTER</span><span class="dots">................................</span><span class="val cur">5</span></div>
       </div>
 
-      <!-- Right: Hold List Panel (Where Bingo Card was in Example 2) -->
+      <!-- 2. Full 5-Column Pay Table (Shown in Casino View across all 100% width!) -->
+      <div class="pay-table-full" id="payFull" style="display:none;">
+        <div></div><div class="col-hdr">1 COIN</div><div class="col-hdr">2 COINS</div><div class="col-hdr">3 COINS</div><div class="col-hdr">4 COINS</div><div class="col-hdr active-col">5 COINS</div>
+        
+        <div class="n">ROYAL FLUSH</div><div class="v">250</div><div class="v">500</div><div class="v">750</div><div class="v">1000</div><div class="v cur-bet">4000</div>
+        <div class="n">STRAIGHT FLUSH</div><div class="v">50</div><div class="v">100</div><div class="v">150</div><div class="v">200</div><div class="v cur-bet">250</div>
+        <div class="n">4 ACES</div><div class="v">160</div><div class="v">320</div><div class="v">480</div><div class="v">640</div><div class="v cur-bet">800</div>
+        <div class="n">4 2S, 3S, 4S</div><div class="v">80</div><div class="v">160</div><div class="v">240</div><div class="v">320</div><div class="v cur-bet">400</div>
+        <div class="n">4 5S THRU KINGS</div><div class="v">50</div><div class="v">100</div><div class="v">150</div><div class="v">200</div><div class="v cur-bet">250</div>
+        <div class="n">FULL HOUSE</div><div class="v">10</div><div class="v">20</div><div class="v">30</div><div class="v">40</div><div class="v cur-bet">50</div>
+        <div class="n">FLUSH</div><div class="v">7</div><div class="v">14</div><div class="v">21</div><div class="v">28</div><div class="v cur-bet">35</div>
+        <div class="n">STRAIGHT</div><div class="v">5</div><div class="v">10</div><div class="v">15</div><div class="v">20</div><div class="v cur-bet">25</div>
+        <div class="n">3 OF A KIND</div><div class="v">3</div><div class="v">6</div><div class="v">9</div><div class="v">12</div><div class="v cur-bet">15</div>
+        <div class="n win-row">2 PAIR</div><div class="v win-row">1</div><div class="v win-row">2</div><div class="v win-row">3</div><div class="v win-row">4</div><div class="v cur-bet win-row">5</div>
+        <div class="n">JACKS OR BETTER</div><div class="v">1</div><div class="v">2</div><div class="v">3</div><div class="v">4</div><div class="v cur-bet">5</div>
+      </div>
+
+      <!-- 3. Hold List Panel (Hidden in Casino mode) -->
       <div class="hold-panel" id="holdListPanel">
         <div class="hr-item top" role="button">
           <div class="dn">1</div>
@@ -803,17 +918,25 @@
       </div>
     </div>
 
-    <!-- BOTTOM SECTION: Status Meters + Button Bar + Footer -->
+    <!-- BOTTOM SECTION: Status row with Volume Slider + Buttons + Footer -->
     <div class="bottom-deck">
       
-      <!-- Status Row: With Volume/Speaker button, and tap-to-toggle meters -->
+      <!-- Status Row: With Volume Slider Bar & Tap-to-Toggle Meters -->
       <div class="status-row">
         <button class="status-btn win-val" onclick="toggleWin()">WIN<b id="winDisplay">10</b></button>
         
         <div class="mid-status">
-          <button class="snd-btn" id="sndBtn" onclick="toggleSnd()" title="Sound On / Off">
+          <!-- Speaker Icon Button -->
+          <button class="snd-btn" id="sndBtn" onclick="toggleSnd()" title="Tap to toggle sound">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--red,#c4000b);stroke:var(--red,#c4000b)"/><path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13"/></svg>
           </button>
+          
+          <!-- Exact VP_Player Volume Slider Bar (#vsl, #vfi, #vkn) -->
+          <div class="vsl" id="vsl" onclick="setVol(event)" title="Click to adjust volume">
+            <div class="vfi" id="vfi"></div>
+            <div class="vkn" id="vkn"></div>
+          </div>
+
           <button class="status-btn bet-val" onclick="toggleBet()"><span id="betDisplay">BET 5</span></button>
         </div>
 
@@ -822,7 +945,7 @@
 
       <!-- Button Bar: HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW -->
       <div class="btn-strip">
-        <button id="bHelp" onclick="alert('POKER HELP\n\nMake bet and deal. Hold or discard any of the 5 cards and draw.\n\nLearn: Shows optimal hold list\nPractice: You pick holds first, then review\nCasino: Pure casino play')">HELP</button>
+        <button id="bHelp" onclick="alert('POKER HELP\n\nMake bet and deal. Hold or discard any of the 5 cards and draw.\n\nLearn: Shows optimal hold list\nPractice: You pick holds first, then review\nCasino: Pure casino play with full 5-column pay table')">HELP</button>
         <button id="bOptions" onclick="toggleOptions()">OPTIONS</button>
         <button id="bSpeed">SPEED ▶▶▶</button>
         <button class="coin-btn" id="bDenom">25&cent;</button>
@@ -848,7 +971,7 @@
       overlay.classList.toggle('hidden');
     }
 
-    // 2. Theme Switcher
+    // 2. Theme Switcher (All 8 Themes with exact dark felt backgrounds)
     const screenView = document.getElementById('screenView');
     function setThm(themeName, btn) {
       screenView.className = 'viewport theme-' + themeName;
@@ -856,28 +979,56 @@
       if (btn) btn.classList.add('active');
     }
 
-    // 3. Training Level Modes
+    // 3. Training Level Modes: Learn / Practice / Casino (with full 5-column pay table)
     function setMode(mode) {
       ['mLearn', 'mPractice', 'mCasino'].forEach(id => document.getElementById(id).classList.remove('active'));
-      const panel = document.getElementById('holdListPanel');
+      const topDeck = document.getElementById('topDeck');
+      const paySingle = document.getElementById('paySingle');
+      const payFull = document.getElementById('payFull');
+      const holdPanel = document.getElementById('holdListPanel');
+
       if (mode === 'learn') {
         document.getElementById('mLearn').classList.add('active');
-        panel.style.display = 'flex';
+        topDeck.classList.remove('casino-mode');
+        paySingle.style.display = 'flex';
+        payFull.style.display = 'none';
+        holdPanel.style.display = 'flex';
+        document.querySelector('.hr-item.top .pill').className = "pill";
+        document.querySelector('.hr-item.top .pill').innerHTML = "&#10003; Top choice";
       } else if (mode === 'practice') {
         document.getElementById('mPractice').classList.add('active');
-        panel.style.display = 'flex';
+        topDeck.classList.remove('casino-mode');
+        paySingle.style.display = 'flex';
+        payFull.style.display = 'none';
+        holdPanel.style.display = 'flex';
+        document.querySelector('.hr-item.top .pill').className = "pill";
+        document.querySelector('.hr-item.top .pill').innerHTML = "You held this";
       } else {
+        // CASINO MODE: Full 5-column pay table spanning 100% width, hold panel hidden!
         document.getElementById('mCasino').classList.add('active');
-        panel.style.display = 'none';
+        topDeck.classList.add('casino-mode');
+        paySingle.style.display = 'none';
+        payFull.style.display = 'grid';
+        holdPanel.style.display = 'none';
       }
     }
 
-    // 4. Sound Toggle
+    // 4. Sound & Volume Slider Bar
     let soundOn = true;
     function toggleSnd() {
       soundOn = !soundOn;
       document.getElementById('sndToggle').textContent = soundOn ? 'Sound: ON' : 'Sound: OFF';
-      document.getElementById('sndBtn').style.opacity = soundOn ? '1' : '0.4';
+      document.getElementById('sndBtn').style.opacity = soundOn ? '1' : '0.35';
+      document.getElementById('vsl').style.opacity = soundOn ? '1' : '0.35';
+    }
+
+    function setVol(event) {
+      const vsl = document.getElementById('vsl');
+      const rect = vsl.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const pct = Math.max(0, Math.min(100, Math.round((clickX / rect.width) * 100)));
+      document.getElementById('vfi').style.width = pct + '%';
+      document.getElementById('vkn').style.left = pct + '%';
     }
 
     // 5. Card Hold Toggles
