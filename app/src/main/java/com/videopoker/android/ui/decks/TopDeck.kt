@@ -24,9 +24,8 @@ fun TopDeck(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(156.dp)
-            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (state.currentMode == GameMode.CASINO) {
             // Full-width 5-coin pay table

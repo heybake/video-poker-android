@@ -1,10 +1,12 @@
 package com.videopoker.android.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,34 +36,39 @@ fun MainScreen(viewModel: GameViewModel) {
             .background(palette.backgroundColor),
         contentAlignment = Alignment.Center
     ) {
-        // Strict 1024x460 dp logical gaming canvas matching the approved landscape mockup
         Box(
             modifier = Modifier
-                .width(1024.dp)
-                .height(460.dp)
+                .fillMaxSize()
                 .clipToBounds()
                 .background(
                     Brush.radialGradient(
                         colors = listOf(palette.feltColor, palette.backgroundColor),
-                        radius = 800f
+                        radius = 1200f
                     )
                 )
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // Top Deck (156dp): Pay Table + Hold Panel
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Top Deck: Pay Table + Hold Panel
                 TopDeck(
                     state = state,
-                    palette = palette
+                    palette = palette,
+                    modifier = Modifier.weight(142f)
                 )
 
-                // Mid Deck (200dp): Plaque + 5 Cards + Dots
+                // Mid Deck: Plaque + 5 Cards + Dots
                 MidDeck(
                     state = state,
                     palette = palette,
-                    onToggleHold = viewModel::onToggleHold
+                    onToggleHold = viewModel::onToggleHold,
+                    modifier = Modifier.weight(180f)
                 )
 
-                // Bottom Deck (104dp): Status Row + 9 Action Buttons + Footer
+                // Bottom Deck: Status Row + 9 Action Buttons + Footer
                 BottomDeck(
                     state = state,
                     palette = palette,
@@ -72,7 +79,8 @@ fun MainScreen(viewModel: GameViewModel) {
                     onToggleCurrency = viewModel::onToggleCurrencyDisplay,
                     onToggleVolumePopup = viewModel::onToggleVolumePopup,
                     onVolumeChange = viewModel::onVolumeChange,
-                    onOpenOverlay = viewModel::openOverlay
+                    onOpenOverlay = viewModel::openOverlay,
+                    modifier = Modifier.weight(92f)
                 )
             }
 

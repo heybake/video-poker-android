@@ -26,10 +26,9 @@ fun MidDeck(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .padding(top = 4.dp),
+            .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Center
     ) {
         // Hand Plaque (TWO PAIR)
         HandPlaque(

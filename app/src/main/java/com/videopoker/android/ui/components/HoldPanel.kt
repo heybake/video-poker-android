@@ -44,11 +44,11 @@ fun HoldPanel(
 
     Box(
         modifier = modifier
-            .height(150.dp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(8.dp))
             .background(palette.panelColor)
             .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

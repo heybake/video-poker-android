@@ -49,11 +49,11 @@ fun PayTableGrid(
 
     Box(
         modifier = modifier
-            .height(150.dp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(8.dp))
             .background(palette.panelColor)
             .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = if (isCasino) 10.dp else 8.dp, vertical = 5.dp)
+            .padding(horizontal = if (isCasino) 8.dp else 6.dp, vertical = 4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -67,14 +67,14 @@ fun PayTableGrid(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(12.2.dp),
+                            .weight(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Hand Name
                         Text(
                             text = row.label,
                             color = if (isWinRow) palette.winRowBg else palette.payTableTextColor,
-                            fontSize = 11.sp,
+                            fontSize = 9.5.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -106,7 +106,7 @@ fun PayTableGrid(
                                 Text(
                                     text = cellVal.toString(),
                                     color = if (isWinningCell) palette.winRowText else if (isCurrentBetCol) palette.goldColor else palette.payTableTextColor,
-                                    fontSize = 11.sp,
+                                    fontSize = 9.5.sp,
                                     fontWeight = if (isCurrentBetCol) FontWeight.ExtraBold else FontWeight.Bold,
                                     textAlign = TextAlign.End
                                 )
@@ -118,7 +118,7 @@ fun PayTableGrid(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(12.2.dp)
+                            .weight(1f)
                             .then(
                                 if (isWinRow) {
                                     Modifier.background(palette.winRowBg, RoundedCornerShape(2.dp))
@@ -126,13 +126,13 @@ fun PayTableGrid(
                                     Modifier
                                 }
                             )
-                            .padding(horizontal = 4.dp),
+                            .padding(horizontal = 3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = row.label,
                             color = if (isWinRow) palette.winRowText else palette.payTableTextColor,
-                            fontSize = 11.sp,
+                            fontSize = 9.5.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -144,7 +144,7 @@ fun PayTableGrid(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(1.dp)
-                                .padding(horizontal = 6.dp)
+                                .padding(horizontal = 4.dp)
                                 .drawBehind {
                                     if (!isWinRow) {
                                         drawLine(
@@ -152,7 +152,7 @@ fun PayTableGrid(
                                             start = Offset(0f, size.height / 2),
                                             end = Offset(size.width, size.height / 2),
                                             strokeWidth = 1.dp.toPx(),
-                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f, 3f), 0f)
                                         )
                                     }
                                 }
@@ -163,7 +163,7 @@ fun PayTableGrid(
                         Text(
                             text = valStr,
                             color = if (isWinRow) palette.winRowText else palette.payTableTextColor,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.End
                         )

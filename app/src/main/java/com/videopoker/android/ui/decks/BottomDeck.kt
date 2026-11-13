@@ -51,8 +51,7 @@ fun BottomDeck(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(104.dp)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         // 1. Status Bar (24dp)

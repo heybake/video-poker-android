@@ -35,10 +35,10 @@ data class Card(
         get() = rank in HIGH_RANKS
 
     /**
-     * Asset filename in assets/cards/ (e.g. "Ah.png", "Ts.png").
+     * Asset filename in assets/cards/ (e.g. "Ah.png", "Ts.png", "Ks.png").
      */
     val assetFileName: String
-        get() = "${rank.lowercaseChar()}${suit.lowercaseChar()}.png"
+        get() = "$rank$suit.png"
 
     override fun toString(): String = "$rank$suit"
 
