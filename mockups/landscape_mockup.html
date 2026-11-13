@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pixel 10 Pro Landscape Video Poker (Exact 1024x460)</title>
+  <title>Pixel 10 Pro Landscape Video Poker (Comprehensive UI)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,7 +14,7 @@
     }
 
     body {
-      background: #06070a;
+      background: #050608;
       color: #fff;
       font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
       min-height: 100vh;
@@ -26,15 +26,15 @@
       padding: 10px;
     }
 
-    /* Top helper toolbar */
+    /* Top Helper Toolbar */
     .toolbar {
       width: 1024px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #141720;
-      border: 1px solid #2b3040;
+      background: #12151e;
+      border: 1px solid #282f42;
       border-radius: 8px;
       padding: 6px 14px;
       font-size: 12px;
@@ -43,15 +43,23 @@
       color: #f5c518;
       font-weight: bold;
     }
-    .toggle-opt-btn {
-      background: #2e364a;
-      color: #ffd700;
-      border: 1px solid #f5c518;
+    .toolbar .quick-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .tb-btn {
+      background: #222838;
+      color: #ccc;
+      border: 1px solid #3d4764;
       border-radius: 4px;
-      padding: 4px 12px;
+      padding: 3px 9px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
+    }
+    .tb-btn:hover {
+      background: #323b54;
+      color: #fff;
     }
 
     /* Exact Pixel 10 Pro Landscape Phone Viewport (1024 x 460) */
@@ -66,20 +74,28 @@
       padding: 6px 10px 4px 10px;
       border: 3px solid #333;
       border-radius: 18px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.95);
-      background: #0a0aa0;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.95);
+      background: var(--felt, #0a0aa0);
+      font-family: var(--t-sansv, Arial, sans-serif);
     }
 
-    /* All 8 Themes with Exact VP_Player dark felt & accents */
+    /* ========================================================= */
+    /* THEMES (Exact VP_Player CSS Definitions)                  */
+    /* ========================================================= */
     .theme-classic {
       --felt: #0a0aa0;
       --felt-line: #e9c500;
       --yellow: #ffe21a;
       --red: #c4000b;
+      --white: #fff;
       --btn: #f2cf1b;
       --btn-edge: #8a6d00;
       --btn-ink: #201800;
-      --panel: #0a0aa0;
+      --grey: #c9ccd2;
+      --grey-edge: #6c707a;
+      --t-grid: rgba(255,255,255,0.25);
+      --t-stval: #c4000b;
+      --t-accent: #ffffff;
       --set-bg: #07075c;
       background: radial-gradient(circle at 50% 45%, #0f15c4 0%, #080a8c 70%, #030452 100%);
     }
@@ -88,10 +104,15 @@
       --felt-line: #c9a24d;
       --yellow: #f2ece0;
       --red: #c4000b;
+      --white: #fff;
       --btn: #c9a24d;
       --btn-edge: #6e4f16;
       --btn-ink: #1f1406;
-      --panel: #20110b;
+      --grey: #8a7a60;
+      --grey-edge: #524736;
+      --t-grid: rgba(201,162,77,0.3);
+      --t-stval: #c4000b;
+      --t-accent: #f2ece0;
       --set-bg: #1c100b;
       background: radial-gradient(circle at 50% 45%, #422416 0%, #24140e 70%, #120906 100%);
     }
@@ -100,10 +121,15 @@
       --felt-line: #d8b25e;
       --yellow: #f4ead2;
       --red: #a81320;
+      --white: #fff;
       --btn: #d8b25e;
       --btn-edge: #7a5a1e;
       --btn-ink: #1a150c;
-      --panel: #1a1614;
+      --grey: #756a56;
+      --grey-edge: #423b2f;
+      --t-grid: rgba(216,178,94,0.3);
+      --t-stval: #a81320;
+      --t-accent: #f4ead2;
       --set-bg: #14110f;
       background: radial-gradient(circle at 50% 45%, #2a221c 0%, #171310 70%, #0b0907 100%);
     }
@@ -112,10 +138,15 @@
       --felt-line: #c9a45a;
       --yellow: #efe6d0;
       --red: #c4000b;
+      --white: #fff;
       --btn: #c9a45a;
       --btn-edge: #6e5420;
       --btn-ink: #141108;
-      --panel: #0e1a16;
+      --grey: #6b7a74;
+      --grey-edge: #3c4743;
+      --t-grid: rgba(201,164,90,0.3);
+      --t-stval: #c4000b;
+      --t-accent: #efe6d0;
       --set-bg: #08100e;
       background: radial-gradient(circle at 50% 45%, #182c25 0%, #0c1713 70%, #040807 100%);
     }
@@ -124,10 +155,15 @@
       --felt-line: #c98f6b;
       --yellow: #f6ece0;
       --red: #c4000b;
+      --white: #fff;
       --btn: #c98f6b;
       --btn-edge: #754b32;
       --btn-ink: #1e130c;
-      --panel: #332e2a;
+      --grey: #857d76;
+      --grey-edge: #4d4742;
+      --t-grid: rgba(201,143,107,0.3);
+      --t-stval: #c4000b;
+      --t-accent: #f6ece0;
       --set-bg: #211e1c;
       background: radial-gradient(circle at 50% 45%, #47403b 0%, #2b2724 70%, #171513 100%);
     }
@@ -136,57 +172,68 @@
       --felt-line: #ff8a4c;
       --yellow: #f3e6d2;
       --red: #c4000b;
+      --white: #fff;
       --btn: #ff8a4c;
       --btn-edge: #943d12;
       --btn-ink: #1f0b03;
-      --panel: #24181a;
+      --grey: #7d6b6e;
+      --grey-edge: #473a3c;
+      --t-grid: rgba(255,138,76,0.3);
+      --t-stval: #c4000b;
+      --t-accent: #f3e6d2;
       --set-bg: #140d0f;
       background: radial-gradient(circle at 50% 45%, #381f23 0%, #1c1113 70%, #0d0708 100%);
     }
-    /* Parchment: Exact dark charcoal-umber felt with aged warm gold trim */
     .theme-parchment {
       --felt: #1b1415;
       --felt-line: #b98a3a;
       --yellow: #f6ecdc;
       --red: #b83a14;
+      --white: #fff;
       --btn: #b98a3a;
       --btn-edge: #6e4f16;
       --btn-ink: #1a0b05;
-      --panel: #241c1e;
+      --grey: #73675a;
+      --grey-edge: #42392f;
+      --t-grid: rgba(185,138,58,0.3);
+      --t-stval: #b83a14;
+      --t-accent: #f6ecdc;
       --set-bg: #1b1415;
       background: radial-gradient(ellipse at 50% 30%, #241c1e 0%, #120d0f 55%, #070506 100%);
     }
-    /* Ruby: Exact deep emerald velvet with ruby and heirloom gold */
     .theme-ruby {
       --felt: #0f1d1a;
       --felt-line: #d9b45a;
       --yellow: #f0e2b6;
       --red: #c3162f;
+      --white: #fff;
       --btn: #d9b45a;
       --btn-edge: #7a5a14;
       --btn-ink: #2a2216;
-      --panel: #15423a;
+      --grey: #627570;
+      --grey-edge: #33423e;
+      --t-grid: rgba(217,180,90,0.3);
+      --t-stval: #c3162f;
+      --t-accent: #f0e2b6;
       --set-bg: #0f1d1a;
       background: radial-gradient(ellipse at 50% 30%, #15423a 0%, #0b231e 55%, #051210 100%);
     }
 
-    /* TOP SECTION: 152px Height */
+    /* TOP SECTION (152px Height) */
     .top-deck {
       height: 152px;
       display: grid;
-      grid-template-columns: 370px 1fr;
+      grid-template-columns: 380px 1fr;
       gap: 10px;
-      transition: all 0.2s ease;
     }
-    /* In Casino view, paytable spans 100% of the top deck */
     .top-deck.casino-mode {
       grid-template-columns: 1fr;
     }
 
-    /* Pay Table: Learn/Practice view (single column) */
+    /* Pay Table Single-Column (Learn & Practice) */
     .pay-table-single {
       height: 100%;
-      border: 2px solid var(--felt-line, #e9c500);
+      border: 2px solid var(--felt-line);
       background: rgba(0,0,0,0.45);
       display: flex;
       flex-direction: column;
@@ -194,7 +241,7 @@
       padding: 3px 6px;
       font-size: 11px;
       font-weight: bold;
-      color: var(--yellow, #ffe21a);
+      color: var(--yellow);
       line-height: 1.15;
       font-family: "Arial Narrow", Arial, sans-serif;
     }
@@ -203,49 +250,64 @@
       justify-content: space-between;
       align-items: center;
       white-space: nowrap;
+      padding: 0.5px 2px;
+      border-radius: 2px;
     }
+    .pay-row .name-part {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* Dots running all the way across */
     .pay-row .dots {
       overflow: hidden;
       flex: 1;
-      margin: 0 4px;
+      margin: 0 3px;
+      letter-spacing: 1.5px;
+      font-weight: 400;
       opacity: 0.5;
-      letter-spacing: 1px;
     }
     .pay-row .val {
-      min-width: 36px;
+      min-width: 38px;
       text-align: right;
       padding-right: 4px;
       color: #fff;
     }
-    .pay-row.cur .val {
-      background: var(--red, #c4000b);
+    .pay-row .val.cur {
+      background: var(--red);
       color: #fff;
       font-weight: 900;
       border-radius: 2px;
       padding: 0 4px;
     }
-    .pay-row.win {
-      color: #fff;
+    /* Whole bar flashes when winning per Dave */
+    .pay-row.win-flash {
+      animation: barFlash 0.5s steps(1) infinite;
     }
-    .pay-row.win .val {
-      background: var(--red, #c4000b);
-      color: #fff;
-      animation: fl 0.6s steps(1) infinite;
+    @keyframes barFlash {
+      0%, 100% {
+        background: var(--red);
+        color: #fff;
+      }
+      50% {
+        background: transparent;
+        color: var(--yellow);
+      }
+    }
+    .pay-row.win-flash .dots {
+      opacity: 0.8;
     }
 
-    /* ======================================================== */
-    /* FULL 5-COLUMN CASINO PAY TABLE (Full width in Casino mode)*/
-    /* ======================================================== */
+    /* Full 5-Column Pay Table (Casino View) */
     .pay-table-full {
       height: 100%;
-      border: 2px solid var(--felt-line, #e9c500);
+      border: 2px solid var(--felt-line);
       background: rgba(0,0,0,0.45);
       display: grid;
       grid-template-columns: 1fr repeat(5, 11%);
       padding: 2px 4px;
       font-size: 11px;
       font-weight: bold;
-      color: var(--yellow, #ffe21a);
+      color: var(--yellow);
       line-height: 1.18;
       font-family: "Arial Narrow", Arial, sans-serif;
       align-items: center;
@@ -257,8 +319,8 @@
       border-bottom: 1px solid var(--felt-line);
       padding-bottom: 1px;
     }
-    .pay-table-full .col-hdr.active-col {
-      background: var(--red, #c4000b);
+    .pay-table-full .col-hdr.cur-col {
+      background: var(--red);
       font-weight: 900;
       border-radius: 2px 2px 0 0;
     }
@@ -270,28 +332,21 @@
     .pay-table-full .v {
       text-align: right;
       padding-right: 6px;
-      border-left: 1px solid rgba(233,197,0,0.3);
+      border-left: 1px solid rgba(233,197,0,0.25);
       color: #fff;
     }
     .pay-table-full .v.cur-bet {
-      background: var(--red, #c4000b);
+      background: var(--red);
       font-weight: 900;
     }
-    .pay-table-full .win-row {
-      color: #fff;
-    }
-    .pay-table-full .win-row .cur-bet {
-      animation: fl 0.6s steps(1) infinite;
-    }
-
-    @keyframes fl {
-      50% { opacity: 0.5; }
+    .pay-table-full .win-bar {
+      animation: barFlash 0.5s steps(1) infinite;
     }
 
     /* Hold List Panel */
     .hold-panel {
       height: 100%;
-      border: 2px solid var(--felt-line, #e9c500);
+      border: 2px solid var(--felt-line);
       background: rgba(0,0,0,0.45);
       border-radius: 4px;
       padding: 6px 10px;
@@ -372,7 +427,7 @@
       white-space: nowrap;
     }
 
-    /* MIDDLE SECTION: 2 PAIR Banner + 5 Real PNG Cards */
+    /* MIDDLE SECTION (195px Height) */
     .cards-deck {
       height: 195px;
       position: relative;
@@ -387,7 +442,7 @@
       top: 0px;
       left: 50%;
       transform: translateX(-50%);
-      color: var(--yellow, #ffe21a);
+      color: var(--yellow);
       font-size: 20px;
       font-weight: 900;
       letter-spacing: 2px;
@@ -425,9 +480,9 @@
       top: -15px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--btn, #f2cf1b);
+      background: var(--btn);
       border: 1.5px solid #111;
-      color: var(--red, #c4000b);
+      color: var(--red);
       font-weight: 900;
       font-size: 11px;
       line-height: 1.2;
@@ -438,7 +493,7 @@
       z-index: 4;
     }
 
-    /* BOTTOM SECTION: Status row with Sound Slider + Buttons + Footer */
+    /* BOTTOM SECTION (95px Height) */
     .bottom-deck {
       height: 95px;
       display: flex;
@@ -471,13 +526,14 @@
     .status-btn:active {
       background: rgba(255,255,255,0.15);
     }
-    .win-val { color: var(--red, #c4000b); }
-    .win-val b { color: var(--yellow, #ffe21a); margin-left: 4px; }
+    .win-val { color: var(--red); }
+    .win-val b { color: var(--yellow); margin-left: 4px; }
     
     .mid-status {
       display: flex;
       align-items: center;
       gap: 6px;
+      position: relative;
     }
     .snd-btn {
       background: none;
@@ -492,18 +548,27 @@
       height: 22px;
     }
 
-    /* Exact Sound Slider Bar (from VP_Player: #vsl, #vfi, #vkn) */
+    /* Exact VP_Player Sound Slider with auto-hide */
     .vsl {
       position: relative;
-      width: 80px;
+      width: 0;
+      opacity: 0;
       height: 10px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.25);
+      background: var(--t-grid, rgba(255,255,255,0.25));
       cursor: pointer;
       display: flex;
       align-items: center;
+      margin: 0;
+      flex: none;
+      overflow: hidden;
+      transition: width 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+    }
+    .vsl.open {
+      width: 80px;
+      opacity: 1;
       margin: 0 6px;
-      transition: opacity 0.2s ease;
+      overflow: visible;
     }
     .vsl .vfi {
       position: absolute;
@@ -512,7 +577,7 @@
       bottom: 0;
       width: 60%;
       border-radius: 5px;
-      background: var(--red, #c4000b);
+      background: var(--t-stval, var(--red));
       pointer-events: none;
     }
     .vsl .vkn {
@@ -524,37 +589,38 @@
       margin-top: -7px;
       margin-left: -7px;
       border-radius: 50%;
-      background: #fff;
-      border: 2px solid var(--red, #c4000b);
+      background: var(--t-accent, #fff);
+      border: 2px solid var(--t-stval, var(--red));
       box-shadow: 0 1px 3px rgba(0,0,0,0.5);
       pointer-events: none;
     }
 
     .bet-val { color: #fff; }
-    .cash-val { color: var(--red, #c4000b); }
-    .cash-val b { color: var(--yellow, #ffe21a); margin-left: 6px; }
+    .cash-val { color: var(--red); }
+    .cash-val b { color: var(--yellow); margin-left: 6px; }
 
-    /* Button Strip: HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW */
+    /* Full Button Strip: 9 buttons, all from VP_Player + Options */
     .btn-strip {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       height: 42px;
     }
     .btn-strip button {
       flex: 1;
       height: 100%;
       border-radius: 6px;
-      border: 2px solid var(--btn-edge, #8a6d00);
-      background: var(--btn, #f2cf1b);
-      color: var(--btn-ink, #201800);
-      font-size: 13px;
+      border: 2px solid var(--btn-edge);
+      background: var(--btn);
+      color: var(--btn-ink);
+      font-size: 12px;
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
+      padding: 0 2px;
+      white-space: nowrap;
     }
     .btn-strip button:active {
       transform: translateY(1px);
@@ -576,11 +642,11 @@
       font-weight: 900;
     }
     .btn-strip .btn-deal {
-      flex: 1.4;
-      background: var(--red, #c4000b);
+      flex: 1.35;
+      background: var(--red);
       border-color: #600;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       letter-spacing: 1px;
     }
 
@@ -591,30 +657,126 @@
       align-items: center;
       font-size: 11px;
       font-weight: bold;
-      color: var(--yellow, #ffe21a);
+      color: var(--yellow);
       padding: 0 4px;
     }
 
-    /* OPTIONS / SETTINGS MODAL OVERLAY */
-    .options-overlay {
+    /* ========================================================= */
+    /* AUTHENTIC OVERLAYS: HELP, MORE GAMES, OPTIONS            */
+    /* ========================================================= */
+    .full-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.78);
+      background: rgba(0,0,0,0.75);
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: center;
       backdrop-filter: blur(2px);
     }
-    .options-overlay.hidden {
+    .full-overlay.hidden {
       display: none;
     }
 
+    /* Authentic VP_Player Help Box */
+    .help-box {
+      width: 760px;
+      height: 380px;
+      background: #000;
+      border: 8px solid var(--red);
+      box-shadow: 0 0 0 6px var(--yellow), 0 15px 40px rgba(0,0,0,0.95);
+      color: #fff;
+      padding: 16px 24px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .help-box h3 {
+      margin: 0 auto 12px;
+      background: var(--yellow);
+      color: #000;
+      width: max-content;
+      padding: 4px 30px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .help-text {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .ret-btn {
+      align-self: flex-end;
+      min-width: 160px;
+      height: 38px;
+      border-radius: 6px;
+      border: 2px solid var(--btn-edge);
+      background: var(--btn);
+      color: var(--btn-ink);
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    /* More Games Overlay */
+    .more-box {
+      width: 820px;
+      max-height: 410px;
+      background: var(--set-bg, #07075c);
+      border: 3px solid var(--felt-line);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.9);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      color: #fff;
+      overflow-y: auto;
+    }
+    .more-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .game-tile {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      cursor: pointer;
+      color: #fff;
+      font-weight: bold;
+      font-size: 12px;
+      transition: all 0.1s ease;
+    }
+    .game-tile:hover, .game-tile.active {
+      border-color: var(--felt-line);
+      background: rgba(255,215,0,0.18);
+      outline: 2px solid var(--felt-line);
+    }
+    .game-tile .art {
+      height: 42px;
+      background: var(--red);
+      border: 2px solid var(--btn);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--yellow);
+      font-weight: 900;
+      font-size: 11px;
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+
+    /* Options / Settings Window */
     .options-window {
       width: 780px;
       max-height: 420px;
       background: var(--set-bg, #07075c);
-      border: 3px solid var(--felt-line, #e9c500);
+      border: 3px solid var(--felt-line);
       border-radius: 12px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.9);
       padding: 14px 18px;
@@ -624,44 +786,19 @@
       color: #fff;
       overflow-y: auto;
     }
-
     .opt-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid var(--felt-line, #e9c500);
+      border-bottom: 2px solid var(--felt-line);
       padding-bottom: 8px;
     }
     .opt-header h2 {
       font-size: 18px;
       letter-spacing: 2px;
-      color: var(--yellow, #ffe21a);
+      color: var(--yellow);
       font-weight: 900;
     }
-    .opt-close-btn {
-      background: var(--btn, #f2cf1b);
-      color: var(--btn-ink, #201800);
-      border: 2px solid var(--btn-edge, #8a6d00);
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 900;
-      padding: 4px 14px;
-      cursor: pointer;
-    }
-
-    .opt-section-title {
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #d1d5e0;
-      margin-top: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    /* 8 Theme Grid inside Options */
     .theme-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -682,9 +819,9 @@
       transition: all 0.1s ease;
     }
     .theme-opt-btn.active {
-      border-color: var(--felt-line, #e9c500);
+      border-color: var(--felt-line);
       background: rgba(255,215,0,0.2);
-      outline: 2px solid var(--felt-line, #e9c500);
+      outline: 2px solid var(--felt-line);
     }
     .theme-opt-btn i {
       width: 14px;
@@ -693,11 +830,9 @@
       display: inline-block;
       flex-shrink: 0;
     }
-
-    /* Mode segment inside Options */
     .mode-segment {
       display: flex;
-      border: 1px solid var(--felt-line, #e9c500);
+      border: 1px solid var(--felt-line);
       border-radius: 6px;
       overflow: hidden;
       width: fit-content;
@@ -710,33 +845,26 @@
       font-size: 12px;
       font-weight: bold;
       cursor: pointer;
-      border-right: 1px solid var(--felt-line, #e9c500);
+      border-right: 1px solid var(--felt-line);
     }
     .mode-btn:last-child {
       border-right: 0;
     }
     .mode-btn.active {
-      background: var(--felt-line, #e9c500);
+      background: var(--felt-line);
       color: #000;
-    }
-
-    .opt-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      font-size: 12px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Helper Toolbar -->
+  <!-- Top Toolbar -->
   <div class="toolbar">
-    <div class="device-badge">Pixel 10 Pro Landscape Viewport (1024x460) &mdash; Casino Mode (5 Columns) & Volume Slider</div>
-    <div style="display:flex; gap:8px;">
-      <button class="toggle-opt-btn" onclick="toggleOptions()">Toggle Options Overlay</button>
+    <div class="device-badge">Pixel 10 Pro Landscape Viewport (1024x460) &mdash; Complete UI Integration</div>
+    <div class="quick-actions">
+      <button class="tb-btn" onclick="openOverlay('options')">Options</button>
+      <button class="tb-btn" onclick="openOverlay('more')">More Games</button>
+      <button class="tb-btn" onclick="openOverlay('help')">Help</button>
     </div>
   </div>
 
@@ -744,21 +872,84 @@
   <div class="viewport theme-classic" id="screenView">
 
     <!-- ======================================================== -->
-    <!-- OPTIONS / SETTINGS MODAL OVERLAY                         -->
+    <!-- 1. AUTHENTIC HELP OVERLAY (Arcade Styled)                -->
     <!-- ======================================================== -->
-    <div class="options-overlay" id="optionsOverlay">
+    <div class="full-overlay hidden" id="helpOverlay">
+      <div class="help-box">
+        <div>
+          <h3>POKER HELP</h3>
+          <div class="help-text">
+            To start the game, make your bet and deal. Then hold or discard any of the 5 cards and draw. Win amounts are paid based on the ending hand. The game uses one 52 card deck.<br><br>
+            In the middle of a game your options are:<br>
+            &bull; Touch any card to hold or discard cards. Touch the card again to cancel.<br>
+            &bull; Touch DRAW to replace unwanted cards for the final hand.<br><br>
+            <b>Learn</b> &mdash; Your hold list shows the best hold for every hand and holds the cards for you. Best for getting the strategy into your head.<br>
+            <b>Practice</b> &mdash; You pick your own holds first. Then the list shows how your choice compared with the best one.<br>
+            <b>Casino</b> &mdash; No hold list and no help. Just the game, like a real machine.
+          </div>
+        </div>
+        <button class="ret-btn" onclick="closeAllOverlays()">RETURN TO GAME</button>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 2. MORE GAMES OVERLAY (Game Catalog Selector)            -->
+    <!-- ======================================================== -->
+    <div class="full-overlay hidden" id="moreOverlay">
+      <div class="more-box">
+        <div class="opt-header">
+          <h2>SELECT A GAME</h2>
+          <button class="ret-btn" style="min-width:100px; height:32px; font-size:12px;" onclick="closeAllOverlays()">CLOSE &times;</button>
+        </div>
+        <div class="more-grid">
+          <div class="game-tile active" onclick="selectGame('Double Bonus Poker', '10/7')">
+            <div class="art">DOUBLE BONUS</div>
+            <div>Double Bonus (10/7)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Bonus Poker', '8/5')">
+            <div class="art">BONUS POKER</div>
+            <div>Bonus Poker (8/5)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Jacks or Better', '9/6')">
+            <div class="art">JACKS OR BETTER</div>
+            <div>Jacks or Better (9/6)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Double Double Bonus', '9/6')">
+            <div class="art">DOUBLE DOUBLE</div>
+            <div>Double Double (9/6)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Triple Double Bonus', '9/7')">
+            <div class="art">TRIPLE DOUBLE</div>
+            <div>Triple Double (9/7)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Super Aces Bonus', '8/5')">
+            <div class="art">SUPER ACES</div>
+            <div>Super Aces (8/5)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('White Hot Aces', '9/5')">
+            <div class="art">WHITE HOT ACES</div>
+            <div>White Hot Aces (9/5)</div>
+          </div>
+          <div class="game-tile" onclick="selectGame('Bonus Poker Deluxe', '9/6')">
+            <div class="art">BONUS DELUXE</div>
+            <div>Bonus Deluxe (9/6)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 3. OPTIONS / SETTINGS MODAL OVERLAY                      -->
+    <!-- ======================================================== -->
+    <div class="full-overlay hidden" id="optionsOverlay">
       <div class="options-window">
         
         <div class="opt-header">
           <h2>SETTINGS &bull; OPTIONS</h2>
-          <button class="opt-close-btn" onclick="toggleOptions()">CLOSE &times;</button>
+          <button class="ret-btn" style="min-width:100px; height:32px; font-size:12px;" onclick="closeAllOverlays()">CLOSE &times;</button>
         </div>
 
-        <!-- 1. Theme Selector (All 8 Themes with Exact Dark Felts) -->
-        <div class="opt-section-title">
-          <span>Theme (Remembered on this device)</span>
-          <span style="font-size:10px; opacity:0.7;">Tap to change live</span>
-        </div>
+        <div style="font-size:12px; font-weight:bold; color:#d1d5e0; margin-top:4px;">Theme (All 8 Exact VP_Player Themes)</div>
         <div class="theme-grid">
           <button class="theme-opt-btn active" onclick="setThm('classic', this)"><i style="background:#0a0aa0"></i>Classic Blue</button>
           <button class="theme-opt-btn" onclick="setThm('brass', this)"><i style="background:linear-gradient(135deg,#8a4b24 50%,#c9a24d 50%)"></i>Smoke & Brass</button>
@@ -770,71 +961,89 @@
           <button class="theme-opt-btn" onclick="setThm('ruby', this)"><i style="background:linear-gradient(135deg,#15423a 50%,#c3162f 50%)"></i>Ruby</button>
         </div>
 
-        <!-- 2. Training Level Selection (Switching to Casino shows all 5 columns!) -->
-        <div class="opt-section-title">
-          <span>Training Level Mode</span>
-          <span style="font-size:10px; color:#f5c518;">Casino mode expands to all 5 columns!</span>
-        </div>
+        <div style="font-size:12px; font-weight:bold; color:#d1d5e0; margin-top:6px;">Training Level Mode</div>
         <div class="mode-segment">
           <button class="mode-btn active" id="mLearn" onclick="setMode('learn')">Learn</button>
           <button class="mode-btn" id="mPractice" onclick="setMode('practice')">Practice</button>
           <button class="mode-btn" id="mCasino" onclick="setMode('casino')">Casino</button>
         </div>
 
-        <!-- 3. Audio & Speed Controls -->
-        <div class="opt-section-title">Sound & Game Speed</div>
-        <div class="opt-row">
-          <span>Game Audio</span>
-          <button class="opt-close-btn" style="padding:2px 10px; font-size:11px;" id="sndToggle" onclick="toggleSnd()">Sound: ON</button>
-        </div>
-        <div class="opt-row">
-          <span>Dealing Speed</span>
-          <span style="color:var(--yellow); font-weight:bold;">SPEED 3 (Fastest ▶▶▶)</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; margin-top:4px;">
+          <span style="font-size:12px;">Sound Effects</span>
+          <button class="ret-btn" style="min-width:110px; height:28px; font-size:11px;" id="sndToggle" onclick="toggleSnd()">Sound: ON</button>
         </div>
 
       </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- GAME SCREEN (Underneath)                                 -->
+    <!-- GAME SCREEN CONTENT                                      -->
     <!-- ======================================================== -->
 
     <!-- TOP SECTION: Paytable + Hold List -->
     <div class="top-deck" id="topDeck">
       
-      <!-- 1. Single-Column Pay Table (Shown in Learn and Practice) -->
+      <!-- 1. Single-Column Pay Table (Learn/Practice) -->
       <div class="pay-table-single" id="paySingle">
-        <div class="pay-row"><span>ROYAL FLUSH</span><span class="dots">................................</span><span class="val cur">4000</span></div>
-        <div class="pay-row"><span>STRAIGHT FLUSH</span><span class="dots">................................</span><span class="val cur">250</span></div>
-        <div class="pay-row"><span>4 ACES</span><span class="dots">................................</span><span class="val cur">800</span></div>
-        <div class="pay-row"><span>4 2S, 3S, 4S</span><span class="dots">................................</span><span class="val cur">400</span></div>
-        <div class="pay-row"><span>4 5S THRU KINGS</span><span class="dots">................................</span><span class="val cur">250</span></div>
-        <div class="pay-row"><span>FULL HOUSE</span><span class="dots">................................</span><span class="val cur">50</span></div>
-        <div class="pay-row"><span>FLUSH</span><span class="dots">................................</span><span class="val cur">35</span></div>
-        <div class="pay-row"><span>STRAIGHT</span><span class="dots">................................</span><span class="val cur">25</span></div>
-        <div class="pay-row"><span>3 OF A KIND</span><span class="dots">................................</span><span class="val cur">15</span></div>
-        <div class="pay-row win"><span>2 PAIR</span><span class="dots">................................</span><span class="val">5</span></div>
-        <div class="pay-row"><span>JACKS OR BETTER</span><span class="dots">................................</span><span class="val cur">5</span></div>
+        <div class="pay-row" id="r_royal">
+          <span class="name-part">ROYAL FLUSH</span><span class="dots">................................</span><span class="val cur" id="v_royal">4000</span>
+        </div>
+        <div class="pay-row" id="r_stflush">
+          <span class="name-part">STRAIGHT FLUSH</span><span class="dots">................................</span><span class="val cur" id="v_stflush">250</span>
+        </div>
+        <div class="pay-row" id="r_aces">
+          <span class="name-part">4 ACES</span><span class="dots">................................</span><span class="val cur" id="v_aces">800</span>
+        </div>
+        <div class="pay-row" id="r_234">
+          <span class="name-part">4 2S, 3S, 4S</span><span class="dots">................................</span><span class="val cur" id="v_234">400</span>
+        </div>
+        <div class="pay-row" id="r_5k">
+          <span class="name-part">4 5S THRU KINGS</span><span class="dots">................................</span><span class="val cur" id="v_5k">250</span>
+        </div>
+        <div class="pay-row" id="r_full">
+          <span class="name-part">FULL HOUSE</span><span class="dots">................................</span><span class="val cur" id="v_full">50</span>
+        </div>
+        <div class="pay-row" id="r_flush">
+          <span class="name-part">FLUSH</span><span class="dots">................................</span><span class="val cur" id="v_flush">35</span>
+        </div>
+        <div class="pay-row" id="r_straight">
+          <span class="name-part">STRAIGHT</span><span class="dots">................................</span><span class="val cur" id="v_straight">25</span>
+        </div>
+        <div class="pay-row" id="r_three">
+          <span class="name-part">3 OF A KIND</span><span class="dots">................................</span><span class="val cur" id="v_three">15</span>
+        </div>
+        <!-- Winning row: entire row flashes together per Dave! -->
+        <div class="pay-row win-flash" id="r_twopair">
+          <span class="name-part">2 PAIR</span><span class="dots">................................</span><span class="val cur" id="v_twopair">5</span>
+        </div>
+        <div class="pay-row" id="r_jacks">
+          <span class="name-part">JACKS OR BETTER</span><span class="dots">................................</span><span class="val cur" id="v_jacks">5</span>
+        </div>
       </div>
 
-      <!-- 2. Full 5-Column Pay Table (Shown in Casino View across all 100% width!) -->
+      <!-- 2. Full 5-Column Pay Table (Casino View, Spans 100% Width) -->
       <div class="pay-table-full" id="payFull" style="display:none;">
-        <div></div><div class="col-hdr">1 COIN</div><div class="col-hdr">2 COINS</div><div class="col-hdr">3 COINS</div><div class="col-hdr">4 COINS</div><div class="col-hdr active-col">5 COINS</div>
+        <div></div>
+        <div class="col-hdr" id="ch1">1 COIN</div>
+        <div class="col-hdr" id="ch2">2 COINS</div>
+        <div class="col-hdr" id="ch3">3 COINS</div>
+        <div class="col-hdr" id="ch4">4 COINS</div>
+        <div class="col-hdr cur-col" id="ch5">5 COINS</div>
         
-        <div class="n">ROYAL FLUSH</div><div class="v">250</div><div class="v">500</div><div class="v">750</div><div class="v">1000</div><div class="v cur-bet">4000</div>
-        <div class="n">STRAIGHT FLUSH</div><div class="v">50</div><div class="v">100</div><div class="v">150</div><div class="v">200</div><div class="v cur-bet">250</div>
-        <div class="n">4 ACES</div><div class="v">160</div><div class="v">320</div><div class="v">480</div><div class="v">640</div><div class="v cur-bet">800</div>
-        <div class="n">4 2S, 3S, 4S</div><div class="v">80</div><div class="v">160</div><div class="v">240</div><div class="v">320</div><div class="v cur-bet">400</div>
-        <div class="n">4 5S THRU KINGS</div><div class="v">50</div><div class="v">100</div><div class="v">150</div><div class="v">200</div><div class="v cur-bet">250</div>
-        <div class="n">FULL HOUSE</div><div class="v">10</div><div class="v">20</div><div class="v">30</div><div class="v">40</div><div class="v cur-bet">50</div>
-        <div class="n">FLUSH</div><div class="v">7</div><div class="v">14</div><div class="v">21</div><div class="v">28</div><div class="v cur-bet">35</div>
-        <div class="n">STRAIGHT</div><div class="v">5</div><div class="v">10</div><div class="v">15</div><div class="v">20</div><div class="v cur-bet">25</div>
-        <div class="n">3 OF A KIND</div><div class="v">3</div><div class="v">6</div><div class="v">9</div><div class="v">12</div><div class="v cur-bet">15</div>
-        <div class="n win-row">2 PAIR</div><div class="v win-row">1</div><div class="v win-row">2</div><div class="v win-row">3</div><div class="v win-row">4</div><div class="v cur-bet win-row">5</div>
-        <div class="n">JACKS OR BETTER</div><div class="v">1</div><div class="v">2</div><div class="v">3</div><div class="v">4</div><div class="v cur-bet">5</div>
+        <div class="n">ROYAL FLUSH</div><div class="v c1">250</div><div class="v c2">500</div><div class="v c3">750</div><div class="v c4">1000</div><div class="v c5 cur-bet">4000</div>
+        <div class="n">STRAIGHT FLUSH</div><div class="v c1">50</div><div class="v c2">100</div><div class="v c3">150</div><div class="v c4">200</div><div class="v c5 cur-bet">250</div>
+        <div class="n">4 ACES</div><div class="v c1">160</div><div class="v c2">320</div><div class="v c3">480</div><div class="v c4">640</div><div class="v c5 cur-bet">800</div>
+        <div class="n">4 2S, 3S, 4S</div><div class="v c1">80</div><div class="v c2">160</div><div class="v c3">240</div><div class="v c4">320</div><div class="v c5 cur-bet">400</div>
+        <div class="n">4 5S THRU KINGS</div><div class="v c1">50</div><div class="v c2">100</div><div class="v c3">150</div><div class="v c4">200</div><div class="v c5 cur-bet">250</div>
+        <div class="n">FULL HOUSE</div><div class="v c1">10</div><div class="v c2">20</div><div class="v c3">30</div><div class="v c4">40</div><div class="v c5 cur-bet">50</div>
+        <div class="n">FLUSH</div><div class="v c1">7</div><div class="v c2">14</div><div class="v c3">21</div><div class="v c4">28</div><div class="v c5 cur-bet">35</div>
+        <div class="n">STRAIGHT</div><div class="v c1">5</div><div class="v c2">10</div><div class="v c3">15</div><div class="v c4">20</div><div class="v c5 cur-bet">25</div>
+        <div class="n">3 OF A KIND</div><div class="v c1">3</div><div class="v c2">6</div><div class="v c3">9</div><div class="v c4">12</div><div class="v c5 cur-bet">15</div>
+        <div class="n win-bar">2 PAIR</div><div class="v c1 win-bar">1</div><div class="v c2 win-bar">2</div><div class="v c3 win-bar">3</div><div class="v c4 win-bar">4</div><div class="v c5 cur-bet win-bar">5</div>
+        <div class="n">JACKS OR BETTER</div><div class="v c1">1</div><div class="v c2">2</div><div class="v c3">3</div><div class="v c4">4</div><div class="v c5 cur-bet">5</div>
       </div>
 
-      <!-- 3. Hold List Panel (Hidden in Casino mode) -->
+      <!-- 3. Hold List Panel (Beside pay table in Learn/Practice) -->
       <div class="hold-panel" id="holdListPanel">
         <div class="hr-item top" role="button">
           <div class="dn">1</div>
@@ -881,7 +1090,7 @@
 
     </div>
 
-    <!-- MIDDLE SECTION: 2 PAIR Banner + 5 Real PNG Cards -->
+    <!-- MIDDLE SECTION: 2 PAIR Banner + 5 Real Cards -->
     <div class="cards-deck">
       <div class="hname-banner">2 PAIR</div>
 
@@ -918,20 +1127,20 @@
       </div>
     </div>
 
-    <!-- BOTTOM SECTION: Status row with Volume Slider + Buttons + Footer -->
+    <!-- BOTTOM SECTION: Status Meters + Button Bar + Footer -->
     <div class="bottom-deck">
       
-      <!-- Status Row: With Volume Slider Bar & Tap-to-Toggle Meters -->
+      <!-- Status Row -->
       <div class="status-row">
         <button class="status-btn win-val" onclick="toggleWin()">WIN<b id="winDisplay">10</b></button>
         
         <div class="mid-status">
-          <!-- Speaker Icon Button -->
-          <button class="snd-btn" id="sndBtn" onclick="toggleSnd()" title="Tap to toggle sound">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--red,#c4000b);stroke:var(--red,#c4000b)"/><path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13"/></svg>
+          <!-- Speaker Icon (Tapping expands slider, stays 3.5s then auto-hides) -->
+          <button class="snd-btn" id="sndBtn" onclick="speakerTap()" title="Tap to open volume slider / toggle sound">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--red);stroke:var(--red)"/><path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13"/></svg>
           </button>
           
-          <!-- Exact VP_Player Volume Slider Bar (#vsl, #vfi, #vkn) -->
+          <!-- Exact VP_Player Sound Slider Bar (Auto-hides back to speaker!) -->
           <div class="vsl" id="vsl" onclick="setVol(event)" title="Click to adjust volume">
             <div class="vfi" id="vfi"></div>
             <div class="vkn" id="vkn"></div>
@@ -943,21 +1152,23 @@
         <button class="status-btn cash-val" onclick="toggleCash()"><span id="cashLabel">CASH</span><b id="cashDisplay">$41.25</b></button>
       </div>
 
-      <!-- Button Bar: HELP, OPTIONS, SPEED, 25c, BET ONE, BET MAX, DRAW -->
+      <!-- Button Strip: ALL VP_Player buttons + Options -->
       <div class="btn-strip">
-        <button id="bHelp" onclick="alert('POKER HELP\n\nMake bet and deal. Hold or discard any of the 5 cards and draw.\n\nLearn: Shows optimal hold list\nPractice: You pick holds first, then review\nCasino: Pure casino play with full 5-column pay table')">HELP</button>
-        <button id="bOptions" onclick="toggleOptions()">OPTIONS</button>
-        <button id="bSpeed">SPEED ▶▶▶</button>
-        <button class="coin-btn" id="bDenom">25&cent;</button>
-        <button class="btn-sm" id="bOne">BET<br>ONE</button>
-        <button class="btn-sm" id="bMax">BET<br>MAX</button>
+        <button id="bHelp" onclick="openOverlay('help')">HELP</button>
+        <button id="bMore" onclick="openOverlay('more')">MORE GAMES</button>
+        <button id="bOptions" onclick="openOverlay('options')">OPTIONS</button>
+        <button id="bSpeed" onclick="cycleSpeed()">SPEED <span id="speedTxt">▶▶▶</span></button>
+        <button id="bPays" onclick="alert('Full pay table is displayed above!')">SEE PAYS</button>
+        <button class="btn-sm" id="bOne" onclick="betOne()">BET<br>ONE</button>
+        <button class="btn-sm" id="bMax" onclick="betMax()">BET<br>MAX</button>
+        <button class="coin-btn" id="bDenom" onclick="cycleDenom()" title="Tap to cycle coin: 5¢, 25¢, 50¢, $1, $2, $5">25&cent;</button>
         <button class="btn-deal" id="bDeal">DRAW</button>
       </div>
 
       <!-- Footer Bar -->
       <div class="footer-bar">
-        <span>Double Bonus Poker (10/7)</span>
-        <span>Hands: 12 &bull; Hands at 25&cent;: 12</span>
+        <span id="gameVariantLabel">Double Bonus Poker (10/7)</span>
+        <span id="handCounterLabel">Hands: 12 &bull; Hands at 25&cent;: 12</span>
       </div>
 
     </div>
@@ -965,13 +1176,173 @@
   </div>
 
   <script>
-    // 1. Toggle Options Overlay
-    const overlay = document.getElementById('optionsOverlay');
-    function toggleOptions() {
-      overlay.classList.toggle('hidden');
+    // -------------------------------------------------------------
+    // OVERLAYS (Help, More Games, Options)
+    // -------------------------------------------------------------
+    function closeAllOverlays() {
+      document.querySelectorAll('.full-overlay').forEach(o => o.classList.add('hidden'));
     }
 
-    // 2. Theme Switcher (All 8 Themes with exact dark felt backgrounds)
+    function openOverlay(name) {
+      closeAllOverlays();
+      if (name === 'help') document.getElementById('helpOverlay').classList.remove('hidden');
+      if (name === 'more') document.getElementById('moreOverlay').classList.remove('hidden');
+      if (name === 'options') document.getElementById('optionsOverlay').classList.remove('hidden');
+    }
+
+    // -------------------------------------------------------------
+    // GAME SELECTION (More Games)
+    // -------------------------------------------------------------
+    let currentGame = "Double Bonus Poker";
+    let currentPayTable = "10/7";
+
+    function selectGame(name, payTable) {
+      currentGame = name;
+      currentPayTable = payTable;
+      document.getElementById('gameVariantLabel').textContent = name + " (" + payTable + ")";
+      document.querySelectorAll('.game-tile').forEach(t => {
+        t.classList.toggle('active', t.textContent.includes(name));
+      });
+      closeAllOverlays();
+      updatePayTableValues();
+    }
+
+    // -------------------------------------------------------------
+    // BETTING & PAYTABLE MULTIPLIERS (Bet One & Bet Max)
+    // -------------------------------------------------------------
+    let currentBet = 5; // 1 to 5
+    const basePayouts = {
+      royal: 250,
+      stflush: 50,
+      aces: 160,
+      quads234: 80,
+      quads5k: 50,
+      full: 10,
+      flush: 7,
+      straight: 5,
+      three: 3,
+      twopair: 1,
+      jacks: 1
+    };
+
+    function betOne() {
+      currentBet = (currentBet >= 5) ? 1 : currentBet + 1;
+      updateBetUI();
+    }
+
+    function betMax() {
+      currentBet = 5;
+      updateBetUI();
+    }
+
+    function updateBetUI() {
+      // Update status text
+      const denomCents = denoms[denomIndex].cents;
+      const dollarsStr = "$" + ((currentBet * denomCents) / 100).toFixed(2);
+      document.getElementById('betDisplay').textContent = betModeDollars ? "BET " + dollarsStr + " at " + denoms[denomIndex].label : "BET " + currentBet;
+
+      // Update single column pay table values
+      updatePayTableValues();
+
+      // Update 5-column Casino header and highlighted column
+      for (let c = 1; c <= 5; c++) {
+        const hdr = document.getElementById('ch' + c);
+        if (hdr) hdr.classList.toggle('cur-col', c === currentBet);
+        document.querySelectorAll('.pay-table-full .v.c' + c).forEach(v => {
+          v.classList.toggle('cur-bet', c === currentBet);
+        });
+      }
+    }
+
+    function updatePayTableValues() {
+      const mult = currentBet;
+      document.getElementById('v_royal').textContent = (currentBet === 5) ? 4000 : 250 * mult;
+      document.getElementById('v_stflush').textContent = basePayouts.stflush * mult;
+      document.getElementById('v_aces').textContent = basePayouts.aces * mult;
+      document.getElementById('v_234').textContent = basePayouts.quads234 * mult;
+      document.getElementById('v_5k').textContent = basePayouts.quads5k * mult;
+      document.getElementById('v_full').textContent = basePayouts.full * mult;
+      document.getElementById('v_flush').textContent = basePayouts.flush * mult;
+      document.getElementById('v_straight').textContent = basePayouts.straight * mult;
+      document.getElementById('v_three').textContent = basePayouts.three * mult;
+      document.getElementById('v_twopair').textContent = basePayouts.twopair * mult;
+      document.getElementById('v_jacks').textContent = basePayouts.jacks * mult;
+    }
+
+    // -------------------------------------------------------------
+    // COIN DENOMINATION CYCLER (5¢ -> 25¢ -> 50¢ -> $1 -> $2 -> $5)
+    // -------------------------------------------------------------
+    const denoms = [
+      { cents: 5, label: "5¢" },
+      { cents: 25, label: "25¢" },
+      { cents: 50, label: "50¢" },
+      { cents: 100, label: "$1" },
+      { cents: 200, label: "$2" },
+      { cents: 500, label: "$5" }
+    ];
+    let denomIndex = 1; // starts at 25¢
+
+    function cycleDenom() {
+      denomIndex = (denomIndex + 1) % denoms.length;
+      const d = denoms[denomIndex];
+      document.getElementById('bDenom').textContent = d.label;
+      document.getElementById('handCounterLabel').textContent = "Hands: 12 • Hands at " + d.label + ": 12";
+      updateBetUI();
+    }
+
+    // -------------------------------------------------------------
+    // SOUND & AUTO-HIDING VOLUME SLIDER
+    // -------------------------------------------------------------
+    let soundOn = true;
+    let sliderTimer = null;
+    const vsl = document.getElementById('vsl');
+
+    function speakerTap() {
+      if (!vsl.classList.contains('open')) {
+        vsl.classList.add('open');
+        resetSliderTimer();
+      } else {
+        toggleSnd();
+        resetSliderTimer();
+      }
+    }
+
+    function resetSliderTimer() {
+      clearTimeout(sliderTimer);
+      sliderTimer = setTimeout(() => {
+        vsl.classList.remove('open');
+      }, 3500); // Auto-hides after 3.5 seconds of idle!
+    }
+
+    function setVol(event) {
+      const rect = vsl.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const pct = Math.max(0, Math.min(100, Math.round((clickX / rect.width) * 100)));
+      document.getElementById('vfi').style.width = pct + '%';
+      document.getElementById('vkn').style.left = pct + '%';
+      if (!soundOn && pct > 0) toggleSnd();
+      resetSliderTimer();
+    }
+
+    function toggleSnd() {
+      soundOn = !soundOn;
+      document.getElementById('sndToggle').textContent = soundOn ? 'Sound: ON' : 'Sound: OFF';
+      document.getElementById('sndBtn').style.opacity = soundOn ? '1' : '0.35';
+    }
+
+    // -------------------------------------------------------------
+    // SPEED CYCLER (1, 2, 3)
+    // -------------------------------------------------------------
+    let speedLevel = 3;
+    function cycleSpeed() {
+      speedLevel = (speedLevel % 3) + 1;
+      const txt = (speedLevel === 1) ? "▶" : (speedLevel === 2) ? "▶▶" : "▶▶▶";
+      document.getElementById('speedTxt').textContent = txt;
+    }
+
+    // -------------------------------------------------------------
+    // THEMES & STYLING
+    // -------------------------------------------------------------
     const screenView = document.getElementById('screenView');
     function setThm(themeName, btn) {
       screenView.className = 'viewport theme-' + themeName;
@@ -979,7 +1350,9 @@
       if (btn) btn.classList.add('active');
     }
 
-    // 3. Training Level Modes: Learn / Practice / Casino (with full 5-column pay table)
+    // -------------------------------------------------------------
+    // TRAINING MODES (Learn / Practice / Casino)
+    // -------------------------------------------------------------
     function setMode(mode) {
       ['mLearn', 'mPractice', 'mCasino'].forEach(id => document.getElementById(id).classList.remove('active'));
       const topDeck = document.getElementById('topDeck');
@@ -1013,31 +1386,17 @@
       }
     }
 
-    // 4. Sound & Volume Slider Bar
-    let soundOn = true;
-    function toggleSnd() {
-      soundOn = !soundOn;
-      document.getElementById('sndToggle').textContent = soundOn ? 'Sound: ON' : 'Sound: OFF';
-      document.getElementById('sndBtn').style.opacity = soundOn ? '1' : '0.35';
-      document.getElementById('vsl').style.opacity = soundOn ? '1' : '0.35';
-    }
-
-    function setVol(event) {
-      const vsl = document.getElementById('vsl');
-      const rect = vsl.getBoundingClientRect();
-      const clickX = event.clientX - rect.left;
-      const pct = Math.max(0, Math.min(100, Math.round((clickX / rect.width) * 100)));
-      document.getElementById('vfi').style.width = pct + '%';
-      document.getElementById('vkn').style.left = pct + '%';
-    }
-
-    // 5. Card Hold Toggles
+    // -------------------------------------------------------------
+    // CARD HOLD TOGGLE
+    // -------------------------------------------------------------
     function toggleHold(idx) {
       const el = document.getElementById('h' + idx);
       el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
 
-    // 6. Status Meter Toggles (Click to switch between credits and dollars cleanly)
+    // -------------------------------------------------------------
+    // STATUS METERS TOGGLE
+    // -------------------------------------------------------------
     let winModeDollars = false;
     function toggleWin() {
       winModeDollars = !winModeDollars;
@@ -1047,7 +1406,7 @@
     let betModeDollars = false;
     function toggleBet() {
       betModeDollars = !betModeDollars;
-      document.getElementById('betDisplay').textContent = betModeDollars ? 'BET $1.25 at 25¢' : 'BET 5';
+      updateBetUI();
     }
 
     let cashModeCredits = false;
