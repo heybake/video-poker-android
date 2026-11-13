@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel 10 Pro Landscape Video Poker Mockup</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --bg-crt-blue: #070b8c;
+      --bg-felt-brass: #24140e;
+      --gold: #f5c518;
+      --gold-dark: #b8860b;
+      --red-payout: #cc0000;
+      --green-held: #00cc44;
+      --text-yellow: #ffff00;
+    }
+    .crt-blue {
+      background: radial-gradient(circle at 50% 40%, #0d15b0 0%, #060a75 75%, #030545 100%);
+      color: #ffffff;
+    }
+    .felt-brass {
+      background: radial-gradient(circle at 50% 40%, #3d2319 0%, #20110b 75%, #0f0704 100%);
+      color: #f0e6d2;
+    }
+    .vp-font {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 700;
+    }
+    .btn-vp {
+      background: linear-gradient(180deg, #ffd700 0%, #cca000 60%, #997300 100%);
+      color: #000;
+      font-weight: 900;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 0 rgba(0,0,0,0.3);
+      border: 1px solid #735600;
+      user-select: none;
+      transition: all 0.08s ease;
+    }
+    .btn-vp:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+    }
+    .btn-deal {
+      background: linear-gradient(180deg, #ff4444 0%, #cc0000 60%, #880000 100%);
+      color: #fff;
+      border: 1px solid #550000;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    }
+    .card-shadow {
+      box-shadow: 0 8px 16px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+    }
+    /* Hide scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+  <!-- Top Controller Bar -->
+  <div class="max-w-5xl w-full flex flex-wrap items-center justify-between gap-3 mb-3 bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-lg">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Target Device:</span>
+      <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-200">Google Pixel 10 Pro (20:9 Landscape)</span>
+    </div>
+
+    <!-- Theme & Mode Controls for Testing -->
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-lg">
+        <span class="text-xs text-slate-400 px-1">Theme:</span>
+        <button id="themeBlue" class="text-xs px-2 py-0.5 rounded font-bold bg-blue-600 text-white">Classic Blue</button>
+        <button id="themeBrass" class="text-xs px-2 py-0.5 rounded font-bold text-amber-300 hover:bg-slate-700">Smoke & Brass</button>
+      </div>
+
+      <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-lg">
+        <span class="text-xs text-slate-400 px-1">Mode:</span>
+        <button id="modeLearn" class="text-xs px-2 py-0.5 rounded font-bold bg-amber-500 text-slate-950">Learn</button>
+        <button id="modePractice" class="text-xs px-2 py-0.5 rounded font-bold text-slate-300 hover:bg-slate-700">Practice</button>
+        <button id="modeCasino" class="text-xs px-2 py-0.5 rounded font-bold text-slate-300 hover:bg-slate-700">Casino</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulated Phone Body (Pixel 10 Pro Landscape Frame) -->
+  <div class="relative w-full max-w-[960px] aspect-[20/9] rounded-[32px] p-2 bg-gradient-to-b from-neutral-800 via-neutral-900 to-neutral-950 shadow-2xl border-4 border-neutral-700 overflow-hidden flex flex-col">
+    
+    <!-- Phone Screen Content (Example 2 Layout) -->
+    <div id="gameScreen" class="crt-blue w-full h-full rounded-[24px] flex flex-col justify-between p-2.5 relative select-none overflow-hidden border border-black/40">
+      
+      <!-- Top Section (Collapsed Pay Table + Hold List Area) -->
+      <div class="grid grid-cols-12 gap-2 h-[34%]">
+        
+        <!-- Left: Collapsed Single-Column Pay Table (Example 2 style) -->
+        <div class="col-span-5 bg-black/60 rounded-lg p-1.5 border border-yellow-400/40 flex flex-col justify-between overflow-hidden shadow-inner">
+          <div class="flex justify-between items-center text-[11px] font-black tracking-wider text-yellow-300 border-b border-yellow-400/40 pb-0.5 px-1">
+            <span>DOUBLE BONUS 10/7</span>
+            <span class="bg-red-700 px-1.5 rounded text-white font-mono">BET 5</span>
+          </div>
+          <div class="text-[10px] leading-tight font-bold space-y-0.5 font-mono overflow-y-auto pr-0.5 mt-0.5">
+            <div class="flex justify-between text-yellow-200"><span>ROYAL FLUSH</span><span class="text-amber-400 font-extrabold bg-red-900/50 px-1 rounded">4000</span></div>
+            <div class="flex justify-between"><span>STRAIGHT FLUSH</span><span class="text-yellow-300">250</span></div>
+            <div class="flex justify-between"><span>4 ACES</span><span class="text-yellow-300">800</span></div>
+            <div class="flex justify-between"><span>4 2S, 3S, 4S</span><span class="text-yellow-300">400</span></div>
+            <div class="flex justify-between"><span>4 5S THRU KS</span><span class="text-yellow-300">250</span></div>
+            <div class="flex justify-between"><span>FULL HOUSE</span><span class="text-yellow-300">50</span></div>
+            <div class="flex justify-between"><span>FLUSH</span><span class="text-yellow-300">35</span></div>
+            <div class="flex justify-between"><span>STRAIGHT</span><span class="text-yellow-300">25</span></div>
+            <div class="flex justify-between"><span>3 OF A KIND</span><span class="text-yellow-300">15</span></div>
+            <div class="flex justify-between bg-yellow-400/20 text-yellow-300 px-0.5 rounded font-black"><span>2 PAIR</span><span>5</span></div>
+            <div class="flex justify-between"><span>JACKS OR BETTER</span><span class="text-yellow-300">5</span></div>
+          </div>
+        </div>
+
+        <!-- Right: Dedicated Hold List / Strategy Box (Replacing the Bingo Card) -->
+        <div id="holdListBox" class="col-span-7 bg-black/60 rounded-lg p-2 border border-yellow-400/40 flex flex-col justify-between overflow-hidden shadow-inner">
+          <div class="flex justify-between items-center border-b border-yellow-400/30 pb-1">
+            <div class="flex items-center gap-1.5">
+              <span id="holdHeaderLabel" class="text-[11px] font-black uppercase text-amber-300 tracking-wider">Optimal Strategy Holds</span>
+              <span id="levelPill" class="text-[9px] bg-amber-500/30 text-amber-300 border border-amber-400/40 px-1.5 py-0.2 rounded font-bold uppercase">Learn Mode</span>
+            </div>
+            <span class="text-[10px] text-yellow-200/70 font-mono">Rank #1 of 32</span>
+          </div>
+
+          <!-- Strategy Recommendation Content -->
+          <div id="strategyContent" class="py-1 flex-1 flex flex-col justify-center">
+            <div class="bg-amber-400/10 border border-amber-400/30 rounded p-1.5 flex items-center justify-between">
+              <div>
+                <div class="text-[12px] font-black text-amber-300 flex items-center gap-1.5">
+                  <span class="bg-amber-500 text-black px-1 rounded text-[10px] font-black">#1</span>
+                  Two Pair (Kings & 4s)
+                </div>
+                <div class="text-[10px] text-slate-300 mt-0.5">
+                  Hold: <b class="text-yellow-300">K♦ K♠ 4♣ 4♥</b> &bull; Discard 6♥
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">K♦</span>
+                <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">4♣</span>
+                <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">K♠</span>
+                <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">4♥</span>
+              </div>
+            </div>
+            <div class="text-[10px] text-yellow-300/80 mt-1 flex justify-between">
+              <span>Expected Return: <b>2.59 credits</b></span>
+              <span class="text-amber-400 underline cursor-pointer">View Complete List &rarr;</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Middle Section: Hand Label & 5 Playing Cards -->
+      <div class="flex-1 flex flex-col justify-center items-center py-1">
+        
+        <!-- Hand Identification Banner -->
+        <div id="handBanner" class="text-[13px] font-black tracking-widest text-amber-300 uppercase mb-1 drop-shadow-md">
+          TWO PAIR
+        </div>
+
+        <!-- 5 Cards (Tappable on mobile) -->
+        <div class="grid grid-cols-5 gap-2.5 w-full max-w-[620px] px-2">
+          
+          <!-- Card 1: K♦ (Held) -->
+          <div class="card-slot flex flex-col items-center cursor-pointer group" onclick="toggleCard(0)">
+            <div class="held-tag text-[10px] font-black tracking-wider text-yellow-300 bg-red-700 px-2 py-0.2 rounded-t mb-0.5 uppercase shadow">HELD</div>
+            <div class="card-face w-full aspect-[2.5/3.5] bg-white rounded-lg p-1.5 flex flex-col justify-between card-shadow border border-slate-300 text-red-600 font-bold">
+              <div class="flex flex-col items-start leading-none">
+                <span class="text-base font-black">K</span>
+                <span class="text-xs">♦</span>
+              </div>
+              <div class="text-center text-2xl font-black">K♦</div>
+              <div class="flex flex-col items-end leading-none rotate-180">
+                <span class="text-base font-black">K</span>
+                <span class="text-xs">♦</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: 4♣ (Held) -->
+          <div class="card-slot flex flex-col items-center cursor-pointer group" onclick="toggleCard(1)">
+            <div class="held-tag text-[10px] font-black tracking-wider text-yellow-300 bg-red-700 px-2 py-0.2 rounded-t mb-0.5 uppercase shadow">HELD</div>
+            <div class="card-face w-full aspect-[2.5/3.5] bg-white rounded-lg p-1.5 flex flex-col justify-between card-shadow border border-slate-300 text-slate-900 font-bold">
+              <div class="flex flex-col items-start leading-none">
+                <span class="text-base font-black">4</span>
+                <span class="text-xs">♣</span>
+              </div>
+              <div class="text-center text-2xl font-black">4♣</div>
+              <div class="flex flex-col items-end leading-none rotate-180">
+                <span class="text-base font-black">4</span>
+                <span class="text-xs">♣</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: K♠ (Held) -->
+          <div class="card-slot flex flex-col items-center cursor-pointer group" onclick="toggleCard(2)">
+            <div class="held-tag text-[10px] font-black tracking-wider text-yellow-300 bg-red-700 px-2 py-0.2 rounded-t mb-0.5 uppercase shadow">HELD</div>
+            <div class="card-face w-full aspect-[2.5/3.5] bg-white rounded-lg p-1.5 flex flex-col justify-between card-shadow border border-slate-300 text-slate-900 font-bold">
+              <div class="flex flex-col items-start leading-none">
+                <span class="text-base font-black">K</span>
+                <span class="text-xs">♠</span>
+              </div>
+              <div class="text-center text-2xl font-black">K♠</div>
+              <div class="flex flex-col items-end leading-none rotate-180">
+                <span class="text-base font-black">K</span>
+                <span class="text-xs">♠</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: 6♥ (Not Held) -->
+          <div class="card-slot flex flex-col items-center cursor-pointer group" onclick="toggleCard(3)">
+            <div class="held-tag text-[10px] font-black tracking-wider text-transparent px-2 py-0.2 mb-0.5">&nbsp;</div>
+            <div class="card-face w-full aspect-[2.5/3.5] bg-white rounded-lg p-1.5 flex flex-col justify-between card-shadow border border-slate-300 text-red-600 font-bold opacity-85">
+              <div class="flex flex-col items-start leading-none">
+                <span class="text-base font-black">6</span>
+                <span class="text-xs">♥</span>
+              </div>
+              <div class="text-center text-2xl font-black">6♥</div>
+              <div class="flex flex-col items-end leading-none rotate-180">
+                <span class="text-base font-black">6</span>
+                <span class="text-xs">♥</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5: 4♥ (Held) -->
+          <div class="card-slot flex flex-col items-center cursor-pointer group" onclick="toggleCard(4)">
+            <div class="held-tag text-[10px] font-black tracking-wider text-yellow-300 bg-red-700 px-2 py-0.2 rounded-t mb-0.5 uppercase shadow">HELD</div>
+            <div class="card-face w-full aspect-[2.5/3.5] bg-white rounded-lg p-1.5 flex flex-col justify-between card-shadow border border-slate-300 text-red-600 font-bold">
+              <div class="flex flex-col items-start leading-none">
+                <span class="text-base font-black">4</span>
+                <span class="text-xs">♥</span>
+              </div>
+              <div class="text-center text-2xl font-black">4♥</div>
+              <div class="flex flex-col items-end leading-none rotate-180">
+                <span class="text-base font-black">4</span>
+                <span class="text-xs">♥</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Status & Control Bar -->
+      <div class="flex flex-col gap-1">
+        
+        <!-- Meters (Win, Bet, Cash) -->
+        <div class="flex justify-between items-center px-3 text-[12px] font-black font-mono">
+          <div class="text-yellow-300 flex items-center gap-1">
+            <span>WIN:</span>
+            <span class="text-amber-400 text-sm">10</span>
+            <span class="text-xs text-yellow-200/70">($2.50)</span>
+          </div>
+          <div class="text-white flex items-center gap-1">
+            <span>BET:</span>
+            <span class="text-yellow-300 text-sm">5</span>
+            <span class="text-xs text-yellow-200/70">at 25¢</span>
+          </div>
+          <div class="text-yellow-300 flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded border border-yellow-400/30">
+            <span class="text-red-400">CASH:</span>
+            <span class="text-amber-300 text-sm">$41.25</span>
+          </div>
+        </div>
+
+        <!-- Thumb Controls (Example 2 Button Strip) -->
+        <div class="grid grid-cols-7 gap-1.5 h-10 px-1">
+          <button class="btn-vp rounded text-[11px]">MENU</button>
+          <button class="btn-vp rounded text-[11px]">OPTIONS</button>
+          <button class="btn-vp rounded text-[11px]">SPEED ▶▶▶</button>
+          <button class="btn-vp rounded text-[12px] text-amber-900 font-black bg-gradient-to-b from-yellow-200 to-amber-400">25¢</button>
+          <button class="btn-vp rounded text-[11px]">BET ONE</button>
+          <button class="btn-vp rounded text-[11px]">BET MAX</button>
+          <button class="btn-vp btn-deal rounded text-[13px] font-black tracking-wider">DRAW</button>
+        </div>
+
+        <!-- Game Variant & Hands Tracking Footer -->
+        <div class="flex justify-between items-center text-[10px] text-yellow-200/80 px-2 pt-0.5 font-bold">
+          <span>Double Bonus Poker (10/7)</span>
+          <span>Hands: 12 &bull; Hands at 25¢: 12</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Interactive toggles for Dave & Amy to test the mockup
+    const screen = document.getElementById('gameScreen');
+    const holdBox = document.getElementById('holdListBox');
+    const holdHeader = document.getElementById('holdHeaderLabel');
+    const levelPill = document.getElementById('levelPill');
+    const strategyContent = document.getElementById('strategyContent');
+
+    // Theme toggles
+    document.getElementById('themeBlue').onclick = () => {
+      screen.className = "crt-blue w-full h-full rounded-[24px] flex flex-col justify-between p-2.5 relative select-none overflow-hidden border border-black/40";
+      document.getElementById('themeBlue').className = "text-xs px-2 py-0.5 rounded font-bold bg-blue-600 text-white";
+      document.getElementById('themeBrass').className = "text-xs px-2 py-0.5 rounded font-bold text-amber-300 hover:bg-slate-700";
+    };
+    document.getElementById('themeBrass').onclick = () => {
+      screen.className = "felt-brass w-full h-full rounded-[24px] flex flex-col justify-between p-2.5 relative select-none overflow-hidden border border-black/40";
+      document.getElementById('themeBrass').className = "text-xs px-2 py-0.5 rounded font-bold bg-amber-700 text-white";
+      document.getElementById('themeBlue').className = "text-xs px-2 py-0.5 rounded font-bold text-slate-300 hover:bg-slate-700";
+    };
+
+    // Mode toggles
+    document.getElementById('modeLearn').onclick = () => {
+      setMode('Learn', 'Optimal Strategy Holds', 'bg-amber-500 text-slate-950');
+      holdBox.style.display = 'flex';
+      strategyContent.innerHTML = `
+        <div class="bg-amber-400/10 border border-amber-400/30 rounded p-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[12px] font-black text-amber-300 flex items-center gap-1.5">
+              <span class="bg-amber-500 text-black px-1 rounded text-[10px] font-black">#1</span>
+              Two Pair (Kings & 4s)
+            </div>
+            <div class="text-[10px] text-slate-300 mt-0.5">Hold: <b class="text-yellow-300">K♦ K♠ 4♣ 4♥</b> &bull; Discard 6♥</div>
+          </div>
+          <div class="flex gap-1">
+            <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">K♦</span>
+            <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">4♣</span>
+            <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">K♠</span>
+            <span class="bg-white text-black font-black text-[11px] px-1 rounded shadow">4♥</span>
+          </div>
+        </div>
+        <div class="text-[10px] text-yellow-300/80 mt-1 flex justify-between">
+          <span>Expected Return: <b>2.59 credits</b></span>
+          <span class="text-amber-400 underline cursor-pointer">View Complete List &rarr;</span>
+        </div>`;
+    };
+
+    document.getElementById('modePractice').onclick = () => {
+      setMode('Practice', 'Practice Feedback (Post-Draw)', 'bg-emerald-600 text-white');
+      holdBox.style.display = 'flex';
+      strategyContent.innerHTML = `
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded p-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] font-black text-emerald-400 flex items-center gap-1">
+              <span>&#10003;</span> Correct! You held the top choice.
+            </div>
+            <div class="text-[10px] text-slate-300 mt-0.5">Choice: <b>Two Pair (Kings & 4s)</b> &bull; Spot #1</div>
+          </div>
+          <span class="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Optimal</span>
+        </div>
+        <div class="text-[10px] text-emerald-300/80 mt-1 flex justify-between">
+          <span>Session Accuracy: <b>95%</b> (19 of 20)</span>
+          <span class="text-amber-400 underline cursor-pointer">Review Choices &rarr;</span>
+        </div>`;
+    };
+
+    document.getElementById('modeCasino').onclick = () => {
+      setMode('Casino', 'Casino Floor (No Advice)', 'bg-slate-600 text-white');
+      holdBox.style.display = 'none'; // In Casino mode, full focus or expanded pay table
+    };
+
+    function setMode(name, header, pillClass) {
+      levelPill.textContent = name + ' Mode';
+      levelPill.className = 'text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ' + pillClass;
+      holdHeader.textContent = header;
+      ['modeLearn', 'modePractice', 'modeCasino'].forEach(id => {
+        document.getElementById(id).className = 'text-xs px-2 py-0.5 rounded font-bold text-slate-300 hover:bg-slate-700';
+      });
+      document.getElementById('mode' + name).className = 'text-xs px-2 py-0.5 rounded font-bold ' + (name === 'Learn' ? 'bg-amber-500 text-slate-950' : name === 'Practice' ? 'bg-emerald-600 text-white' : 'bg-slate-600 text-white');
+    }
+
+    // Card toggle interaction
+    function toggleCard(index) {
+      const slots = document.querySelectorAll('.card-slot');
+      const tag = slots[index].querySelector('.held-tag');
+      const face = slots[index].querySelector('.card-face');
+      if (tag.textContent.trim() === 'HELD') {
+        tag.textContent = '';
+        tag.className = 'held-tag text-[10px] font-black tracking-wider text-transparent px-2 py-0.2 mb-0.5';
+        face.classList.add('opacity-85');
+      } else {
+        tag.textContent = 'HELD';
+        tag.className = 'held-tag text-[10px] font-black tracking-wider text-yellow-300 bg-red-700 px-2 py-0.2 rounded-t mb-0.5 uppercase shadow';
+        face.classList.remove('opacity-85');
+      }
+    }
+  </script>
+</body>
+</html>
