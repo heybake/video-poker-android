@@ -43,8 +43,8 @@ object StrategyEngine {
             payRows.add(PayTableRow(key, label, values))
         }
 
-        // Display name & family
-        val (family, display) = getGameTitles(variant)
+        // Display name, paytable label & family matching catalog
+        val (family, label, display) = getGameTitles(variant)
 
         // Strategy Rules
         val rules = mutableListOf<StrategyRule>()
@@ -63,6 +63,7 @@ object StrategyEngine {
             configName = configName,
             variant = variant,
             familyName = family,
+            payTableLabel = label,
             displayName = display,
             returnPercentage = rtp,
             denominations = denoms,
@@ -457,21 +458,58 @@ object StrategyEngine {
         }
     }
 
-    private fun getGameTitles(variant: String): Pair<String, String> {
-        val clean = variant.replace("_built", "").replace("_", " ")
-        val words = clean.split(" ").map { it.replaceFirstChar { c -> c.uppercaseChar() } }
-        val title = words.joinToString(" ")
-        val family = when {
-            variant.contains("double_double") -> "Double Double Bonus"
-            variant.contains("triple_double") -> "Triple Double Bonus"
-            variant.contains("double_bonus") -> "Double Bonus Poker"
-            variant.contains("bonus_poker") -> "Bonus Poker"
-            variant.contains("deuces_wild") -> "Deuces Wild"
-            variant.contains("joker") -> "Joker Poker"
-            variant.contains("all_american") -> "All American"
-            variant.contains("white_hot") -> "White Hot Aces"
-            else -> "Jacks or Better"
+    private fun getGameTitles(variant: String): Triple<String, String, String> {
+        val v = variant.replace("_built", "")
+        val (family, label) = when {
+            v.startsWith("bonus_poker_deluxe_") -> {
+                val pt = v.removePrefix("bonus_poker_deluxe_").replace("_", "/")
+                Pair("Bonus Poker Deluxe", pt)
+            }
+            v.startsWith("bonus_poker_") -> {
+                val pt = v.removePrefix("bonus_poker_").replace("_", "/")
+                Pair("Bonus Poker", pt)
+            }
+            v.startsWith("double_double_bonus_") -> {
+                val pt = v.removePrefix("double_double_bonus_").replace("_", "/")
+                Pair("Double Double Bonus", pt)
+            }
+            v.startsWith("triple_double_bonus_") -> {
+                val pt = v.removePrefix("triple_double_bonus_").replace("_", "/")
+                Pair("Triple Double Bonus", pt)
+            }
+            v.startsWith("triple_bonus_plus_") -> {
+                val pt = v.removePrefix("triple_bonus_plus_").replace("_", "/")
+                Pair("Triple Bonus Plus", pt)
+            }
+            v.startsWith("super_aces_bonus_") -> {
+                val pt = v.removePrefix("super_aces_bonus_").replace("_", "/")
+                Pair("Super Aces Bonus", pt)
+            }
+            v.startsWith("white_hot_aces_") -> {
+                val pt = v.removePrefix("white_hot_aces_").replace("_", "/")
+                Pair("White Hot Aces", pt)
+            }
+            v.startsWith("double_bonus_") -> {
+                val pt = v.removePrefix("double_bonus_").replace("_", "/")
+                Pair("Double Bonus", pt)
+            }
+            v.startsWith("jacks_or_better_") -> {
+                val pt = v.removePrefix("jacks_or_better_").replace("_", "/")
+                Pair("Jacks or Better", pt)
+            }
+            v.startsWith("usa_poker_") -> {
+                val pt = v.removePrefix("usa_poker_")
+                Pair("USA Poker", pt)
+            }
+            v.startsWith("hybrid_db_") -> {
+                Pair("Hybrid Db Bp Quads", "10/8/5")
+            }
+            else -> {
+                val clean = v.replace("_", " ")
+                Pair("Jacks or Better", clean)
+            }
         }
-        return Pair(family, title)
+        val display = "$family ($label)"
+        return Triple(family, label, display)
     }
 }

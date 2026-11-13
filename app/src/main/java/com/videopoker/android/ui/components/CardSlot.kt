@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,10 +45,10 @@ fun CardSlot(
     choicesHoldingCard: List<Int>, // 1-based choices holding this card (e.g. [1, 2])
     mode: GameMode,
     palette: ThemePalette,
-    onToggleHold: () -> Unit
+    onToggleHold: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val liftOffset by animateDpAsState(targetValue = if (isHeld) (-5).dp else 0.dp, label = "cardLift")
+    val liftOffset by animateDpAsState(targetValue = 0.dp, label = "cardLift")
 
     // Load card image from assets
     val cardBitmap = remember(card) {
@@ -63,14 +64,9 @@ fun CardSlot(
 
     Box(
         modifier = Modifier
-            .width(96.dp)
-            .height(134.dp)
-            .offset(y = liftOffset)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onToggleHold
-            ),
+            .width(90.dp)
+            .height(126.dp)
+            .offset(y = liftOffset),
         contentAlignment = Alignment.Center
     ) {
         // Card Surface
@@ -97,24 +93,25 @@ fun CardSlot(
             }
         }
 
-        // HELD Badge
+        // Authentic Theme-Adhering HELD Badge
         if (isHeld) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = (-10).dp)
+                    .shadow(elevation = 4.dp, shape = RoundedCornerShape(4.dp))
                     .clip(RoundedCornerShape(4.dp))
                     .background(
                         Brush.verticalGradient(
-                            listOf(palette.goldColor, palette.panelBorderSecondary)
+                            listOf(palette.heldTagBgStart, palette.heldTagBgEnd)
                         )
                     )
-                    .border(1.dp, Color(0xFFFFF0D0), RoundedCornerShape(4.dp))
+                    .border(1.2.dp, palette.heldTagBorder, RoundedCornerShape(4.dp))
                     .padding(horizontal = 10.dp, vertical = 2.dp)
             ) {
                 Text(
                     text = "HELD",
-                    color = palette.buttonTextColor,
+                    color = palette.heldTagTextColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp
@@ -123,39 +120,27 @@ fun CardSlot(
         }
 
         // Learn Mode Choice Dots (bottom-right corner)
-        if (mode == GameMode.LEARN && choicesHoldingCard.isNotEmpty()) {
+        if (choicesHoldingCard.isNotEmpty()) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(x = (-4).dp, y = (-4).dp)
-                    .background(Color(0xCC000000), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 3.dp, vertical = 2.dp),
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (1 in choicesHoldingCard) {
+                choicesHoldingCard.forEach { choiceNum ->
+                    val dotColor = when (choiceNum) {
+                        1 -> palette.choice1Color
+                        2 -> palette.choice2Color
+                        else -> palette.choice3Color
+                    }
                     Box(
                         modifier = Modifier
-                            .size(7.dp)
+                            .size(10.dp)
+                            .shadow(2.dp, CircleShape)
                             .clip(CircleShape)
-                            .background(palette.choice1Color)
-                    )
-                }
-                if (2 in choicesHoldingCard) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 2.dp)
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(palette.choice2Color)
-                    )
-                }
-                if (3 in choicesHoldingCard) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 2.dp)
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(palette.choice3Color)
+                            .background(dotColor)
+                            .border(1.dp, Color(0xFF222222), CircleShape)
                     )
                 }
             }

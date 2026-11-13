@@ -7,9 +7,9 @@ import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.theme.AppTheme
 
 enum class GameMode(val displayName: String) {
-    LEARN("LEARN"),
-    PRACTICE("PRACTICE"),
-    CASINO("CASINO")
+    LEARN("Learn"),
+    PRACTICE("Practice"),
+    CASINO("Casino")
 }
 
 enum class DealState {
@@ -24,22 +24,30 @@ data class GameState(
     val currentMode: GameMode = GameMode.LEARN,
     val currentBet: Int = 5,
     val currentDenom: Double = 0.25,
-    val cashBalance: Double = 40.0,
+    val cashBalance: Double = 100.0,
     val dealState: DealState = DealState.DEALT_CHOOSING_HOLDS,
     val cards: List<Card> = emptyList(),
     val heldMask: List<Boolean> = listOf(false, false, false, false, false),
     val holdChoices: List<HoldChoice> = emptyList(),
     val handRank: HandRank = HandRank.NOTHING,
     val winAmount: Int = 0,
-    val displayCurrency: Boolean = false, // false = credits, true = dollars
+    val winAsCash: Boolean = false, // false = credits, true = dollars
+    val betAsCash: Boolean = false,
+    val creditAsCash: Boolean = false,
+    val displayCurrency: Boolean = false, // legacy fallback
     val currentTheme: AppTheme = AppTheme.BRASS,
     val soundVolume: Float = 0.8f,
     val isVolumePopupOpen: Boolean = false,
-    val speedLevel: Int = 3, // 1..3
+    val speedLevel: Int = 2, // 1..3, default 2 (matching desktop SPEED_MS = [250, 170, 100])
+    val revealedMask: List<Boolean> = listOf(true, true, true, true, true),
+    val isAnimating: Boolean = false,
     val totalHandsPlayed: Int = 12,
     val handsAtCurrentDenom: Int = 12,
     val allGames: List<GameConfig> = emptyList(),
-    val activeOverlay: ActiveOverlay? = null
+    val isRecordingSession: Boolean = false,
+    val activeOverlay: ActiveOverlay? = null,
+    val practiceFeedback: String? = null,
+    val practiceMadeTopChoice: Boolean? = null
 )
 
 enum class ActiveOverlay {
@@ -47,5 +55,7 @@ enum class ActiveOverlay {
     MORE_GAMES,
     OPTIONS,
     DENOM,
-    SEE_PAYS
+    SEE_PAYS,
+    ADD_MONEY,
+    CASH_OUT
 }

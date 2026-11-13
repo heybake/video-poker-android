@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,10 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import com.videopoker.android.ui.components.SoundButton
 import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.DealState
@@ -42,7 +45,11 @@ fun BottomDeck(
     onBetOne: () -> Unit,
     onBetMax: () -> Unit,
     onCycleSpeed: () -> Unit,
-    onToggleCurrency: () -> Unit,
+    onToggleWinCurrency: () -> Unit,
+    onToggleBetCurrency: () -> Unit,
+    onToggleCreditCurrency: () -> Unit,
+    onOpenAddMoney: () -> Unit,
+    onCashOut: () -> Unit,
     onToggleVolumePopup: () -> Unit,
     onVolumeChange: (Float) -> Unit,
     onOpenOverlay: (ActiveOverlay) -> Unit,
@@ -54,154 +61,228 @@ fun BottomDeck(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 1. Status Bar (24dp)
+        // 1. Status Bar (22dp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(24.dp)
-                .clickable { onToggleCurrency() },
+                .height(22.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // WIN
-            val winDisplay = if (state.displayCurrency) {
-                String.format("$%.2f", state.winAmount * state.currentDenom)
+            // WIN (Click to toggle WIN independently between dollars and credits)
+            val winDisplay = if (state.winAsCash) {
+                String.format(Locale.US, "$%.2f", state.winAmount * state.currentDenom)
             } else {
                 "${state.winAmount}"
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable { onToggleWinCurrency() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "WIN ",
                     color = palette.statusLabelColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    style = TextStyle(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
                 Text(
                     text = winDisplay,
                     color = palette.statusValueColor,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Black
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
 
-            // Sound Speaker Button (Theme Vector SVG)
-            SoundButton(
-                volume = state.soundVolume,
-                isPopupOpen = state.isVolumePopupOpen,
-                palette = palette,
-                onTogglePopup = onToggleVolumePopup,
-                onVolumeChange = onVolumeChange
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Sound Speaker Button
+                SoundButton(
+                    volume = state.soundVolume,
+                    isPopupOpen = state.isVolumePopupOpen,
+                    palette = palette,
+                    onTogglePopup = onToggleVolumePopup,
+                    onVolumeChange = onVolumeChange
+                )
 
-            // BET
-            val betDisplay = if (state.displayCurrency) {
-                String.format("$%.2f", state.currentBet * state.currentDenom)
+                // Recording Indicator (Visible only when session recording is active)
+                if (state.isRecordingSession) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0x33D6293B))
+                            .border(1.dp, Color(0xFFD6293B), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE53935))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "REC",
+                            color = Color(0xFFFF8A80),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+            }
+
+            // BET (Click to toggle BET independently between dollars and credits)
+            val betDisplay = if (state.betAsCash) {
+                String.format(Locale.US, "$%.2f", state.currentBet * state.currentDenom)
             } else {
                 "${state.currentBet}"
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable { onToggleBetCurrency() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "BET ",
                     color = palette.statusLabelColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    style = TextStyle(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
                 Text(
                     text = betDisplay,
                     color = palette.statusValueColor,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Black
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
 
-            // CASH / CREDIT
-            val cashDisplay = if (state.displayCurrency) {
-                String.format("$%.2f", state.cashBalance)
+            // CASH / CREDIT (Click to toggle CREDIT independently between dollars and credits)
+            val cashDisplay = if (state.creditAsCash) {
+                String.format(Locale.US, "$%.2f", state.cashBalance)
             } else {
                 "${(state.cashBalance / state.currentDenom).toInt()}"
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable { onToggleCreditCurrency() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = if (state.displayCurrency) "CASH " else "CREDIT ",
+                    text = if (state.creditAsCash) "CASH " else "CREDIT ",
                     color = palette.statusLabelColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    style = TextStyle(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
                 Text(
                     text = cashDisplay,
                     color = palette.statusValueColor,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Black
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
         }
 
-        // 2. Action Button Strip (38dp)
+        // 2. Action Button Strip (40dp) - Perfectly centered on screen
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .height(40.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HELP (72dp)
+            // HELP (48dp)
             ActionButton(
                 text = "HELP",
-                width = 72,
+                width = 48,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.HELP) }
             )
 
-            // MORE GAMES (118dp)
+            // INSERT CASH (78dp)
             ActionButton(
-                text = "MORE GAMES",
-                width = 118,
+                text = "INSERT\nCASH",
+                width = 78,
+                palette = palette,
+                onClick = onOpenAddMoney
+            )
+
+            // CASH OUT (72dp)
+            ActionButton(
+                text = "CASH\nOUT",
+                width = 72,
+                palette = palette,
+                onClick = onCashOut
+            )
+
+            // MORE GAMES (88dp)
+            ActionButton(
+                text = "MORE\nGAMES",
+                width = 88,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.MORE_GAMES) }
             )
 
-            // OPTIONS (94dp)
+            // OPTIONS (68dp)
             ActionButton(
                 text = "OPTIONS",
-                width = 94,
+                width = 68,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.OPTIONS) }
             )
 
-            // SEE PAYS (94dp)
+            // SEE PAYS (68dp)
             ActionButton(
                 text = "SEE PAYS",
-                width = 94,
+                width = 68,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.SEE_PAYS) }
             )
 
-            // SPEED (108dp)
+            // SPEED (74dp)
             val speedArrows = "▶".repeat(state.speedLevel)
             ActionButton(
                 text = "SPEED $speedArrows",
-                width = 108,
+                width = 74,
                 palette = palette,
                 onClick = onCycleSpeed
             )
 
-            // BET ONE (74dp)
+            // BET ONE (58dp)
             ActionButton(
                 text = "BET\nONE",
-                width = 74,
+                width = 58,
                 palette = palette,
                 onClick = onBetOne
             )
 
-            // BET MAX (74dp)
+            // BET MAX (58dp)
             ActionButton(
                 text = "BET\nMAX",
-                width = 74,
+                width = 58,
                 palette = palette,
                 onClick = onBetMax
             )
 
-            // DENOM COIN (42dp circle)
+            // DENOM COIN (36dp circle)
             val denomLabel = if (state.currentDenom < 1.0) {
                 "${(state.currentDenom * 100).toInt()}¢"
             } else {
@@ -209,7 +290,7 @@ fun BottomDeck(
             }
             Box(
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(36.dp)
                     .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
                     .background(
@@ -224,16 +305,19 @@ fun BottomDeck(
                 Text(
                     text = denomLabel,
                     color = Color(0xFF2A1A08),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black
+                    style = TextStyle(
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
 
-            // DRAW / DEAL (146dp tactile button for right thumb)
+            // DRAW / DEAL (98dp tactile button)
             val dealDrawLabel = if (state.dealState == DealState.DEALT_CHOOSING_HOLDS) "DRAW" else "DEAL"
             Box(
                 modifier = Modifier
-                    .width(146.dp)
+                    .width(98.dp)
                     .fillMaxHeight()
                     .shadow(6.dp, RoundedCornerShape(6.dp))
                     .clip(RoundedCornerShape(6.dp))
@@ -242,24 +326,28 @@ fun BottomDeck(
                             listOf(palette.dealButtonBgStart, palette.dealButtonBgEnd)
                         )
                     )
-                    .border(1.5.dp, palette.goldColor, RoundedCornerShape(6.dp))
-                    .clickable(onClick = onDealDraw),
+                    .border(1.5.dp, palette.dealButtonBorderColor, RoundedCornerShape(6.dp))
+                    .clickable(enabled = !state.isAnimating, onClick = onDealDraw),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = dealDrawLabel,
                     color = palette.dealButtonTextColor,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.2.sp
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.2.sp,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
         }
 
-        // 3. Footer Bar (16dp)
+        // 3. Footer Bar (16dp with dedicated breathing room)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 2.dp)
                 .height(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -274,15 +362,21 @@ fun BottomDeck(
             Text(
                 text = gameTitle,
                 color = palette.footerTextColor,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Bold
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                )
             )
 
             Text(
                 text = counterText,
                 color = palette.footerTextColor,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Bold
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                )
             )
         }
     }
@@ -313,10 +407,13 @@ fun ActionButton(
         Text(
             text = text,
             color = palette.buttonTextColor,
-            fontSize = 10.5.sp,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center,
-            lineHeight = 11.5.sp
+            style = TextStyle(
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                lineHeight = 12.sp,
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            )
         )
     }
 }

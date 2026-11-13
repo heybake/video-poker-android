@@ -3,7 +3,6 @@ package com.videopoker.android.ui.decks
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -38,18 +37,24 @@ fun TopDeck(
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            // Split View: 380dp Pay Table + Hold Choices Panel
+            // Split View: 375dp Pay Table + Hold Choices Panel
             PayTableGrid(
                 game = state.currentGame,
                 currentBet = state.currentBet,
                 winningRank = state.handRank,
                 mode = state.currentMode,
                 palette = palette,
-                modifier = Modifier.width(380.dp)
+                modifier = Modifier.width(375.dp)
             )
 
             HoldPanel(
                 choices = state.holdChoices,
+                playerHeldMask = state.heldMask,
+                dealtCards = state.cards,
+                mode = state.currentMode,
+                dealState = state.dealState,
+                practiceFeedback = state.practiceFeedback,
+                practiceMadeTopChoice = state.practiceMadeTopChoice,
                 palette = palette,
                 modifier = Modifier.weight(1f)
             )

@@ -4,12 +4,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -18,14 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.videopoker.android.ui.theme.ThemePalette
 
 @Composable
@@ -38,7 +42,7 @@ fun SoundButton(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Speaker Icon Canvas
+        // Speaker Icon Canvas (Click to toggle volume slider popup)
         Box(
             modifier = Modifier
                 .size(24.dp)
@@ -88,43 +92,64 @@ fun SoundButton(
             }
         }
 
-        // Volume Popup Slider
+        // Floating Volume Popup Slider (floats ABOVE the status bar; dismisses on outside tap or X)
         if (isPopupOpen) {
-            Box(
-                modifier = Modifier
-                    .width(180.dp)
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(palette.panelColor)
-                    .border(1.dp, palette.panelBorderColor, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center
+            Popup(
+                alignment = Alignment.TopCenter,
+                offset = IntOffset(0, -110),
+                onDismissRequest = onTogglePopup
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "VOL",
-                        color = palette.goldColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Slider(
-                        value = volume,
-                        onValueChange = onVolumeChange,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 6.dp),
-                        colors = SliderDefaults.colors(
-                            thumbColor = palette.goldColor,
-                            activeTrackColor = palette.goldColor,
-                            inactiveTrackColor = Color(0x44FFFFFF)
+                Box(
+                    modifier = Modifier
+                        .shadow(10.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(palette.overlayBgColor)
+                        .border(1.5.dp, palette.goldColor, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "VOL",
+                            color = palette.goldColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                    )
-                    Text(
-                        text = "${(volume * 100).toInt()}%",
-                        color = palette.textColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                        Slider(
+                            value = volume,
+                            onValueChange = onVolumeChange,
+                            modifier = Modifier.width(120.dp),
+                            colors = SliderDefaults.colors(
+                                thumbColor = palette.goldColor,
+                                activeTrackColor = palette.goldColor,
+                                inactiveTrackColor = Color(0x44FFFFFF)
+                            )
+                        )
+                        Text(
+                            text = "${(volume * 100).toInt()}%",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        // Close button '✕' to return to just the volume icon
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x33FFFFFF))
+                                .clickable { onTogglePopup() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "✕",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         }

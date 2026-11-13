@@ -10,6 +10,7 @@ data class GameConfig(
     val configName: String,
     val variant: String,
     val familyName: String,
+    val payTableLabel: String,
     val displayName: String,
     val returnPercentage: Double,
     val denominations: List<Double>,
