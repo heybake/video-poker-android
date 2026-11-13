@@ -7,30 +7,31 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import com.videopoker.android.ui.theme.BrassBackground
-import com.videopoker.android.ui.theme.BrassGold
+import androidx.activity.viewModels
+import com.videopoker.android.ui.MainScreen
+import com.videopoker.android.ui.state.GameViewModel
 import com.videopoker.android.ui.theme.VideoPokerTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: GameViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         hideSystemBars()
 
+        viewModel.loadGames(this)
+
         setContent {
             VideoPokerTheme {
-                MainContainer()
+                MainScreen(viewModel = viewModel)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideSystemBars()
     }
 
     private fun hideSystemBars() {
@@ -51,22 +52,5 @@ class MainActivity : ComponentActivity() {
                     or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             )
         }
-    }
-}
-
-@Composable
-fun MainContainer() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BrassBackground),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Video Poker Android Engine Ready",
-            color = BrassGold,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
