@@ -147,28 +147,29 @@
     }
 
     /* ======================================================== */
-    /* TOP DECK: PAY TABLE & HOLD LIST                          */
+    /* TOP DECK: PAY TABLE & HOLD LIST (EXPANDED TO 148px)      */
     /* ======================================================== */
     .top-deck {
-      height: 134px;
+      height: 148px;
       display: flex;
       padding: 6px 12px 2px 12px;
       gap: 12px;
       position: relative;
     }
 
-    /* Single Column Pay Table (Learn & Practice) */
+    /* Single Column Pay Table: Fits all 11 rows cleanly with no overflow */
     .pay-single {
       width: 380px;
-      height: 130px;
+      height: 144px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 3px 8px;
+      padding: 4px 8px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      overflow: hidden;
     }
 
     .pay-row {
@@ -176,7 +177,7 @@
       align-items: center;
       font-size: 11px;
       font-weight: 700;
-      line-height: 11px;
+      line-height: 12px;
       color: var(--t-paytxt, var(--pay-text));
       padding: 0 4px;
       border-radius: 2px;
@@ -213,31 +214,32 @@
     /* Casino Mode 5-Column Pay Table */
     .pay-casino {
       flex: 1;
-      height: 130px;
+      height: 144px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 2px 8px;
+      padding: 3px 8px;
       display: none;
       flex-direction: column;
       justify-content: space-between;
+      overflow: hidden;
       font-family: var(--t-serifv, Arial);
     }
 
     .c-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
-      line-height: 10px;
+      font-size: 10.5px;
+      line-height: 11px;
     }
 
     .c-table th {
       color: var(--t-gold, var(--yellow));
       font-weight: 800;
       text-align: right;
-      padding: 1px 4px;
-      font-size: 9.5px;
+      padding: 2px 4px;
+      font-size: 10px;
       border-bottom: 1px solid var(--t-grid, #444);
     }
 
@@ -246,7 +248,7 @@
     }
 
     .c-table td {
-      padding: 0 4px;
+      padding: 1px 4px;
       font-variant-numeric: tabular-nums;
       text-align: right;
       color: var(--t-paytxt, #fff);
@@ -278,16 +280,16 @@
     }
 
     /* ======================================================== */
-    /* HOLD LIST PANEL (NO HEADER LINE, WITH MINI CARDS!)        */
+    /* HOLD LIST PANEL (EXPANDED TO 144px, ROOMY & CLEAN)       */
     /* ======================================================== */
     .hold-panel {
       flex: 1;
-      height: 130px;
+      height: 144px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 5px 10px;
+      padding: 6px 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-around;
@@ -298,7 +300,7 @@
     .hold-rows {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
       height: 100%;
       justify-content: space-between;
     }
@@ -308,7 +310,7 @@
       align-items: center;
       gap: 8px;
       font-size: 11.5px;
-      padding: 2px 6px;
+      padding: 3px 6px;
       border-radius: 4px;
       color: var(--ink, #fff);
       background: rgba(255, 255, 255, 0.02);
@@ -365,8 +367,8 @@
     }
 
     .chipimg {
-      height: 22px;
-      width: 16px;
+      height: 23px;
+      width: 16.5px;
       display: block;
       border-radius: 2px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -390,7 +392,7 @@
     }
 
     /* ======================================================== */
-    /* MIDDLE DECK: TWO PAIR PLAQUE & CARDS (ZERO OVERLAP!)     */
+    /* MIDDLE DECK: TWO PAIR PLAQUE & CARDS MOVED DOWN SLIGHTLY */
     /* ======================================================== */
     .mid-deck {
       flex: 1;
@@ -398,7 +400,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding-top: 6px;
+      padding-top: 10px;
       position: relative;
     }
 
@@ -418,7 +420,7 @@
       z-index: 2;
     }
 
-    /* 5 Cards Row - clear gap below plaque */
+    /* 5 Cards Row - shifted down to balance space above sound icon */
     .cards-row {
       display: flex;
       gap: 15px;
@@ -494,7 +496,7 @@
     /* BOTTOM DECK: STATUS, BUTTONS, FOOTER (ZERO OVERLAP!)     */
     /* ======================================================== */
     .bot-deck {
-      height: 106px;
+      height: 104px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -566,7 +568,7 @@
     .vol-popup {
       position: absolute;
       left: 310px;
-      bottom: 80px;
+      bottom: 78px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 20px;
@@ -657,18 +659,24 @@
       letter-spacing: 1.5px !important;
     }
 
-    /* Footer Row: Clean dedicated space below buttons, zero overlap */
+    /* Footer Row: Clean dedicated space below buttons, zero overlap, roomy padding */
     .footer-bar {
-      height: 14px;
+      height: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 4px;
-      font-size: 10px;
+      padding: 0 8px;
+      font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.5px;
       font-family: var(--t-sansv, Arial);
-      line-height: 14px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    #handCounterLabel {
+      padding-right: 4px;
+      white-space: nowrap;
     }
 
     /* ======================================================== */
@@ -708,7 +716,7 @@
       filter: brightness(1.15);
     }
 
-    /* 1. Authentic Arcade HELP (Header removed as requested!) */
+    /* 1. Authentic Arcade HELP (Header icon/pill removed as requested!) */
     .help-box {
       position: absolute;
       inset: 20px 24px 65px;
@@ -716,9 +724,9 @@
       border: 5px solid var(--red);
       box-shadow: 0 0 0 3px var(--yellow);
       color: #ffffff;
-      padding: 18px 24px;
-      font-size: 12.5px;
-      line-height: 1.5;
+      padding: 22px 26px;
+      font-size: 13px;
+      line-height: 1.55;
       overflow-y: auto;
     }
 
@@ -1050,7 +1058,7 @@
   <div class="phone" id="phoneContainer">
 
     <!-- ========================================================== -->
-    <!-- TOP DECK: SINGLE COLUMN (LEARN/PRACTICE) OR 5-COL (CASINO) -->
+    <!-- TOP DECK: PAY TABLE & HOLD LIST (EXPANDED TO 148px)      -->
     <!-- ========================================================== -->
     <div class="top-deck">
       
@@ -1229,7 +1237,7 @@
       <!-- Footer Bar: Clean spacing, no overlapping with buttons -->
       <div class="footer-bar">
         <span id="gameVariantLabel">Double Bonus (10/7) &bull; 100.17%</span>
-        <span id="handCounterLabel">Hands: 12 &bull; Hands at 25&cent;: 12</span>
+        <span id="handCounterLabel">Hands: 12 &nbsp;&bull;&nbsp; Hands at 25&cent;: 12</span>
       </div>
 
     </div>
@@ -7960,11 +7968,11 @@
     function updateGameUI() {
       const g = getCurrentGame();
 
-      // Footer
+      // Footer with clean spacing around bullets and denom
       const ret = g.payTable.return_pct ? ` • ${g.payTable.return_pct.toFixed(2)}%` : '';
       document.getElementById('gameVariantLabel').textContent = `${g.family} (${g.payTable.label})${ret}`;
       const denomLabel = currentDenomCents < 100 ? `${currentDenomCents}¢` : `$${currentDenomCents / 100}`;
-      document.getElementById('handCounterLabel').textContent = `Hands: ${handsTotal} • Hands at ${denomLabel}: ${handsAtDenom}`;
+      document.getElementById('handCounterLabel').innerHTML = `Hands: ${handsTotal} &nbsp;&bull;&nbsp; Hands at ${denomLabel}: ${handsAtDenom}`;
       document.getElementById('bDenom').textContent = denomLabel;
 
       // Status Bar values
