@@ -54,9 +54,9 @@
       --vol-track: #1c1c73;
       --vol-fill: #ffea00;
       --vol-thumb: #ffffff;
-      --dim: #8fa0d4;
+      --dim: #a0b2e8;
       --ink: #ffffff;
-      --muted: #8fa0d4;
+      --muted: #a0b2e8;
       --c1: #f2b705;
       --c2: #56b4e9;
       --c3: #1fb58a;
@@ -92,6 +92,7 @@
       --t-dbg: #1b8a3e;
       --t-dtxt: #ffffff;
       --t-dedge: #43c96c;
+      --t-gname: #ffffff;
     }
 
     /* Injected exact rules for lounge, brass, noir, penthouse, autumn, parchment, ruby */
@@ -122,6 +123,15 @@
     .wrap[data-theme="parchment"] .hold-panel { --ink:#2a1a10; --muted:#6a5840; --line:#6e4f1688; --top:#e6c99a; --tag-top:#b83a14; }
     .wrap[data-theme="ruby"] .hold-panel { --ink:#f0e2b6; --muted:#c9b98c; --line:#d9b45a55; --top:#4a1220; --tag-top:#a30f25; }
 
+    /* Ensure footer text color matches theme perfectly */
+    .wrap[data-theme="lounge"] .footer-bar { color: #d8b25e; }
+    .wrap[data-theme="brass"] .footer-bar { color: #c9a24d; }
+    .wrap[data-theme="noir"] .footer-bar { color: #c9a45a; }
+    .wrap[data-theme="penthouse"] .footer-bar { color: #d2a85e; }
+    .wrap[data-theme="autumn"] .footer-bar { color: #d3a85a; }
+    .wrap[data-theme="parchment"] .footer-bar { color: #5a4025; }
+    .wrap[data-theme="ruby"] .footer-bar { color: #3a1018; }
+
     /* ======================================================== */
     /* PHONE SHELL: Strictly 1024x460 landscape                  */
     /* ======================================================== */
@@ -140,7 +150,7 @@
     /* TOP DECK: PAY TABLE & HOLD LIST                          */
     /* ======================================================== */
     .top-deck {
-      height: 140px;
+      height: 136px;
       display: flex;
       padding: 6px 12px 2px 12px;
       gap: 12px;
@@ -150,12 +160,12 @@
     /* Single Column Pay Table (Learn & Practice) */
     .pay-single {
       width: 380px;
-      height: 136px;
+      height: 132px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 4px 8px;
+      padding: 3px 8px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -166,7 +176,7 @@
       align-items: center;
       font-size: 11px;
       font-weight: 700;
-      line-height: 11.5px;
+      line-height: 11.2px;
       color: var(--t-paytxt, var(--pay-text));
       padding: 0 4px;
       border-radius: 2px;
@@ -203,7 +213,7 @@
     /* Casino Mode 5-Column Pay Table */
     .pay-casino {
       flex: 1;
-      height: 136px;
+      height: 132px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
@@ -218,7 +228,7 @@
     .c-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10.5px;
+      font-size: 10px;
       line-height: 10.5px;
     }
 
@@ -227,7 +237,7 @@
       font-weight: 800;
       text-align: right;
       padding: 1px 4px;
-      font-size: 10px;
+      font-size: 9.5px;
       border-bottom: 1px solid var(--t-grid, #444);
     }
 
@@ -272,12 +282,12 @@
     /* ======================================================== */
     .hold-panel {
       flex: 1;
-      height: 136px;
+      height: 132px;
       background: var(--t-panel, var(--panel));
       border: 1.5px solid var(--t-gold, var(--panel-border));
       border-radius: 8px;
       box-shadow: inset 0 0 0 1px var(--t-panel, #000), inset 0 0 0 2px var(--t-goldd, #444), 0 4px 10px rgba(0,0,0,0.5);
-      padding: 6px 10px;
+      padding: 5px 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-around;
@@ -288,7 +298,7 @@
     .hold-rows {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       height: 100%;
       justify-content: space-between;
     }
@@ -298,7 +308,7 @@
       align-items: center;
       gap: 8px;
       font-size: 11.5px;
-      padding: 3px 6px;
+      padding: 2px 6px;
       border-radius: 4px;
       color: var(--ink, #fff);
       background: rgba(255, 255, 255, 0.02);
@@ -355,8 +365,8 @@
     }
 
     .chipimg {
-      height: 24px;
-      width: 17px;
+      height: 22px;
+      width: 16px;
       display: block;
       border-radius: 2px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -370,7 +380,7 @@
     }
 
     .pill-top {
-      font-size: 10px;
+      font-size: 9.5px;
       padding: 1px 8px;
       border-radius: 8px;
       background: var(--tag-top, #1b8a3e);
@@ -380,18 +390,19 @@
     }
 
     /* ======================================================== */
-    /* MIDDLE DECK: CARDS & AUTHENTIC TWO PAIR PLAQUE           */
+    /* MIDDLE DECK: TWO PAIR PLAQUE & CARDS (ZERO OVERLAP!)     */
     /* ======================================================== */
     .mid-deck {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      padding-top: 8px;
       position: relative;
     }
 
-    /* Authentic Two Pair Plaque matching play_base.css */
+    /* Authentic Two Pair Plaque with dedicated vertical clearance */
     .hname {
       background: var(--t-hnbg);
       color: var(--t-hntxt);
@@ -403,29 +414,25 @@
       box-shadow: var(--t-hnbsh);
       text-shadow: var(--t-hnsh);
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin-bottom: 14px;
       z-index: 2;
     }
 
-    /* 5 Cards Row */
+    /* 5 Cards Row - shifted down to avoid ANY overlap with Two Pair plaque */
     .cards-row {
       display: flex;
-      gap: 14px;
+      gap: 15px;
       justify-content: center;
       align-items: center;
       position: relative;
     }
 
     .card-slot {
-      width: 110px;
-      height: 154px;
+      width: 100px;
+      height: 140px;
       position: relative;
       cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-    }
-
-    .card-slot.held-slot {
-      transform: translateY(-5px);
+      transition: transform 0.12s ease;
     }
 
     .card-slot img {
@@ -439,13 +446,13 @@
     }
 
     .card-slot.held-slot img {
-      box-shadow: 0 0 0 2px var(--t-accent), 0 0 16px var(--t-glow), 0 6px 14px rgba(0,0,0,0.8);
+      box-shadow: 0 0 0 2.5px var(--t-accent), 0 0 16px var(--t-glow), 0 6px 14px rgba(0,0,0,0.8);
     }
 
-    /* Authentic Held Badge */
+    /* Authentic Held Badge positioned neatly on the upper card edge */
     .held {
       position: absolute;
-      top: -12px;
+      top: -9px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--t-tagbg);
@@ -453,7 +460,7 @@
       border: var(--t-tagbw) solid var(--t-tagedge);
       border-radius: var(--t-tagrad);
       font: 900 11px/1 var(--t-sansv);
-      padding: 3px 10px;
+      padding: 3px 9px;
       letter-spacing: .14em;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
       z-index: 10;
@@ -471,8 +478,8 @@
     }
 
     .dot {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       border-radius: 50%;
       border: 1.5px solid #111;
       box-shadow: 0 1px 3px rgba(0,0,0,0.6);
@@ -532,20 +539,26 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .sound-btn {
+    /* Authentic Sound Button with Theme-styled Vector SVG */
+    .snd-btn {
       background: none;
-      border: none;
-      color: var(--t-stval, var(--yellow));
-      font-size: 16px;
+      border: 0;
       cursor: pointer;
       padding: 2px 6px;
       display: flex;
       align-items: center;
+      justify-content: center;
       border-radius: 4px;
+      transition: background 0.15s ease;
     }
 
-    .sound-btn:hover {
+    .snd-btn:hover {
       background: rgba(255, 255, 255, 0.08);
+    }
+
+    .snd-btn svg {
+      width: 20px;
+      height: 20px;
     }
 
     /* Auto-hiding Volume Slider Popup */
@@ -648,8 +661,9 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 4px;
-      font-size: 9.5px;
-      color: var(--dim);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
       font-family: var(--t-sansv, Arial);
     }
 
@@ -952,7 +966,7 @@
       overflow-y: auto;
     }
 
-    /* 6. Options Overlay (Exact Themes List from play.html) */
+    /* 6. Options Overlay (Exact Themes List & Swatches from play.html) */
     .opt-wrap {
       padding: 20px 30px;
       height: 100%;
@@ -1112,7 +1126,7 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- MIDDLE DECK: AUTHENTIC TWO PAIR PLAQUE & 5 CARDS WITH DOTS -->
+    <!-- MIDDLE DECK: TWO PAIR PLAQUE & CARDS (ZERO OVERLAP!)     -->
     <!-- ========================================================== -->
     <div class="mid-deck">
       <!-- Authentic beveled Plaque for Hand Name -->
@@ -1180,8 +1194,12 @@
           <span class="value" id="winVal">10</span>
         </div>
 
-        <button class="sound-btn" onclick="toggleVolumePopup()" title="Sound volume">
-          &#128266;
+        <!-- Authentic vector SVG sound speaker icon matching Streamlit app -->
+        <button class="snd-btn" id="sndBtn" onclick="toggleVolumePopup()" title="Sound volume">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+            <path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--t-stval, #c4000b); stroke:var(--t-stval, #c4000b);"/>
+            <path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13" style="stroke:var(--t-stval, #c4000b);"/>
+          </svg>
         </button>
 
         <div class="status-item" onclick="toggleBetDisplay()" title="Tap to toggle credits / cash">
@@ -7751,6 +7769,8 @@
     let cashCents = 4125;
     let handsTotal = 12;
     let handsAtDenom = 12;
+    let currentVol = 0.8;
+    let soundEnabled = true;
 
     // Display toggle states
     let winShowCash = false;
@@ -7769,13 +7789,14 @@
     // --- Sound Effects using Web Audio API ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq, type, duration) {
+      if (!soundEnabled || currentVol <= 0) return;
       try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        const v = document.getElementById('volRange').value / 100.0 * 0.15;
+        const v = currentVol * 0.15;
         gain.gain.setValueAtTime(v, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
         osc.connect(gain);
@@ -7788,6 +7809,22 @@
     function sfxCard() { playBeep(520, 'sine', 0.08); }
     function sfxBet() { playBeep(440, 'triangle', 0.09); }
     function sfxCoin() { playBeep(880, 'sine', 0.12); }
+
+    // --- Sound Icon rendering from Streamlit app (play.js) ---
+    function renderSoundIcon() {
+      const lit = soundEnabled && currentVol > 0;
+      const waves = !lit 
+        ? '<path d="M16 9l6 6M22 9l-6 6" style="stroke:var(--t-stval, #c4000b);"/>'
+        : currentVol < 0.4
+          ? '<path d="M16 8a5 5 0 010 8" style="stroke:var(--t-stval, #c4000b);"/>'
+          : '<path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13" style="stroke:var(--t-stval, #c4000b);"/>';
+      
+      const svg = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+        <path d="M3 9v6h4l5 4V5L7 9z" style="fill:var(--t-stval, #c4000b); stroke:var(--t-stval, #c4000b);"/>
+        ${waves}
+      </svg>`;
+      document.getElementById('sndBtn').innerHTML = svg;
+    }
 
     // --- Overlay Management ---
     function openOverlay(id) {
@@ -7940,6 +7977,7 @@
 
       // Status Bar values
       updateStatusDisplays();
+      renderSoundIcon();
 
       // 1. Single Column Pay Table (ONLY winning row flashes / lights up red!)
       const singleEl = document.getElementById('paySingle');
@@ -8062,7 +8100,10 @@
 
     function onVolumeChange() {
       const v = document.getElementById('volRange').value;
+      currentVol = v / 100.0;
+      soundEnabled = (currentVol > 0);
       document.getElementById('volNum').textContent = v + '%';
+      renderSoundIcon();
       resetVolTimeout();
     }
 
@@ -8076,6 +8117,7 @@
       }
       document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
+      renderSoundIcon();
     }
 
     // Training Modes
