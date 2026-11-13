@@ -357,7 +357,7 @@ fun BottomDeck(
             } ?: "Double Bonus (10/7) • 100.17%"
 
             val denomText = if (state.currentDenom < 1.0) "${(state.currentDenom * 100).toInt()}¢" else "$${state.currentDenom.toInt()}"
-            val counterText = "Hands: ${state.totalHandsPlayed}  •  Hands at $denomText: ${state.handsAtCurrentDenom}"
+            val counterText = "Hands: ${state.totalHandsPlayed}  •  Hands at $denomText: ${state.handsAtCurrentDenom}  •  v1.0.0"
 
             Text(
                 text = gameTitle,
