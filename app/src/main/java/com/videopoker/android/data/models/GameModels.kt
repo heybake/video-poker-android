@@ -16,7 +16,10 @@ data class GameConfig(
     val denominations: List<Double>,
     val defaultDenomination: Double,
     val payTable: PayTable,
-    val strategyRules: List<StrategyRule>
+    val strategyRules: List<StrategyRule>,
+    val configFile: String = configName,
+    val baseMultipliers: Map<String, Int> = emptyMap(),
+    val expectedFrequenciesPct: Map<String, Double> = emptyMap()
 )
 
 /**

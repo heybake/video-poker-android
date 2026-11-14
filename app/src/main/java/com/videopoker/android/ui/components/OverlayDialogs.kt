@@ -96,7 +96,9 @@ fun OverlayDialogs(
     onVolumeChange: (Float) -> Unit,
     onAddCashAmount: (Double) -> Unit,
     onConfirmCashOut: () -> Unit,
-    onToggleRecordingSession: () -> Unit
+    onToggleRecordingSession: () -> Unit,
+    onSaveSessionToDownloads: (String) -> Unit = {},
+    onShareSession: (String) -> Unit = {}
 ) {
     if (state.activeOverlay == null) return
 
@@ -150,6 +152,8 @@ fun OverlayDialogs(
                     onThemeSelect = onThemeSelect,
                     onVolumeChange = onVolumeChange,
                     onToggleRecordingSession = onToggleRecordingSession,
+                    onSaveSessionToDownloads = onSaveSessionToDownloads,
+                    onShareSession = onShareSession,
                     onClose = onClose
                 )
                 ActiveOverlay.DENOM -> DenomContent(
@@ -496,6 +500,8 @@ private fun OptionsContent(
     onThemeSelect: (AppTheme) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onToggleRecordingSession: () -> Unit,
+    onSaveSessionToDownloads: (String) -> Unit,
+    onShareSession: (String) -> Unit,
     onClose: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -650,7 +656,14 @@ private fun OptionsContent(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = if (state.isRecordingSession) "Logging all hands to session history" else "Session logging is disabled",
+                                text = when {
+                                    state.isRecordingSession && state.recordedHandsCount > 0 ->
+                                        "Recording Workbench session (${state.recordedHandsCount} hands)"
+                                    state.isRecordingSession ->
+                                        "Ready — next finished hand starts a Workbench folder"
+                                    else ->
+                                        "Tap to record Workbench-compatible session logs"
+                                },
                                 color = Color(0xFFB0A495),
                                 fontSize = 9.5.sp
                             )
@@ -668,6 +681,127 @@ private fun OptionsContent(
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Black
                         )
+                    }
+                }
+
+                // Saved Workbench Sessions & Export
+                Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(
+                        text = "SAVED SESSIONS FOR WORKBENCH (${state.recordedSessions.size})",
+                        color = palette.goldColor,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Save a .zip to Downloads/VideoPokerSessions or Share to PC, then unzip into Workbench output.",
+                        color = Color(0xFFB0A495),
+                        fontSize = 9.sp
+                    )
+                    val exportMsg = state.sessionExportStatus
+                    if (exportMsg != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(Color(0x332E8540))
+                                .border(1.dp, Color(0xFF56C470), RoundedCornerShape(5.dp))
+                                .padding(horizontal = 8.dp, vertical = 5.dp)
+                        ) {
+                            Text(
+                                text = exportMsg,
+                                color = Color(0xFFB8E6C4),
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    if (state.recordedSessions.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x18FFFFFF))
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "No recorded sessions yet. Turn RECORD PLAY SESSION ON and play a hand.",
+                                color = Color(0xFF999084),
+                                fontSize = 9.5.sp
+                            )
+                        }
+                    } else {
+                        state.recordedSessions.forEach { session ->
+                            val netStr = if (session.netProfitLoss >= 0) {
+                                String.format(Locale.US, "+$%.2f", session.netProfitLoss)
+                            } else {
+                                String.format(Locale.US, "-$%.2f", abs(session.netProfitLoss))
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0x1EFFFFFF))
+                                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        text = session.payTableName,
+                                        color = Color(0xFFF5F0E6),
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "${session.handsPlayed} hands  •  $netStr  •  ${session.startedAtDisplay}",
+                                        color = Color(0xFFB0A495),
+                                        fontSize = 9.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(5.dp))
+                                            .background(Color(0xFF1E6E35))
+                                            .border(1.dp, Color(0xFF56C470), RoundedCornerShape(5.dp))
+                                            .clickable { onSaveSessionToDownloads(session.folderPath) }
+                                            .padding(horizontal = 8.dp, vertical = 5.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "DOWNLOAD",
+                                            color = Color.White,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(5.dp))
+                                            .background(palette.goldColor)
+                                            .clickable { onShareSession(session.folderPath) }
+                                            .padding(horizontal = 8.dp, vertical = 5.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "SHARE",
+                                            color = Color(0xFF14100A),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.videopoker.android.ui.components.OverlayDialogs
 import com.videopoker.android.ui.decks.BottomDeck
@@ -25,6 +26,7 @@ import com.videopoker.android.ui.theme.ThemeManager
 fun MainScreen(viewModel: GameViewModel) {
     val state by viewModel.uiState.collectAsState()
     val palette = ThemeManager.getPalette(state.currentTheme)
+    val context = LocalContext.current
 
     // Outer container fills phone screen with authentic theme background
     Box(
@@ -93,7 +95,9 @@ fun MainScreen(viewModel: GameViewModel) {
             onVolumeChange = viewModel::onVolumeChange,
             onAddCashAmount = viewModel::onAddCashAmount,
             onConfirmCashOut = viewModel::onConfirmCashOut,
-            onToggleRecordingSession = viewModel::onToggleRecordingSession
+            onToggleRecordingSession = viewModel::onToggleRecordingSession,
+            onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
+            onShareSession = { path -> viewModel.onShareSession(context, path) }
         )
     }
 }

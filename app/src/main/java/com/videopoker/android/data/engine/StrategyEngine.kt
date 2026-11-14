@@ -18,13 +18,20 @@ object StrategyEngine {
     /**
      * Parse a built game JSON into a [GameConfig].
      */
-    fun parseGameConfig(json: JsonObject): GameConfig {
+    fun parseGameConfig(json: JsonObject, assetFileName: String? = null): GameConfig {
         val variant = json.get("variant")?.asString ?: "unknown"
         val configName = json.get("config_name")?.asString ?: "$variant.json"
+        val configFile = assetFileName ?: json.get("config_file")?.asString ?: configName
 
-        // Theoretical return
+        // Theoretical return & hand frequencies
         val benchObj = json.getAsJsonObject("theoretical_benchmarks")
         val rtp = benchObj?.get("base_rtp")?.asDouble ?: 99.0
+        val expectedFreqs = mutableMapOf<String, Double>()
+        benchObj?.getAsJsonObject("frequencies_pct")?.entrySet()?.forEach { entry ->
+            if (entry.value.isJsonPrimitive) {
+                expectedFreqs[entry.key] = entry.value.asDouble
+            }
+        }
 
         // Denominations
         val denoms = json.getAsJsonArray("denominations")?.map { it.asDouble } ?: listOf(0.25)
@@ -33,9 +40,11 @@ object StrategyEngine {
         // Paytable
         val ptObj = json.getAsJsonObject("paytable")
         val payRows = mutableListOf<PayTableRow>()
+        val baseMults = mutableMapOf<String, Int>()
         ptObj?.entrySet()?.forEach { entry ->
             val key = entry.key
             val baseVal = entry.value.asInt
+            baseMults[key] = baseVal
             val values = (1..5).map { coin ->
                 if (key == "royal_flush" && coin == 5) 4000 else baseVal * coin
             }
@@ -69,7 +78,10 @@ object StrategyEngine {
             denominations = denoms,
             defaultDenomination = defaultDenom,
             payTable = PayTable(payRows),
-            strategyRules = rules
+            strategyRules = rules,
+            configFile = configFile,
+            baseMultipliers = baseMults,
+            expectedFrequenciesPct = expectedFreqs
         )
     }
 

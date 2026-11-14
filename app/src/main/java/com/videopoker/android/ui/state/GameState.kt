@@ -1,5 +1,6 @@
 package com.videopoker.android.ui.state
 
+import com.videopoker.android.data.export.RecordedSessionInfo
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HandRank
@@ -45,6 +46,9 @@ data class GameState(
     val handsAtCurrentDenom: Int = 0,
     val allGames: List<GameConfig> = emptyList(),
     val isRecordingSession: Boolean = false,
+    val recordedHandsCount: Int = 0,
+    val recordedSessions: List<RecordedSessionInfo> = emptyList(),
+    val sessionExportStatus: String? = null,
     val activeOverlay: ActiveOverlay? = null,
     val practiceFeedback: String? = null,
     val practiceMadeTopChoice: Boolean? = null

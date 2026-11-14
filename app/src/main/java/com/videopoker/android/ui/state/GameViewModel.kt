@@ -7,19 +7,28 @@ import com.google.gson.JsonParser
 import com.videopoker.android.data.engine.Deck
 import com.videopoker.android.data.engine.HandClassifier
 import com.videopoker.android.data.engine.StrategyEngine
+import com.videopoker.android.data.export.PlayedGameLog
+import com.videopoker.android.data.export.SessionExporter
+import com.videopoker.android.data.export.SessionVoucher
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HandRank
+import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.sound.SoundEffect
 import com.videopoker.android.sound.SoundManager
 import com.videopoker.android.ui.theme.AppTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.InputStreamReader
+import java.time.LocalDateTime
+import kotlin.math.roundToLong
 
 class GameViewModel : ViewModel() {
 
@@ -28,12 +37,18 @@ class GameViewModel : ViewModel() {
 
     private var deck: Deck = Deck()
     private var soundManager: SoundManager? = null
+    private var sessionsRoot: File? = null
+    private var activePlayedLog: PlayedGameLog? = null
+    private var sessionMoneyInCents: Long = 0L
+    private var pendingAllHoldChoices: List<HoldChoice> = emptyList()
 
     fun loadGames(context: Context) {
         if (soundManager == null) {
             soundManager = SoundManager(context.applicationContext)
             soundManager?.setVolume(_uiState.value.soundVolume)
         }
+        val root = File(context.applicationContext.filesDir, "recorded_sessions").apply { mkdirs() }
+        sessionsRoot = root
 
         viewModelScope.launch {
             try {
@@ -46,7 +61,7 @@ class GameViewModel : ViewModel() {
                         assetManager.open("games/$file").use { stream ->
                             val reader = InputStreamReader(stream)
                             val json = JsonParser.parseReader(reader).asJsonObject
-                            val config = StrategyEngine.parseGameConfig(json)
+                            val config = StrategyEngine.parseGameConfig(json, file)
                             loadedList.add(config)
                         }
                     }
@@ -54,6 +69,7 @@ class GameViewModel : ViewModel() {
 
                 // Sort games: Double Bonus 10/7 first, then alphabetical
                 loadedList.sortBy { if (it.variant.contains("double_bonus_10_7")) "000" else it.displayName }
+                val saved = withContext(Dispatchers.IO) { PlayedGameLog.listRecordedSessions(root) }
 
                 _uiState.update { current ->
                     current.copy(
@@ -65,7 +81,8 @@ class GameViewModel : ViewModel() {
                         holdChoices = emptyList(),
                         handRank = HandRank.NOTHING,
                         winAmount = 0,
-                        dealState = DealState.READY_TO_DEAL
+                        dealState = DealState.READY_TO_DEAL,
+                        recordedSessions = saved
                     )
                 }
             } catch (e: Exception) {
@@ -101,7 +118,25 @@ class GameViewModel : ViewModel() {
                 val newDeal = deck.deal(5)
                 val payKeys = game.payTable.rows.map { it.key }.toSet()
                 val currentRank = HandClassifier.classifyHand(newDeal, payKeys)
-                val choices = StrategyEngine.evaluateHoldChoices(newDeal, game)
+                val allChoices = StrategyEngine.evaluateHoldChoices(newDeal, game, maxChoices = Int.MAX_VALUE)
+                pendingAllHoldChoices = allChoices
+                val choices = allChoices.take(15)
+
+                if (state.isRecordingSession && activePlayedLog == null) {
+                    val root = sessionsRoot
+                    if (root != null) {
+                        val startingCents = (state.cashBalance * 100.0).roundToLong()
+                        sessionMoneyInCents = startingCents
+                        activePlayedLog = PlayedGameLog(
+                            game = game,
+                            outputRoot = root,
+                            startingCents = startingCents,
+                            startedAt = LocalDateTime.now(),
+                            startingDenomination = state.currentDenom,
+                            startingCredits = state.currentBet
+                        )
+                    }
+                }
 
                 // In Learn mode, auto-hold top choice. In Practice/Casino, start empty!
                 val autoMask = if (state.currentMode == GameMode.LEARN && choices.isNotEmpty()) {
@@ -175,8 +210,23 @@ class GameViewModel : ViewModel() {
                         val topChoice = state.holdChoices.firstOrNull()
                         val didMakeTopChoice = (topChoice != null && state.heldMask == topChoice.holdMask)
 
+                        val newCashBalance = _uiState.value.cashBalance + wonCash
+                        val minDenom = game.denominations.minOrNull() ?: state.currentDenom
+                        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minDenom * 100.0).roundToLong()
                         if (_uiState.value.isRecordingSession) {
-                            logSessionHand(game, state.currentDenom, state.currentBet, state.cards, state.heldMask, state.cards, finalRank, payoutCredits)
+                            logSessionHand(
+                                game = game,
+                                denom = state.currentDenom,
+                                bet = state.currentBet,
+                                dealt = state.cards,
+                                held = state.heldMask,
+                                drawn = emptyList(),
+                                finalCards = state.cards,
+                                rank = finalRank,
+                                payoutCredits = payoutCredits,
+                                mode = state.currentMode,
+                                wentBroke = wentBroke
+                            )
                         }
 
                         _uiState.update {
@@ -232,15 +282,33 @@ class GameViewModel : ViewModel() {
                         val topChoice = state.holdChoices.firstOrNull()
                         val didMakeTopChoice = (topChoice != null && state.heldMask == topChoice.holdMask)
 
+                        val finalCardList = workingCards.toList()
+                        val drawnList = unheldIndices.map { finalCardList[it] }
+                        val newCashBalance = _uiState.value.cashBalance + wonCash
+                        val minDenom = game.denominations.minOrNull() ?: state.currentDenom
+                        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minDenom * 100.0).roundToLong()
+
                         if (_uiState.value.isRecordingSession) {
-                            logSessionHand(game, state.currentDenom, state.currentBet, state.cards, state.heldMask, state.cards, finalRank, payoutCredits)
+                            logSessionHand(
+                                game = game,
+                                denom = state.currentDenom,
+                                bet = state.currentBet,
+                                dealt = state.cards,
+                                held = state.heldMask,
+                                drawn = drawnList,
+                                finalCards = finalCardList,
+                                rank = finalRank,
+                                payoutCredits = payoutCredits,
+                                mode = state.currentMode,
+                                wentBroke = wentBroke
+                            )
                         }
 
                         _uiState.update {
                             it.copy(
                                 isAnimating = false,
                                 dealState = nextState,
-                                cards = workingCards,
+                                cards = finalCardList,
                                 revealedMask = listOf(true, true, true, true, true),
                                 handRank = finalRank,
                                 winAmount = payoutCredits,
@@ -292,7 +360,36 @@ class GameViewModel : ViewModel() {
     }
 
     fun onToggleRecordingSession() {
-        _uiState.update { it.copy(isRecordingSession = !it.isRecordingSession) }
+        val turningOn = !_uiState.value.isRecordingSession
+        if (turningOn) {
+            activePlayedLog = null
+            sessionMoneyInCents = 0L
+            _uiState.update {
+                it.copy(
+                    isRecordingSession = true,
+                    recordedHandsCount = 0,
+                    sessionExportStatus = null
+                )
+            }
+        } else {
+            val log = activePlayedLog
+            activePlayedLog = null
+            sessionMoneyInCents = 0L
+            _uiState.update {
+                it.copy(
+                    isRecordingSession = false,
+                    recordedHandsCount = 0
+                )
+            }
+            if (log != null && log.created) {
+                viewModelScope.launch {
+                    withContext(Dispatchers.IO) {
+                        log.finish(PlayedGameLog.ENDED_BY_LEFT, LocalDateTime.now())
+                    }
+                    refreshRecordedSessions()
+                }
+            }
+        }
     }
 
     fun onBetOne() {
@@ -318,6 +415,27 @@ class GameViewModel : ViewModel() {
     }
 
     fun onConfirmCashOut() {
+        val cashOutCents = (_uiState.value.cashBalance * 100.0).roundToLong()
+        val log = activePlayedLog
+        val moneyIn = sessionMoneyInCents
+        activePlayedLog = null
+        sessionMoneyInCents = 0L
+
+        if (log != null && log.created) {
+            val voucher = SessionVoucher(
+                moneyInCents = moneyIn,
+                handsPlayed = log.handsLogged,
+                cashOutCents = cashOutCents,
+                resultCents = cashOutCents - moneyIn
+            )
+            viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    log.finish(PlayedGameLog.ENDED_BY_CASHED_OUT, LocalDateTime.now(), voucher)
+                }
+                refreshRecordedSessions()
+            }
+        }
+
         _uiState.update {
             it.copy(
                 cashBalance = 0.0,
@@ -332,6 +450,7 @@ class GameViewModel : ViewModel() {
                 practiceMadeTopChoice = null,
                 totalHandsPlayed = 0,
                 handsAtCurrentDenom = 0,
+                recordedHandsCount = 0,
                 activeOverlay = null
             )
         }
@@ -351,6 +470,9 @@ class GameViewModel : ViewModel() {
     fun onAddCashAmount(amount: Double) {
         if (amount <= 0.0 || !amount.isFinite()) return
         soundManager?.play(SoundEffect.COUNT_TICK)
+        if (activePlayedLog != null) {
+            sessionMoneyInCents += (amount * 100.0).roundToLong()
+        }
         _uiState.update { it.copy(cashBalance = it.cashBalance + amount) }
     }
 
@@ -370,6 +492,19 @@ class GameViewModel : ViewModel() {
     }
 
     fun onGameSelect(game: GameConfig) {
+        val log = activePlayedLog
+        if (log != null && _uiState.value.currentGame?.variant != game.variant) {
+            activePlayedLog = null
+            sessionMoneyInCents = 0L
+            if (log.created) {
+                viewModelScope.launch {
+                    withContext(Dispatchers.IO) {
+                        log.finish(PlayedGameLog.ENDED_BY_LEFT, LocalDateTime.now())
+                    }
+                    refreshRecordedSessions()
+                }
+            }
+        }
         _uiState.update { state ->
             val payKeys = game.payTable.rows.map { it.key }.toSet()
             val newRank = if (state.cards.size == 5) HandClassifier.classifyHand(state.cards, payKeys) else HandRank.NOTHING
@@ -379,6 +514,7 @@ class GameViewModel : ViewModel() {
                 currentGame = game,
                 handRank = newRank,
                 holdChoices = choices,
+                recordedHandsCount = if (activePlayedLog != null) state.recordedHandsCount else 0,
                 activeOverlay = null
             )
         }
@@ -432,22 +568,60 @@ class GameViewModel : ViewModel() {
     }
 
     fun openOverlay(overlay: ActiveOverlay) {
-        _uiState.update { it.copy(activeOverlay = overlay, isVolumePopupOpen = false) }
+        if (overlay == ActiveOverlay.OPTIONS) {
+            refreshRecordedSessions()
+        }
+        _uiState.update { it.copy(activeOverlay = overlay, isVolumePopupOpen = false, sessionExportStatus = null) }
     }
 
     fun closeOverlay() {
         _uiState.update { it.copy(activeOverlay = null) }
     }
 
-    private fun logSessionHand(
+    fun onSaveSessionToDownloads(context: Context, folderPath: String) {
+        val dir = File(folderPath)
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) {
+                SessionExporter.saveZipToDownloads(context.applicationContext, dir)
+            }
+            val msg = res.fold(
+                onSuccess = { it },
+                onFailure = { "Export failed: ${it.message ?: "unknown error"}" }
+            )
+            _uiState.update { it.copy(sessionExportStatus = msg) }
+        }
+    }
+
+    fun onShareSession(context: Context, folderPath: String) {
+        val dir = File(folderPath)
+        val res = SessionExporter.shareSessionZip(context, dir)
+        res.onFailure { err ->
+            _uiState.update { it.copy(sessionExportStatus = "Share failed: ${err.message ?: "unknown error"}") }
+        }
+    }
+
+    private fun refreshRecordedSessions() {
+        val root = sessionsRoot ?: return
+        viewModelScope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                PlayedGameLog.listRecordedSessions(root)
+            }
+            _uiState.update { it.copy(recordedSessions = saved) }
+        }
+    }
+
+    private suspend fun logSessionHand(
         game: GameConfig,
         denom: Double,
         bet: Int,
         dealt: List<Card>,
         held: List<Boolean>,
+        drawn: List<Card>,
         finalCards: List<Card>,
         rank: HandRank,
-        payoutCredits: Int
+        payoutCredits: Int,
+        mode: GameMode,
+        wentBroke: Boolean
     ) {
         val dealtStr = dealt.joinToString(" ")
         val heldStr = held.mapIndexedNotNull { i, h -> if (h) dealt.getOrNull(i)?.toString() else null }.joinToString(" ")
@@ -457,6 +631,46 @@ class GameViewModel : ViewModel() {
             "VP_SESSION",
             "HAND #${_uiState.value.totalHandsPlayed + 1} | Game: ${game.variant} | Denom: $denom | Bet: $bet | Dealt: [$dealtStr] | Held: [$heldStr] | Final: [$finalStr] | Rank: ${rank.displayName} | Won: $payoutCredits cr ($$wonCash)"
         )
+
+        val log = activePlayedLog ?: return
+        val choicesSnapshot = pendingAllHoldChoices
+        val now = LocalDateTime.now()
+        withContext(Dispatchers.IO) {
+            log.recordHand(
+                dealt = dealt,
+                heldMask = held,
+                drawn = drawn,
+                finalCards = finalCards,
+                classification = rank.key,
+                creditsPlayed = bet,
+                denominationCents = (denom * 100.0).roundToLong(),
+                creditsWon = payoutCredits,
+                trainingLevel = mode.displayName.lowercase(),
+                allHoldChoices = choicesSnapshot,
+                finishedAt = now,
+                wentBroke = wentBroke
+            )
+            if (wentBroke) {
+                log.finish(PlayedGameLog.ENDED_BY_WENT_BROKE, now)
+            }
+        }
+        val loggedCount = log.handsLogged
+        val root = sessionsRoot
+        val updatedList = if (root != null) {
+            withContext(Dispatchers.IO) { PlayedGameLog.listRecordedSessions(root) }
+        } else {
+            _uiState.value.recordedSessions
+        }
+        if (wentBroke) {
+            activePlayedLog = null
+            sessionMoneyInCents = 0L
+        }
+        _uiState.update {
+            it.copy(
+                recordedHandsCount = if (wentBroke) 0 else loggedCount,
+                recordedSessions = updatedList
+            )
+        }
     }
 
     override fun onCleared() {
