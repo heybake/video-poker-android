@@ -373,7 +373,7 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.2",
+                text = "v1.0.3",
                 color = palette.goldColor,
                 style = TextStyle(
                     fontSize = 10.5.sp,

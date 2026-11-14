@@ -41,8 +41,8 @@ data class GameState(
     val speedLevel: Int = 2, // 1..3, default 2 (matching desktop SPEED_MS = [250, 170, 100])
     val revealedMask: List<Boolean> = listOf(true, true, true, true, true),
     val isAnimating: Boolean = false,
-    val totalHandsPlayed: Int = 12,
-    val handsAtCurrentDenom: Int = 12,
+    val totalHandsPlayed: Int = 0,
+    val handsAtCurrentDenom: Int = 0,
     val allGames: List<GameConfig> = emptyList(),
     val isRecordingSession: Boolean = false,
     val activeOverlay: ActiveOverlay? = null,
