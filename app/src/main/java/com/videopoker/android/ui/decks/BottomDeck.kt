@@ -343,10 +343,11 @@ fun BottomDeck(
             }
         }
 
-        // 3. Footer Bar: Game Title, Centered Version Number & Hands Counters
+        // 3. Footer Bar: Game Title, Centered Version Number & Hands Counters (Safe from phone corner curves)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 52.dp)
                 .padding(top = 2.dp)
                 .height(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -372,7 +373,7 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.1",
+                text = "v1.0.2",
                 color = palette.goldColor,
                 style = TextStyle(
                     fontSize = 10.5.sp,
