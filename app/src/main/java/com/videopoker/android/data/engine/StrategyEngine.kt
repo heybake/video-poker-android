@@ -76,7 +76,7 @@ object StrategyEngine {
     /**
      * Resolve all matching hold choices for a given deal in priority order.
      */
-    fun evaluateHoldChoices(deal: List<Card>, gameConfig: GameConfig, maxChoices: Int = 3): List<HoldChoice> {
+    fun evaluateHoldChoices(deal: List<Card>, gameConfig: GameConfig, maxChoices: Int = 15): List<HoldChoice> {
         require(deal.size == 5) { "Deal must contain exactly 5 cards" }
 
         val seenMasks = mutableSetOf<List<Boolean>>()
