@@ -355,7 +355,7 @@ fun BottomDeck(
         ) {
             val gameTitle = state.currentGame?.let {
                 "${it.displayName} • ${String.format("%.2f", it.returnPercentage)}%"
-            } ?: "Double Bonus (10/7) • 100.17%"
+            } ?: "Select a Game"
 
             val denomText = if (state.currentDenom < 1.0) "${(state.currentDenom * 100).toInt()}¢" else "$${state.currentDenom.toInt()}"
             val counterText = "Hands: ${state.totalHandsPlayed}  •  Hands at $denomText: ${state.handsAtCurrentDenom}"
@@ -373,7 +373,7 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.3",
+                text = "v1.0.4",
                 color = palette.goldColor,
                 style = TextStyle(
                     fontSize = 10.5.sp,

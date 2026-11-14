@@ -55,36 +55,17 @@ class GameViewModel : ViewModel() {
                 // Sort games: Double Bonus 10/7 first, then alphabetical
                 loadedList.sortBy { if (it.variant.contains("double_bonus_10_7")) "000" else it.displayName }
 
-                val defaultGame = loadedList.firstOrNull { it.variant.contains("double_bonus_10_7") }
-                    ?: loadedList.firstOrNull()
-
-                // Initial approved mock hand: Two Pair [Ks, Kh, 5d, 5c, 2h]
-                val initialDeal = listOf(
-                    Card.fromString("Ks"),
-                    Card.fromString("Kh"),
-                    Card.fromString("5d"),
-                    Card.fromString("5c"),
-                    Card.fromString("2h")
-                )
-
-                val payKeys = defaultGame?.payTable?.rows?.map { it.key }?.toSet()
-                val initialRank = HandClassifier.classifyHand(initialDeal, payKeys)
-                val initialChoices = defaultGame?.let {
-                    StrategyEngine.evaluateHoldChoices(initialDeal, it)
-                } ?: emptyList()
-
-                val initialMask = listOf(true, true, true, true, false)
-
                 _uiState.update { current ->
                     current.copy(
                         allGames = loadedList,
-                        currentGame = defaultGame,
-                        cards = initialDeal,
-                        heldMask = initialMask,
-                        holdChoices = initialChoices,
-                        handRank = initialRank,
-                        winAmount = 10,
-                        dealState = DealState.DEALT_CHOOSING_HOLDS
+                        currentGame = null,
+                        cards = emptyList(),
+                        heldMask = listOf(false, false, false, false, false),
+                        revealedMask = listOf(false, false, false, false, false),
+                        holdChoices = emptyList(),
+                        handRank = HandRank.NOTHING,
+                        winAmount = 0,
+                        dealState = DealState.READY_TO_DEAL
                     )
                 }
             } catch (e: Exception) {
@@ -96,7 +77,11 @@ class GameViewModel : ViewModel() {
     fun onDealDraw() {
         val state = _uiState.value
         if (state.isAnimating) return
-        val game = state.currentGame ?: return
+        if (state.currentGame == null) {
+            openOverlay(ActiveOverlay.MORE_GAMES)
+            return
+        }
+        val game = state.currentGame
 
         // Authentic speeds from desktop SPEED_MS = [250, 170, 100]
         val speedDelays = listOf(250L, 170L, 100L)

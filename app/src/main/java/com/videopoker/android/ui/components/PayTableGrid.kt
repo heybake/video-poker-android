@@ -51,12 +51,26 @@ fun PayTableGrid(
             .clip(RoundedCornerShape(8.dp))
             .background(palette.panelColor)
             .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = if (isCasino) 8.dp else 6.dp, vertical = 3.dp)
+            .padding(horizontal = if (isCasino) 8.dp else 6.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceEvenly
-        ) {
+        if (rows.isEmpty()) {
+            Text(
+                text = "SELECT A GAME VIA 'MORE GAMES'",
+                color = palette.goldColor.copy(alpha = 0.85f),
+                style = TextStyle(
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp,
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                )
+            )
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
             rows.forEach { row ->
                 val isWinRow = (winningRank != null && row.key == winningRank.key)
 
@@ -193,4 +207,5 @@ fun PayTableGrid(
             }
         }
     }
+}
 }
