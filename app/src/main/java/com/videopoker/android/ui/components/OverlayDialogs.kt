@@ -44,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.data.models.GameConfig
+import com.videopoker.android.data.models.HoldCatalogue
+import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
@@ -77,7 +79,7 @@ fun OverlayDialogs(
     ) {
         Box(
             modifier = Modifier
-                .width(540.dp)
+                .width(if (state.activeOverlay == ActiveOverlay.COMPLETE_HOLD_LIST) 580.dp else 540.dp)
                 .height(340.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -132,6 +134,12 @@ fun OverlayDialogs(
                     currentDenom = state.currentDenom,
                     palette = palette,
                     onConfirmCashOut = onConfirmCashOut,
+                    onClose = onClose
+                )
+                ActiveOverlay.COMPLETE_HOLD_LIST -> CompleteHoldListContent(
+                    game = state.currentGame,
+                    holdChoices = state.holdChoices,
+                    palette = palette,
                     onClose = onClose
                 )
             }
@@ -901,6 +909,238 @@ private fun CashOutContent(
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "KEEP PLAYING", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompleteHoldListContent(
+    game: GameConfig?,
+    holdChoices: List<HoldChoice>,
+    palette: ThemePalette,
+    onClose: () -> Unit
+) {
+    val rules = game?.strategyRules ?: emptyList()
+    val totalRules = rules.size
+    val matchedChoicesBySlot = remember(holdChoices) {
+        holdChoices.associateBy { it.slot }
+    }
+    val topMatchedSpot = holdChoices.firstOrNull()?.slot ?: 1
+    val initialScrollIndex = (topMatchedSpot - 2).coerceIn(0, (totalRules - 1).coerceAtLeast(0))
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex = initialScrollIndex)
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "COMPLETE STRATEGY LIST",
+                    color = palette.goldColor,
+                    style = TextStyle(
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
+                )
+                Text(
+                    text = "${game?.displayName ?: "Video Poker"} • $totalRules Priority Rules (Top to Bottom)",
+                    color = palette.textDimColor,
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
+                )
+            }
+            CloseButton(palette = palette, onClose = onClose)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Table Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(0x22FFFFFF))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "SPOT",
+                color = palette.goldColor,
+                fontSize = 9.5.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.width(36.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "STRATEGY RULE & ACTIONS",
+                color = palette.goldColor,
+                fontSize = 9.5.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "MATCH STATUS",
+                color = palette.goldColor,
+                fontSize = 9.5.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.End,
+                modifier = Modifier.width(90.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Scrollable Rules (Automatically centered on top matching rule)
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            items(rules.size) { idx ->
+                val spot = idx + 1
+                val rule = rules[idx]
+                val info = HoldCatalogue.getInfo(rule.id)
+                val matched = matchedChoicesBySlot[spot]
+                val isTop = matched?.isTopChoice == true
+                val isMatched = matched != null
+
+                val rowBg = when {
+                    isTop -> Color(0xFF1B5E20)
+                    isMatched -> Color(0x33FFD700)
+                    idx % 2 == 0 -> Color(0x10FFFFFF)
+                    else -> Color(0x06FFFFFF)
+                }
+
+                val rowBorder = when {
+                    isTop -> Color(0xFF4CAF50)
+                    isMatched -> palette.goldColor.copy(alpha = 0.6f)
+                    else -> Color(0x18FFFFFF)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(rowBg)
+                        .border(1.dp, rowBorder, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Spot Number (e.g. 1, 2, ..., 45)
+                    Text(
+                        text = "$spot",
+                        color = if (isTop) Color.White else palette.goldColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.width(36.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Rule Name and Keeps text
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = info.label,
+                            color = if (isTop) Color.White else palette.payTableTextColor,
+                            fontSize = 11.5.sp,
+                            fontWeight = if (isTop || isMatched) FontWeight.Bold else FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (info.keeps.isNotBlank()) {
+                            Text(
+                                text = info.keeps,
+                                color = if (isTop) Color(0xFFD5EFDF) else palette.textDimColor,
+                                fontSize = 9.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    // Match Status Pill / Badge
+                    Box(
+                        modifier = Modifier.width(90.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        if (isTop) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFF2E7D32))
+                                    .border(1.dp, Color(0xFF81C784), RoundedCornerShape(3.dp))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "✓ TOP CHOICE",
+                                    color = Color.White,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        } else if (isMatched) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFFB8860B))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "#${matched?.row} MATCH",
+                                    color = Color.White,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Footer with Close Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Rules evaluated in top-to-bottom priority. Highest matching rule is played.",
+                color = palette.textDimColor,
+                fontSize = 9.5.sp,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0x33FFFFFF))
+                    .border(1.dp, palette.goldColor, RoundedCornerShape(4.dp))
+                    .clickable { onClose() }
+                    .padding(horizontal = 14.dp, vertical = 5.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "CLOSE",
+                    color = palette.goldColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black
+                )
             }
         }
     }

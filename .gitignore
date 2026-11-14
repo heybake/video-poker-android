@@ -15,6 +15,7 @@ gen/
 out/
 build/
 .gradle/
+.kotlin/
 
 # Android Studio / IntelliJ IDEA
 .idea/

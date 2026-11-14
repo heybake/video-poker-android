@@ -82,7 +82,7 @@ object StrategyEngine {
         val seenMasks = mutableSetOf<List<Boolean>>()
         val choices = mutableListOf<HoldChoice>()
 
-        for (rule in gameConfig.strategyRules) {
+        for ((ruleIndex, rule) in gameConfig.strategyRules.withIndex()) {
             val (matched, matchingCards) = evaluateQuery(deal, rule.query)
             if (matched) {
                 val mask = projectHoldMask(deal, rule.hold, matchingCards)
@@ -102,7 +102,8 @@ object StrategyEngine {
                             keptCards = keptCards,
                             description = desc,
                             expectedValue = 0.0, // calculated or ranked
-                            isTopChoice = isTop
+                            isTopChoice = isTop,
+                            slot = ruleIndex + 1
                         )
                     )
 
@@ -114,6 +115,9 @@ object StrategyEngine {
         // If no rule matched, fallback to Discard All
         if (choices.isEmpty()) {
             val mask = listOf(false, false, false, false, false)
+            val discardSlot = gameConfig.strategyRules.indexOfFirst { it.id == "discard_all" }.let {
+                if (it >= 0) it + 1 else gameConfig.strategyRules.size + 1
+            }
             choices.add(
                 HoldChoice(
                     row = 1,
@@ -123,7 +127,8 @@ object StrategyEngine {
                     keptCards = emptyList(),
                     description = "Discard All",
                     expectedValue = 0.0,
-                    isTopChoice = true
+                    isTopChoice = true,
+                    slot = discardSlot
                 )
             )
         }
@@ -421,21 +426,8 @@ object StrategyEngine {
     }
 
     private fun generateDescription(ruleId: String, mask: List<Boolean>, keptCards: List<Card>): String {
-        val count = keptCards.size
-        if (count == 0) return "Discard All"
-        if (count == 5) return "Keep Pat Hand (${keptCards.joinToString(", ") { it.rank.toString() }})"
-
-        val cleanId = ruleId.replace("_", " ")
-        val cardList = keptCards.joinToString(", ") { it.rank.toString() }
-
-        return when {
-            cleanId.contains("two pair") -> "Keep 2 Pair ($cardList)"
-            cleanId.contains("three") -> "Keep 3 of a Kind ($cardList)"
-            cleanId.contains("pair") -> "Keep Pair of ${keptCards.first().rank}s"
-            cleanId.contains("flush") -> "Keep $count to a Flush ($cardList)"
-            cleanId.contains("straight") -> "Keep $count to a Straight ($cardList)"
-            else -> "Hold $cardList ($cleanId)"
-        }
+        val info = com.videopoker.android.data.models.HoldCatalogue.getInfo(ruleId)
+        return if (info.shortLabel.isNotBlank()) info.shortLabel else ruleId.replace("_", " ")
     }
 
     private fun formatHandLabel(key: String): String {

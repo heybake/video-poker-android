@@ -48,6 +48,7 @@ fun MainScreen(viewModel: GameViewModel) {
             TopDeck(
                 state = state,
                 palette = palette,
+                onOpenOverlay = viewModel::openOverlay,
                 modifier = Modifier.weight(158f)
             )
 

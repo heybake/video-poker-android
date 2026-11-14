@@ -14,10 +14,13 @@ import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.theme.ThemePalette
 
+import com.videopoker.android.ui.state.ActiveOverlay
+
 @Composable
 fun TopDeck(
     state: GameState,
     palette: ThemePalette,
+    onOpenOverlay: (ActiveOverlay) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -56,6 +59,7 @@ fun TopDeck(
                 practiceFeedback = state.practiceFeedback,
                 practiceMadeTopChoice = state.practiceMadeTopChoice,
                 palette = palette,
+                onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
                 modifier = Modifier.weight(1f)
             )
         }

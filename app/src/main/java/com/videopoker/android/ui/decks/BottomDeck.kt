@@ -343,7 +343,7 @@ fun BottomDeck(
             }
         }
 
-        // 3. Footer Bar (16dp with dedicated breathing room)
+        // 3. Footer Bar: Game Title, Centered Version Number & Hands Counters
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -357,7 +357,7 @@ fun BottomDeck(
             } ?: "Double Bonus (10/7) • 100.17%"
 
             val denomText = if (state.currentDenom < 1.0) "${(state.currentDenom * 100).toInt()}¢" else "$${state.currentDenom.toInt()}"
-            val counterText = "Hands: ${state.totalHandsPlayed}  •  Hands at $denomText: ${state.handsAtCurrentDenom}  •  v1.0.0"
+            val counterText = "Hands: ${state.totalHandsPlayed}  •  Hands at $denomText: ${state.handsAtCurrentDenom}"
 
             Text(
                 text = gameTitle,
@@ -366,7 +366,22 @@ fun BottomDeck(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
+                ),
+                modifier = Modifier.weight(1.2f),
+                textAlign = TextAlign.Start
+            )
+
+            Text(
+                text = "v1.0.1",
+                color = palette.goldColor,
+                style = TextStyle(
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                ),
+                modifier = Modifier.weight(0.6f),
+                textAlign = TextAlign.Center
             )
 
             Text(
@@ -376,7 +391,9 @@ fun BottomDeck(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
+                ),
+                modifier = Modifier.weight(1.2f),
+                textAlign = TextAlign.End
             )
         }
     }

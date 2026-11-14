@@ -345,6 +345,8 @@ class GameViewModel : ViewModel() {
                 dealState = DealState.READY_TO_DEAL,
                 practiceFeedback = null,
                 practiceMadeTopChoice = null,
+                totalHandsPlayed = 0,
+                handsAtCurrentDenom = 0,
                 activeOverlay = null
             )
         }

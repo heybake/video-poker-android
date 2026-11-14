@@ -57,5 +57,6 @@ enum class ActiveOverlay {
     DENOM,
     SEE_PAYS,
     ADD_MONEY,
-    CASH_OUT
+    CASH_OUT,
+    COMPLETE_HOLD_LIST
 }

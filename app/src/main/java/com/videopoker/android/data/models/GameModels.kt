@@ -58,5 +58,6 @@ data class HoldChoice(
     val keptCards: List<Card>,
     val description: String,
     val expectedValue: Double,
-    val isTopChoice: Boolean
+    val isTopChoice: Boolean,
+    val slot: Int = 0
 )
