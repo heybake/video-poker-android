@@ -64,8 +64,8 @@ fun CardSlot(
 
     Box(
         modifier = Modifier
-            .width(90.dp)
-            .height(126.dp)
+            .width(100.dp)
+            .height(140.dp)
             .offset(y = liftOffset),
         contentAlignment = Alignment.Center
     ) {

@@ -45,17 +45,19 @@ fun MidDeck(
     val currentOnSetHold by rememberUpdatedState(onSetHold)
 
     val density = LocalDensity.current
-    val cardWidthPx = with(density) { 90.dp.toPx() }
-    val spacingPx = with(density) { 10.dp.toPx() }
-    val pitchPx = cardWidthPx + spacingPx // 100dp per card slot
-    val totalDeckWidthPx = with(density) { 490.dp.toPx() }
+    val cardWidth = 100.dp
+    val spacing = 8.dp
+    val cardWidthPx = with(density) { cardWidth.toPx() }
+    val spacingPx = with(density) { spacing.toPx() }
+    val pitchPx = cardWidthPx + spacingPx // 108dp per card slot
+    val totalDeckWidthPx = with(density) { (cardWidth * 5 + spacing * 4).toPx() } // 532dp
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Bottom
     ) {
         // Hand Plaque (TWO PAIR)
         HandPlaque(
@@ -63,8 +65,8 @@ fun MidDeck(
             palette = palette
         )
 
-        // 16dp clearance to ensure HELD badges never collide with plaque
-        Spacer(modifier = Modifier.height(16.dp))
+        // 8dp clearance to ensure HELD badges never collide with plaque
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 5 Playing Cards in authentic felt rail
         Box(
@@ -78,7 +80,7 @@ fun MidDeck(
                     )
                 )
                 .border(2.dp, palette.railBorderColor, RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Row(
                 modifier = Modifier.pointerInput(Unit) {
@@ -113,7 +115,7 @@ fun MidDeck(
                         }
                     }
                 },
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Dots logic: Dots ONLY appear in LEARN mode while choosing holds (never in Practice or Casino mode, per authentic play.js)

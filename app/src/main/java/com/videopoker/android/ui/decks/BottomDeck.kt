@@ -61,143 +61,156 @@ fun BottomDeck(
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 1. Status Bar (22dp)
+        // 1. Compact Upper/Side HUD Status Bar (20dp) - Win + Sound on Left, Bet + Credits on Right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(22.dp),
+                .height(20.dp)
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // WIN (Click to toggle WIN independently between dollars and credits)
-            val winDisplay = if (state.winAsCash) {
-                String.format(Locale.US, "$%.2f", state.winAmount * state.currentDenom)
-            } else {
-                "${state.winAmount}"
-            }
-            Row(
-                modifier = Modifier.clickable { onToggleWinCurrency() },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "WIN ",
-                    color = palette.statusLabelColor,
-                    style = TextStyle(
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
-                    )
-                )
-                Text(
-                    text = winDisplay,
-                    color = palette.statusValueColor,
-                    style = TextStyle(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
-                    )
-                )
-            }
-
+            // Left HUD Cluster: WIN and Sound shifted close together
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Sound Speaker Button
-                SoundButton(
-                    volume = state.soundVolume,
-                    isPopupOpen = state.isVolumePopupOpen,
-                    palette = palette,
-                    onTogglePopup = onToggleVolumePopup,
-                    onVolumeChange = onVolumeChange
-                )
-
-                // Recording Indicator (Visible only when session recording is active)
-                if (state.isRecordingSession) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0x33D6293B))
-                            .border(1.dp, Color(0xFFD6293B), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFE53935))
+                // WIN (Click to toggle WIN independently between dollars and credits)
+                val winDisplay = if (state.winAsCash) {
+                    String.format(Locale.US, "$%.2f", state.winAmount * state.currentDenom)
+                } else {
+                    "${state.winAmount}"
+                }
+                Row(
+                    modifier = Modifier.clickable { onToggleWinCurrency() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "WIN ",
+                        color = palette.statusLabelColor,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "REC",
-                            color = Color(0xFFFF8A80),
-                            fontSize = 10.sp,
+                    )
+                    Text(
+                        text = winDisplay,
+                        color = palette.statusValueColor,
+                        style = TextStyle(
+                            fontSize = 13.5.sp,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
+                    )
+                }
+
+                // Sound Speaker Button & Recording Indicator
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    SoundButton(
+                        volume = state.soundVolume,
+                        isPopupOpen = state.isVolumePopupOpen,
+                        palette = palette,
+                        onTogglePopup = onToggleVolumePopup,
+                        onVolumeChange = onVolumeChange
+                    )
+
+                    // Recording Indicator (Visible only when session recording is active)
+                    if (state.isRecordingSession) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0x33D6293B))
+                                .border(1.dp, Color(0xFFD6293B), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 5.dp, vertical = 1.5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE53935))
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "REC",
+                                color = Color(0xFFFF8A80),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
                     }
                 }
             }
 
-            // BET (Click to toggle BET independently between dollars and credits)
-            val betDisplay = if (state.betAsCash) {
-                String.format(Locale.US, "$%.2f", state.currentBet * state.currentDenom)
-            } else {
-                "${state.currentBet}"
-            }
+            // Right HUD Cluster: BET and Credits shifted close together
             Row(
-                modifier = Modifier.clickable { onToggleBetCurrency() },
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "BET ",
-                    color = palette.statusLabelColor,
-                    style = TextStyle(
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                // BET (Click to toggle BET independently between dollars and credits)
+                val betDisplay = if (state.betAsCash) {
+                    String.format(Locale.US, "$%.2f", state.currentBet * state.currentDenom)
+                } else {
+                    "${state.currentBet}"
+                }
+                Row(
+                    modifier = Modifier.clickable { onToggleBetCurrency() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "BET ",
+                        color = palette.statusLabelColor,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        )
                     )
-                )
-                Text(
-                    text = betDisplay,
-                    color = palette.statusValueColor,
-                    style = TextStyle(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    Text(
+                        text = betDisplay,
+                        color = palette.statusValueColor,
+                        style = TextStyle(
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Black,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        )
                     )
-                )
-            }
+                }
 
-            // CASH / CREDIT (Click to toggle CREDIT independently between dollars and credits)
-            val cashDisplay = if (state.creditAsCash) {
-                String.format(Locale.US, "$%.2f", state.cashBalance)
-            } else {
-                "${(state.cashBalance / state.currentDenom).toInt()}"
-            }
-            Row(
-                modifier = Modifier.clickable { onToggleCreditCurrency() },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (state.creditAsCash) "CASH " else "CREDIT ",
-                    color = palette.statusLabelColor,
-                    style = TextStyle(
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                // CASH / CREDIT (Click to toggle CREDIT independently between dollars and credits)
+                val cashDisplay = if (state.creditAsCash) {
+                    String.format(Locale.US, "$%.2f", state.cashBalance)
+                } else {
+                    "${(state.cashBalance / state.currentDenom).toInt()}"
+                }
+                Row(
+                    modifier = Modifier.clickable { onToggleCreditCurrency() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (state.creditAsCash) "CASH " else "CREDIT ",
+                        color = palette.statusLabelColor,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        )
                     )
-                )
-                Text(
-                    text = cashDisplay,
-                    color = palette.statusValueColor,
-                    style = TextStyle(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    Text(
+                        text = cashDisplay,
+                        color = palette.statusValueColor,
+                        style = TextStyle(
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Black,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -373,7 +386,7 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.5",
+                text = "v1.0.6",
                 color = palette.goldColor,
                 style = TextStyle(
                     fontSize = 10.5.sp,

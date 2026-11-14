@@ -44,24 +44,24 @@ fun MainScreen(viewModel: GameViewModel) {
                 .padding(horizontal = 8.dp, vertical = 2.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Deck: Pay Table + Hold Panel (Generous 158f weight so pay table NEVER cuts off)
+            // Top Deck: Pay Table + Hold Panel (Generous 140f weight for clean pay table display)
             TopDeck(
                 state = state,
                 palette = palette,
                 onOpenOverlay = viewModel::openOverlay,
-                modifier = Modifier.weight(158f)
+                modifier = Modifier.weight(140f)
             )
 
-            // Mid Deck: Plaque + 5 Cards + Dots (160f weight for roomy card display)
+            // Mid Deck: Plaque + Scaled 5 Cards (190f weight for enlarged, high-legibility cards)
             MidDeck(
                 state = state,
                 palette = palette,
                 onToggleHold = viewModel::onToggleHold,
                 onSetHold = viewModel::onSetHold,
-                modifier = Modifier.weight(160f)
+                modifier = Modifier.weight(190f)
             )
 
-            // Bottom Deck: Status Row + 10 Action Buttons + Footer (Centered buttons)
+            // Bottom Deck: Compact Status Row + 10 Action Buttons + Footer (82f weight)
             BottomDeck(
                 state = state,
                 palette = palette,
@@ -77,7 +77,7 @@ fun MainScreen(viewModel: GameViewModel) {
                 onToggleVolumePopup = viewModel::onToggleVolumePopup,
                 onVolumeChange = viewModel::onVolumeChange,
                 onOpenOverlay = viewModel::openOverlay,
-                modifier = Modifier.weight(96f)
+                modifier = Modifier.weight(82f)
             )
         }
 

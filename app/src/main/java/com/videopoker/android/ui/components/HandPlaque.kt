@@ -26,13 +26,13 @@ fun HandPlaque(
     palette: ThemePalette
 ) {
     if (handRank == HandRank.NOTHING || handRank.displayName.isEmpty()) {
-        Box(modifier = Modifier.height(28.dp))
+        Box(modifier = Modifier.height(24.dp))
         return
     }
 
     Box(
         modifier = Modifier
-            .height(28.dp)
+            .height(24.dp)
             .shadow(elevation = 6.dp, shape = RoundedCornerShape(6.dp))
             .clip(RoundedCornerShape(6.dp))
             .background(
