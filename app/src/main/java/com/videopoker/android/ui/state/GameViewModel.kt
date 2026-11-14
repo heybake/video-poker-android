@@ -349,8 +349,9 @@ class GameViewModel : ViewModel() {
     }
 
     fun onAddCashAmount(amount: Double) {
+        if (amount <= 0.0 || !amount.isFinite()) return
         soundManager?.play(SoundEffect.COUNT_TICK)
-        _uiState.update { it.copy(cashBalance = it.cashBalance + amount, activeOverlay = null) }
+        _uiState.update { it.copy(cashBalance = it.cashBalance + amount) }
     }
 
     fun onOpenAddMoney() {

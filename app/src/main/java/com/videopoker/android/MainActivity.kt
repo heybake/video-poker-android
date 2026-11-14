@@ -58,6 +58,13 @@ class MainActivity : ComponentActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
+            if (viewModel.uiState.value.activeOverlay != null) {
+                if (event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+                    viewModel.closeOverlay()
+                    return true
+                }
+                return super.dispatchKeyEvent(event)
+            }
             when (event.keyCode) {
                 KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_NUMPAD_0 -> {
                     viewModel.onDealDraw()

@@ -9,12 +9,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,6 +27,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -36,13 +44,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.round
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HoldCatalogue
 import com.videopoker.android.data.models.HoldChoice
@@ -69,10 +86,14 @@ fun OverlayDialogs(
 ) {
     if (state.activeOverlay == null) return
 
+    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val compactForIme = isImeVisible && state.activeOverlay == ActiveOverlay.ADD_MONEY
+
     // Darkened backdrop
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
             .background(Color(0xCC000000))
             .clickable(onClick = onClose),
         contentAlignment = Alignment.Center
@@ -80,7 +101,13 @@ fun OverlayDialogs(
         Box(
             modifier = Modifier
                 .width(if (state.activeOverlay == ActiveOverlay.COMPLETE_HOLD_LIST) 580.dp else 540.dp)
-                .height(340.dp)
+                .then(
+                    if (compactForIme) {
+                        Modifier.wrapContentHeight().heightIn(max = 340.dp)
+                    } else {
+                        Modifier.height(340.dp)
+                    }
+                )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -88,7 +115,7 @@ fun OverlayDialogs(
                 .clip(RoundedCornerShape(14.dp))
                 .background(palette.overlayBgColor)
                 .border(2.dp, palette.goldColor, RoundedCornerShape(14.dp))
-                .padding(16.dp)
+                .padding(if (compactForIme) 12.dp else 16.dp)
         ) {
             when (state.activeOverlay) {
                 ActiveOverlay.HELP -> HelpContent(palette = palette, onClose = onClose)
@@ -125,6 +152,7 @@ fun OverlayDialogs(
                 ActiveOverlay.ADD_MONEY -> AddMoneyContent(
                     cashBalance = state.cashBalance,
                     currentDenom = state.currentDenom,
+                    compactForIme = compactForIme,
                     palette = palette,
                     onAddCashAmount = onAddCashAmount,
                     onClose = onClose
@@ -721,101 +749,293 @@ private fun CloseButton(palette: ThemePalette, onClose: () -> Unit) {
 private fun AddMoneyContent(
     cashBalance: Double,
     currentDenom: Double,
+    compactForIme: Boolean,
     palette: ThemePalette,
     onAddCashAmount: (Double) -> Unit,
     onClose: () -> Unit
 ) {
+    var customInput by remember { mutableStateOf("") }
+    var inputError by remember { mutableStateOf<String?>(null) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    fun submitCustomAmount() {
+        val trimmed = customInput.trim()
+        val parsed = trimmed.toDoubleOrNull()
+        if (parsed == null || !parsed.isFinite() || parsed <= 0.0) {
+            inputError = "Enter a positive dollar amount"
+            return
+        }
+        val roundedCents = round(parsed * 100.0)
+        if (abs(parsed * 100.0 - roundedCents) > 1e-6) {
+            inputError = "Enter whole cents or whole dollars"
+            return
+        }
+        val exactCredits = parsed / currentDenom
+        val roundedCredits = round(exactCredits)
+        if (roundedCredits < 1.0 || abs(exactCredits - roundedCredits) > 1e-6) {
+            val denomLabel = if (currentDenom >= 1.0) {
+                "$${currentDenom.toInt()}"
+            } else {
+                "${round(currentDenom * 100.0).toInt()}¢"
+            }
+            inputError = "Must convert to whole credits (multiple of $denomLabel)"
+            return
+        }
+        inputError = null
+        customInput = ""
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        onAddCashAmount(roundedCents / 100.0)
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween,
+        modifier = if (compactForIme) Modifier.fillMaxWidth().wrapContentHeight() else Modifier.fillMaxSize(),
+        verticalArrangement = if (compactForIme) Arrangement.spacedBy(8.dp) else Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "INSERT CASH / ADD MONEY",
-                color = palette.goldColor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 1.sp
-            )
-            CloseButton(palette = palette, onClose = onClose)
-        }
+        if (compactForIme) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "INSERT CASH",
+                    color = palette.goldColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "Balance: $%.2f (%d Credits)",
+                        cashBalance,
+                        round(cashBalance / currentDenom).toInt()
+                    ),
+                    color = palette.textColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                CloseButton(palette = palette, onClose = {
+                    focusManager.clearFocus()
+                    onClose()
+                })
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "INSERT CASH",
+                    color = palette.goldColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+                CloseButton(palette = palette, onClose = onClose)
+            }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Current Balance",
+                    color = palette.textDimColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "$%.2f  (%d Credits)",
+                        cashBalance,
+                        round(cashBalance / currentDenom).toInt()
+                    ),
+                    color = palette.textColor,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
             Text(
-                text = "Current Balance",
-                color = palette.textDimColor,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = String.format("$%.2f  (%d Credits)", cashBalance, (cashBalance / currentDenom).toInt()),
+                text = "Select a bill or enter an amount:",
                 color = palette.textColor,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
             )
-        }
 
-        Text(
-            text = "Select a bill to insert into the machine:",
-            color = palette.textColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            val bills = listOf(20.0, 50.0, 100.0, 500.0)
-            bills.forEach { amt ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                        .shadow(4.dp, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF2E8540), Color(0xFF144D22))
-                            )
-                        )
-                        .border(1.5.dp, Color(0xFF56C470), RoundedCornerShape(8.dp))
-                        .clickable { onAddCashAmount(amt) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "+$${amt.toInt()}",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Black
-                        )
-                        Text(
-                            text = "${(amt / currentDenom).toInt()} credits",
-                            color = Color(0xFFB8E6C4),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+            val billRows = listOf(
+                listOf(1.0, 5.0, 10.0),
+                listOf(20.0, 50.0, 100.0)
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                billRows.forEach { rowBills ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowBills.forEach { amt ->
+                            val credits = round(amt / currentDenom).toInt()
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp)
+                                    .shadow(3.dp, RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(Color(0xFF2E8540), Color(0xFF144D22))
+                                        )
+                                    )
+                                    .border(1.5.dp, Color(0xFF56C470), RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        inputError = null
+                                        onAddCashAmount(amt)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "+$${amt.toInt()}",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Black,
+                                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                                    )
+                                    Text(
+                                        text = "$credits credits",
+                                        color = Color(0xFFB8E6C4),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 
-        Box(
-            modifier = Modifier
-                .width(120.dp)
-                .height(34.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(Color(0x33FFFFFF))
-                .clickable(onClick = onClose),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text(text = "DONE", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(0.62f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$",
+                    color = palette.goldColor,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFF0A1426))
+                        .border(
+                            width = 1.dp,
+                            color = if (inputError != null) Color(0xFFFF6B6B) else palette.goldColor.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 10.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (customInput.isEmpty()) {
+                        Text(
+                            text = "Amount",
+                            color = palette.textDimColor,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    BasicTextField(
+                        value = customInput,
+                        onValueChange = {
+                            customInput = it
+                            if (inputError != null) inputError = null
+                        },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        cursorBrush = SolidColor(palette.goldColor),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { submitCustomAmount() }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .width(72.dp)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF2E8540), Color(0xFF144D22))
+                            )
+                        )
+                        .border(1.2.dp, Color(0xFF56C470), RoundedCornerShape(6.dp))
+                        .clickable { submitCustomAmount() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "ADD",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier.height(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val err = inputError
+                if (err != null) {
+                    Text(
+                        text = err,
+                        color = Color(0xFFFF7A7A),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        if (!compactForIme) {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0x33FFFFFF))
+                    .clickable(onClick = onClose),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "DONE", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
