@@ -30,7 +30,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.data.models.Card
@@ -45,10 +48,14 @@ fun CardSlot(
     choicesHoldingCard: List<Int>, // 1-based choices holding this card (e.g. [1, 2])
     mode: GameMode,
     palette: ThemePalette,
+    cardWidth: Dp = 100.dp,
+    cardHeight: Dp = 140.dp,
     onToggleHold: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val liftOffset by animateDpAsState(targetValue = 0.dp, label = "cardLift")
+    val cardScale = (cardWidth.value / 100f).coerceIn(0.6f, 2.6f)
+    val cardRadius = (8f * cardScale).dp
 
     // Load card image from assets
     val cardBitmap = remember(card) {
@@ -64,8 +71,8 @@ fun CardSlot(
 
     Box(
         modifier = Modifier
-            .width(100.dp)
-            .height(140.dp)
+            .width(cardWidth)
+            .height(cardHeight)
             .offset(y = liftOffset),
         contentAlignment = Alignment.Center
     ) {
@@ -73,14 +80,14 @@ fun CardSlot(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .shadow(elevation = if (isHeld) 10.dp else 4.dp, shape = RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
+                .shadow(elevation = if (isHeld) (10f * cardScale).dp else (4f * cardScale).dp, shape = RoundedCornerShape(cardRadius))
+                .clip(RoundedCornerShape(cardRadius))
                 .background(Color.White)
                 .then(
                     if (isHeld) {
-                        Modifier.border(2.5.dp, palette.goldColor, RoundedCornerShape(8.dp))
+                        Modifier.border((2.5f * cardScale).coerceAtLeast(2f).dp, palette.goldColor, RoundedCornerShape(cardRadius))
                     } else {
-                        Modifier.border(1.dp, Color(0xFF444444), RoundedCornerShape(8.dp))
+                        Modifier.border(1.dp, Color(0xFF444444), RoundedCornerShape(cardRadius))
                     }
                 )
         ) {
@@ -95,37 +102,43 @@ fun CardSlot(
 
         // Authentic Theme-Adhering HELD Badge
         if (isHeld) {
+            val heldScale = cardScale.coerceIn(0.75f, 1.55f)
+            val heldRadius = (4f * heldScale).dp
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-10).dp)
-                    .shadow(elevation = 4.dp, shape = RoundedCornerShape(4.dp))
-                    .clip(RoundedCornerShape(4.dp))
+                    .offset(y = (-8f * heldScale).dp)
+                    .shadow(elevation = (4f * heldScale).dp, shape = RoundedCornerShape(heldRadius))
+                    .clip(RoundedCornerShape(heldRadius))
                     .background(
                         Brush.verticalGradient(
                             listOf(palette.heldTagBgStart, palette.heldTagBgEnd)
                         )
                     )
-                    .border(1.2.dp, palette.heldTagBorder, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 10.dp, vertical = 2.dp)
+                    .border((1.2f * heldScale).coerceAtLeast(1f).dp, palette.heldTagBorder, RoundedCornerShape(heldRadius))
+                    .padding(horizontal = (10f * heldScale).dp, vertical = (2f * heldScale).dp)
             ) {
                 Text(
                     text = "HELD",
                     color = palette.heldTagTextColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
+                    style = TextStyle(
+                        fontSize = (11f * heldScale).sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (1f * heldScale).sp,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
         }
 
         // Learn Mode Choice Dots (bottom-right corner)
         if (choicesHoldingCard.isNotEmpty()) {
+            val dotSize = (10f * cardScale).coerceIn(8f, 20f).dp
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    .padding((4f * cardScale).dp),
+                horizontalArrangement = Arrangement.spacedBy((3f * cardScale).dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 choicesHoldingCard.forEach { choiceNum ->
@@ -136,7 +149,7 @@ fun CardSlot(
                     }
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(dotSize)
                             .shadow(2.dp, CircleShape)
                             .clip(CircleShape)
                             .background(dotColor)

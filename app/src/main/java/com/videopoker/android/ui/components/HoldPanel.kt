@@ -55,6 +55,7 @@ import com.videopoker.android.data.models.HoldCatalogue
 import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.state.DealState
 import com.videopoker.android.ui.state.GameMode
+import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -74,14 +75,16 @@ fun HoldPanel(
 ) {
     val isPracticeWait = (mode == GameMode.PRACTICE && dealState == DealState.DEALT_CHOOSING_HOLDS)
     val isAfterDraw = (dealState == DealState.SHOWDOWN_WIN || dealState == DealState.SHOWDOWN_NO_WIN)
+    val scale = LocalResponsiveMetrics.current.uiScale
+    val panelRadius = (8f * scale).dp
 
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(panelRadius))
             .background(palette.panelColor)
-            .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(panelRadius))
+            .padding(horizontal = (6f * scale).dp, vertical = (3f * scale).dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -92,7 +95,7 @@ fun HoldPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 2.dp),
+                    .padding(bottom = (2f * scale).dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -104,28 +107,29 @@ fun HoldPanel(
                     },
                     color = palette.goldColor,
                     style = TextStyle(
-                        fontSize = 11.5.sp,
+                        fontSize = (11.5f * scale).sp,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 0.8.sp,
+                        letterSpacing = (0.8f * scale).sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
                 )
 
+                val btnRadius = (4f * scale).dp
                 Box(
                     modifier = Modifier
-                        .height(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .height((24f * scale).dp)
+                        .clip(RoundedCornerShape(btnRadius))
                         .background(Color(0x22FFD700))
-                        .border(1.dp, palette.goldColor.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                        .border(1.dp, palette.goldColor.copy(alpha = 0.7f), RoundedCornerShape(btnRadius))
                         .clickable { onOpenCompleteList() }
-                        .padding(horizontal = 8.dp),
+                        .padding(horizontal = (8f * scale).dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "COMPLETE LIST",
                         color = palette.goldColor,
                         style = TextStyle(
-                            fontSize = 9.5.sp,
+                            fontSize = (9.5f * scale).sp,
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -139,7 +143,7 @@ fun HoldPanel(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = (4f * scale).dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -147,10 +151,10 @@ fun HoldPanel(
                         text = "Select your cards to hold, then tap DRAW.\nOptimal strategy review will appear here after the draw.",
                         color = palette.payTableTextColor,
                         style = TextStyle(
-                            fontSize = 11.sp,
+                            fontSize = (11f * scale).sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
-                            lineHeight = 15.sp,
+                            lineHeight = (15f * scale).sp,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
                     )
@@ -168,7 +172,7 @@ fun HoldPanel(
                         text = "Deal a hand to view optimal holds and strategy choices.",
                         color = palette.textDimColor,
                         style = TextStyle(
-                            fontSize = 11.sp,
+                            fontSize = (11f * scale).sp,
                             fontWeight = FontWeight.Normal,
                             textAlign = TextAlign.Center,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
@@ -177,7 +181,7 @@ fun HoldPanel(
                 }
             } else {
                 // Learn Mode OR Practice Mode after draw:
-                // 2-row constrained viewport with vertical scrolling and enlarged card chips
+                // 2-row constrained viewport with vertical scrolling and scaled card chips
                 val matchedIndex = if (isAfterDraw) {
                     choices.indexOfFirst { it.holdMask == playerHeldMask }
                 } else -1
@@ -195,12 +199,13 @@ fun HoldPanel(
                         .weight(1f)
                 ) {
                     val density = LocalDensity.current
-                    val rowSpacing = 4.dp
+                    val rowSpacing = (4f * scale).dp
                     val rowHeight = with(density) {
                         val availPx = constraints.maxHeight - rowSpacing.roundToPx()
                         (availPx / 2).toDp().coerceAtLeast(36.dp)
                     }
-                    val chipHeight = (rowHeight - 6.dp).coerceIn(32.dp, 46.dp)
+                    val rowScale = (rowHeight.value / 48f).coerceIn(0.95f, 1.95f)
+                    val chipHeight = (rowHeight * 0.84f).coerceIn(32.dp, 92.dp)
                     val chipWidth = chipHeight * 0.72f
                     val snapFlingBehavior = rememberSnapFlingBehavior(
                         lazyListState = listState,
@@ -225,6 +230,7 @@ fun HoldPanel(
                                     isTop = (idx == 0),
                                     isPlayerHold = (isAfterDraw && idx == matchedIndex),
                                     rowHeight = rowHeight,
+                                    rowScale = rowScale,
                                     chipWidth = chipWidth,
                                     chipHeight = chipHeight,
                                     palette = palette
@@ -239,6 +245,7 @@ fun HoldPanel(
                                     OffStrategyHoldRow(
                                         heldCards = heldCards,
                                         rowHeight = rowHeight,
+                                        rowScale = rowScale,
                                         chipWidth = chipWidth,
                                         chipHeight = chipHeight
                                     )
@@ -246,14 +253,14 @@ fun HoldPanel(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width((4f * scale).dp))
 
                         HoldListScrollbar(
                             listState = listState,
                             totalItems = totalRowCount,
                             palette = palette,
                             modifier = Modifier
-                                .width(10.dp)
+                                .width((10f * scale).dp)
                                 .fillMaxHeight()
                         )
                     }
@@ -269,6 +276,7 @@ private fun HoldChoiceRow(
     isTop: Boolean,
     isPlayerHold: Boolean,
     rowHeight: Dp,
+    rowScale: Float,
     chipWidth: Dp,
     chipHeight: Dp,
     palette: ThemePalette
@@ -279,12 +287,13 @@ private fun HoldChoiceRow(
         else -> palette.choice3Color
     }
     val badgeTextColor = if (badgeColor.luminance() < 0.4f) Color.White else Color(0xFF14100A)
+    val rowRadius = (6f * rowScale).dp
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(rowHeight)
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(rowRadius))
             .background(if (isTop) palette.goldColor.copy(alpha = 0.14f) else Color(0x18FFFFFF))
             .border(
                 width = if (isPlayerHold) 1.5.dp else 1.dp,
@@ -293,15 +302,15 @@ private fun HoldChoiceRow(
                     isTop -> palette.goldColor.copy(alpha = 0.55f)
                     else -> Color(0x28FFFFFF)
                 },
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(rowRadius)
             )
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .padding(horizontal = (6f * rowScale).dp, vertical = (2f * rowScale).dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 1. Rank Badge (#1, #2, #3...)
         Box(
             modifier = Modifier
-                .size(22.dp)
+                .size((22f * rowScale).dp)
                 .clip(CircleShape)
                 .background(badgeColor),
             contentAlignment = Alignment.Center
@@ -310,18 +319,19 @@ private fun HoldChoiceRow(
                 text = "#${choice.row}",
                 color = badgeTextColor,
                 style = TextStyle(
-                    fontSize = 10.5.sp,
+                    fontSize = (10.5f * rowScale).sp,
                     fontWeight = FontWeight.Black,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width((6f * rowScale).dp))
 
         // 2. Enlarged Readable Card Chips
         HoldCardStrip(
             cards = choice.keptCards,
+            rowScale = rowScale,
             chipWidth = chipWidth,
             chipHeight = chipHeight,
             pillTextColor = palette.payTableTextColor
@@ -331,14 +341,14 @@ private fun HoldChoiceRow(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 4.dp),
+                .padding(horizontal = (4f * rowScale).dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = choice.description,
                 color = palette.payTableTextColor,
                 style = TextStyle(
-                    fontSize = 12.sp,
+                    fontSize = (12f * rowScale).sp,
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
@@ -353,12 +363,12 @@ private fun HoldChoiceRow(
                 keepsText
             }
             if (subText.isNotBlank()) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height((1f * rowScale).dp))
                 Text(
                     text = subText,
                     color = palette.textDimColor,
                     style = TextStyle(
-                        fontSize = 10.sp,
+                        fontSize = (10f * rowScale).sp,
                         fontWeight = FontWeight.SemiBold,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     ),
@@ -370,16 +380,17 @@ private fun HoldChoiceRow(
 
         // 4. Right Badges: Top Choice and Player Held Indicator
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy((4f * rowScale).dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isTop) {
-                HoldTagBadge(text = "✓ TOP", background = Color(0xFF2B8A3E))
+                HoldTagBadge(text = "✓ TOP", background = Color(0xFF2B8A3E), rowScale = rowScale)
             }
             if (isPlayerHold) {
                 HoldTagBadge(
                     text = if (isTop) "PLAYED" else "HELD",
-                    background = if (isTop) Color(0xFF1E7E34) else Color(0xFFC3162F)
+                    background = if (isTop) Color(0xFF1E7E34) else Color(0xFFC3162F),
+                    rowScale = rowScale
                 )
             }
         }
@@ -390,22 +401,24 @@ private fun HoldChoiceRow(
 private fun OffStrategyHoldRow(
     heldCards: List<Card>,
     rowHeight: Dp,
+    rowScale: Float,
     chipWidth: Dp,
     chipHeight: Dp
 ) {
+    val rowRadius = (6f * rowScale).dp
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(rowHeight)
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(rowRadius))
             .background(Color(0x22C3162F))
-            .border(1.5.dp, Color(0xFFC3162F), RoundedCornerShape(6.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .border(1.5.dp, Color(0xFFC3162F), RoundedCornerShape(rowRadius))
+            .padding(horizontal = (6f * rowScale).dp, vertical = (2f * rowScale).dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(22.dp)
+                .size((22f * rowScale).dp)
                 .clip(CircleShape)
                 .background(Color(0xFFC3162F)),
             contentAlignment = Alignment.Center
@@ -414,17 +427,18 @@ private fun OffStrategyHoldRow(
                 text = "✕",
                 color = Color.White,
                 style = TextStyle(
-                    fontSize = 10.5.sp,
+                    fontSize = (10.5f * rowScale).sp,
                     fontWeight = FontWeight.Black,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width((6f * rowScale).dp))
 
         HoldCardStrip(
             cards = heldCards,
+            rowScale = rowScale,
             chipWidth = chipWidth,
             chipHeight = chipHeight,
             pillTextColor = Color.White
@@ -434,7 +448,7 @@ private fun OffStrategyHoldRow(
             text = "Your hold (Off-strategy)",
             color = Color(0xFFFFCDD2),
             style = TextStyle(
-                fontSize = 11.5.sp,
+                fontSize = (11.5f * rowScale).sp,
                 fontWeight = FontWeight.Bold,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             ),
@@ -442,40 +456,42 @@ private fun OffStrategyHoldRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 4.dp)
+                .padding(horizontal = (4f * rowScale).dp)
         )
 
-        HoldTagBadge(text = "HELD", background = Color(0xFFC3162F))
+        HoldTagBadge(text = "HELD", background = Color(0xFFC3162F), rowScale = rowScale)
     }
 }
 
 @Composable
 private fun HoldCardStrip(
     cards: List<Card>,
+    rowScale: Float,
     chipWidth: Dp,
     chipHeight: Dp,
     pillTextColor: Color
 ) {
     Row(
-        modifier = Modifier.padding(end = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = Modifier.padding(end = (6f * rowScale).dp),
+        horizontalArrangement = Arrangement.spacedBy((3f * rowScale).dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (cards.isEmpty()) {
+            val pillRadius = (4f * rowScale).dp
             Box(
                 modifier = Modifier
                     .height(chipHeight * 0.72f)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(RoundedCornerShape(pillRadius))
                     .background(Color(0x33FFFFFF))
-                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp),
+                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(pillRadius))
+                    .padding(horizontal = (8f * rowScale).dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "DISCARD ALL",
                     color = pillTextColor,
                     style = TextStyle(
-                        fontSize = 10.5.sp,
+                        fontSize = (10.5f * rowScale).sp,
                         fontWeight = FontWeight.Bold,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
@@ -507,8 +523,8 @@ private fun HoldCardChip(
         'd' -> "♦"
         else -> "♣"
     }
-    val rankFontSp = ((height.value * if (card.rank == 'T') 0.36f else 0.40f)).coerceIn(12f, 18.5f).sp
-    val suitFontSp = (height.value * 0.36f).coerceIn(11f, 17f).sp
+    val rankFontSp = ((height.value * if (card.rank == 'T') 0.36f else 0.40f)).coerceIn(12f, 34f).sp
+    val suitFontSp = (height.value * 0.36f).coerceIn(11f, 31f).sp
 
     Box(
         modifier = Modifier
@@ -550,18 +566,19 @@ private fun HoldCardChip(
 }
 
 @Composable
-private fun HoldTagBadge(text: String, background: Color) {
+private fun HoldTagBadge(text: String, background: Color, rowScale: Float = 1f) {
+    val badgeRadius = (4f * rowScale).dp
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(badgeRadius))
             .background(background)
-            .padding(horizontal = 6.dp, vertical = 2.5.dp)
+            .padding(horizontal = (6f * rowScale).dp, vertical = (2.5f * rowScale).dp)
     ) {
         Text(
             text = text,
             color = Color.White,
             style = TextStyle(
-                fontSize = 9.sp,
+                fontSize = (9f * rowScale).sp,
                 fontWeight = FontWeight.Black,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             )

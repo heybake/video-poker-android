@@ -35,6 +35,7 @@ import com.videopoker.android.ui.components.SoundButton
 import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.DealState
 import com.videopoker.android.ui.state.GameState
+import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
 
 @Composable
@@ -55,25 +56,29 @@ fun BottomDeck(
     onOpenOverlay: (ActiveOverlay) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val metrics = LocalResponsiveMetrics.current
+    val scale = metrics.uiScale
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            .padding(horizontal = metrics.s(4f), vertical = metrics.s(2f)),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 1. Compact Upper/Side HUD Status Bar (20dp) - Win + Sound on Left, Bet + Credits on Right
+        // 1. Upper HUD Status Bar anchored to card/control column width so counters stay visually tied to cards
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(20.dp)
-                .padding(horizontal = 8.dp),
+                .width(metrics.hudContainerWidth)
+                .height(metrics.s(20f))
+                .padding(horizontal = metrics.s(6f)),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left HUD Cluster: WIN and Sound shifted close together
+            // Left HUD Cluster: WIN and Sound anchored together
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(metrics.s(10f))
             ) {
                 // WIN (Click to toggle WIN independently between dollars and credits)
                 val winDisplay = if (state.winAsCash) {
@@ -89,7 +94,7 @@ fun BottomDeck(
                         text = "WIN ",
                         color = palette.statusLabelColor,
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = (12f * scale).sp,
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -98,7 +103,7 @@ fun BottomDeck(
                         text = winDisplay,
                         color = palette.statusValueColor,
                         style = TextStyle(
-                            fontSize = 13.5.sp,
+                            fontSize = (13.5f * scale).sp,
                             fontWeight = FontWeight.Black,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -108,7 +113,7 @@ fun BottomDeck(
                 // Sound Speaker Button & Recording Indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(metrics.s(6f))
                 ) {
                     SoundButton(
                         volume = state.soundVolume,
@@ -120,37 +125,38 @@ fun BottomDeck(
 
                     // Recording Indicator (Visible only when session recording is active)
                     if (state.isRecordingSession) {
+                        val recRadius = metrics.s(4f)
                         Row(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(recRadius))
                                 .background(Color(0x33D6293B))
-                                .border(1.dp, Color(0xFFD6293B), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 1.5.dp),
+                                .border(1.dp, Color(0xFFD6293B), RoundedCornerShape(recRadius))
+                                .padding(horizontal = metrics.s(5f), vertical = metrics.s(1.5f)),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(6.dp)
+                                    .size(metrics.s(6f))
                                     .clip(CircleShape)
                                     .background(Color(0xFFE53935))
                             )
-                            Spacer(modifier = Modifier.width(3.dp))
+                            Spacer(modifier = Modifier.width(metrics.s(3f)))
                             Text(
                                 text = "REC",
                                 color = Color(0xFFFF8A80),
-                                fontSize = 9.sp,
+                                fontSize = (9f * scale).sp,
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 0.8.sp
+                                letterSpacing = (0.8f * scale).sp
                             )
                         }
                     }
                 }
             }
 
-            // Right HUD Cluster: BET and Credits shifted close together
+            // Right HUD Cluster: BET and Credits anchored together
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(metrics.s(12f))
             ) {
                 // BET (Click to toggle BET independently between dollars and credits)
                 val betDisplay = if (state.betAsCash) {
@@ -166,7 +172,7 @@ fun BottomDeck(
                         text = "BET ",
                         color = palette.statusLabelColor,
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = (12f * scale).sp,
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -175,7 +181,7 @@ fun BottomDeck(
                         text = betDisplay,
                         color = palette.statusValueColor,
                         style = TextStyle(
-                            fontSize = 13.5.sp,
+                            fontSize = (13.5f * scale).sp,
                             fontWeight = FontWeight.Black,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -196,7 +202,7 @@ fun BottomDeck(
                         text = if (state.creditAsCash) "CASH " else "CREDIT ",
                         color = palette.statusLabelColor,
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = (12f * scale).sp,
                             fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -205,7 +211,7 @@ fun BottomDeck(
                         text = cashDisplay,
                         color = palette.statusValueColor,
                         style = TextStyle(
-                            fontSize = 13.5.sp,
+                            fontSize = (13.5f * scale).sp,
                             fontWeight = FontWeight.Black,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
                         )
@@ -214,88 +220,97 @@ fun BottomDeck(
             }
         }
 
-        // 2. Action Button Strip (40dp) - Perfectly centered on screen
+        // 2. Scaled Action Button Strip centered cleanly
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                .width(metrics.actionBarWidth)
+                .height(metrics.s(40f)),
+            horizontalArrangement = Arrangement.spacedBy(metrics.s(4f), Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HELP (48dp)
+            // HELP
             ActionButton(
                 text = "HELP",
                 width = 48,
+                scale = scale,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.HELP) }
             )
 
-            // INSERT CASH (78dp)
+            // INSERT CASH
             ActionButton(
                 text = "INSERT\nCASH",
                 width = 78,
+                scale = scale,
                 palette = palette,
                 onClick = onOpenAddMoney
             )
 
-            // CASH OUT (72dp)
+            // CASH OUT
             ActionButton(
                 text = "CASH\nOUT",
                 width = 72,
+                scale = scale,
                 palette = palette,
                 onClick = onCashOut
             )
 
-            // MORE GAMES (88dp)
+            // MORE GAMES
             ActionButton(
                 text = "MORE\nGAMES",
                 width = 88,
+                scale = scale,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.MORE_GAMES) }
             )
 
-            // OPTIONS (68dp)
+            // OPTIONS
             ActionButton(
                 text = "OPTIONS",
                 width = 68,
+                scale = scale,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.OPTIONS) }
             )
 
-            // SEE PAYS (68dp)
+            // SEE PAYS
             ActionButton(
                 text = "SEE PAYS",
                 width = 68,
+                scale = scale,
                 palette = palette,
                 onClick = { onOpenOverlay(ActiveOverlay.SEE_PAYS) }
             )
 
-            // SPEED (74dp)
+            // SPEED
             val speedArrows = "▶".repeat(state.speedLevel)
             ActionButton(
                 text = "SPEED $speedArrows",
                 width = 74,
+                scale = scale,
                 palette = palette,
                 onClick = onCycleSpeed
             )
 
-            // BET ONE (58dp)
+            // BET ONE
             ActionButton(
                 text = "BET\nONE",
                 width = 58,
+                scale = scale,
                 palette = palette,
                 onClick = onBetOne
             )
 
-            // BET MAX (58dp)
+            // BET MAX
             ActionButton(
                 text = "BET\nMAX",
                 width = 58,
+                scale = scale,
                 palette = palette,
                 onClick = onBetMax
             )
 
-            // DENOM COIN (36dp circle)
+            // DENOM COIN
             val denomLabel = if (state.currentDenom < 1.0) {
                 "${(state.currentDenom * 100).toInt()}¢"
             } else {
@@ -303,8 +318,8 @@ fun BottomDeck(
             }
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .shadow(4.dp, CircleShape)
+                    .size(metrics.s(36f))
+                    .shadow(metrics.s(4f), CircleShape)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
@@ -319,27 +334,28 @@ fun BottomDeck(
                     text = denomLabel,
                     color = Color(0xFF2A1A08),
                     style = TextStyle(
-                        fontSize = 10.5.sp,
+                        fontSize = (10.5f * scale).sp,
                         fontWeight = FontWeight.Black,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
                 )
             }
 
-            // DRAW / DEAL (98dp tactile button)
+            // DRAW / DEAL tactile button
             val dealDrawLabel = if (state.dealState == DealState.DEALT_CHOOSING_HOLDS) "DRAW" else "DEAL"
+            val dealRadius = metrics.s(6f)
             Box(
                 modifier = Modifier
-                    .width(98.dp)
+                    .width(metrics.s(98f))
                     .fillMaxHeight()
-                    .shadow(6.dp, RoundedCornerShape(6.dp))
-                    .clip(RoundedCornerShape(6.dp))
+                    .shadow(metrics.s(6f), RoundedCornerShape(dealRadius))
+                    .clip(RoundedCornerShape(dealRadius))
                     .background(
                         Brush.verticalGradient(
                             listOf(palette.dealButtonBgStart, palette.dealButtonBgEnd)
                         )
                     )
-                    .border(1.5.dp, palette.dealButtonBorderColor, RoundedCornerShape(6.dp))
+                    .border(1.5.dp, palette.dealButtonBorderColor, RoundedCornerShape(dealRadius))
                     .clickable(enabled = !state.isAnimating, onClick = onDealDraw),
                 contentAlignment = Alignment.Center
             ) {
@@ -347,22 +363,22 @@ fun BottomDeck(
                     text = dealDrawLabel,
                     color = palette.dealButtonTextColor,
                     style = TextStyle(
-                        fontSize = 15.sp,
+                        fontSize = (15f * scale).sp,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 1.2.sp,
+                        letterSpacing = (1.2f * scale).sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
                 )
             }
         }
 
-        // 3. Footer Bar: Game Title, Centered Version Number & Hands Counters (Safe from phone corner curves)
+        // 3. Footer Bar anchored symmetrically with control/card deck bounds
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 52.dp)
-                .padding(top = 2.dp)
-                .height(16.dp),
+                .width(metrics.hudContainerWidth)
+                .padding(horizontal = metrics.s(6f))
+                .padding(top = metrics.s(2f))
+                .height(metrics.s(16f)),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -377,7 +393,7 @@ fun BottomDeck(
                 text = gameTitle,
                 color = palette.footerTextColor,
                 style = TextStyle(
-                    fontSize = 10.sp,
+                    fontSize = (10f * scale).sp,
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
@@ -386,12 +402,12 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.11",
+                text = "v1.0.12",
                 color = palette.goldColor,
                 style = TextStyle(
-                    fontSize = 10.5.sp,
+                    fontSize = (10.5f * scale).sp,
                     fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = (0.5f * scale).sp,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
                 modifier = Modifier.weight(0.6f),
@@ -402,7 +418,7 @@ fun BottomDeck(
                 text = counterText,
                 color = palette.footerTextColor,
                 style = TextStyle(
-                    fontSize = 10.sp,
+                    fontSize = (10f * scale).sp,
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
@@ -417,21 +433,23 @@ fun BottomDeck(
 fun ActionButton(
     text: String,
     width: Int,
+    scale: Float = 1f,
     palette: ThemePalette,
     onClick: () -> Unit
 ) {
+    val radius = (5f * scale).dp
     Box(
         modifier = Modifier
-            .width(width.dp)
+            .width((width * scale).dp)
             .fillMaxHeight()
-            .shadow(3.dp, RoundedCornerShape(5.dp))
-            .clip(RoundedCornerShape(5.dp))
+            .shadow((3f * scale).dp, RoundedCornerShape(radius))
+            .clip(RoundedCornerShape(radius))
             .background(
                 Brush.verticalGradient(
                     listOf(palette.buttonBgStart, palette.buttonBgEnd)
                 )
             )
-            .border(1.dp, palette.buttonBorderColor, RoundedCornerShape(5.dp))
+            .border(1.dp, palette.buttonBorderColor, RoundedCornerShape(radius))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -439,10 +457,10 @@ fun ActionButton(
             text = text,
             color = palette.buttonTextColor,
             style = TextStyle(
-                fontSize = 10.5.sp,
+                fontSize = (10.5f * scale).sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
-                lineHeight = 12.sp,
+                lineHeight = (12f * scale).sp,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             )
         )

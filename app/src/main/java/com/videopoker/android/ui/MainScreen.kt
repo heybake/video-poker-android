@@ -3,24 +3,28 @@ package com.videopoker.android.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.videopoker.android.ui.components.OverlayDialogs
 import com.videopoker.android.ui.decks.BottomDeck
 import com.videopoker.android.ui.decks.MidDeck
 import com.videopoker.android.ui.decks.TopDeck
 import com.videopoker.android.ui.state.GameViewModel
+import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemeManager
+import com.videopoker.android.ui.theme.calculateResponsiveMetrics
 
 @Composable
 fun MainScreen(viewModel: GameViewModel) {
@@ -28,8 +32,8 @@ fun MainScreen(viewModel: GameViewModel) {
     val palette = ThemeManager.getPalette(state.currentTheme)
     val context = LocalContext.current
 
-    // Outer container fills phone screen with authentic theme background
-    Box(
+    // Outer container fills phone or tablet viewport with authentic theme background
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .clipToBounds()
@@ -40,47 +44,56 @@ fun MainScreen(viewModel: GameViewModel) {
             ),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Top Deck: Pay Table + Hold Panel (Generous 140f weight for clean pay table display)
-            TopDeck(
-                state = state,
-                palette = palette,
-                onOpenOverlay = viewModel::openOverlay,
-                modifier = Modifier.weight(140f)
+        val metrics = remember(maxWidth, maxHeight) {
+            calculateResponsiveMetrics(
+                viewportWidthDp = maxWidth.value,
+                viewportHeightDp = maxHeight.value
             )
+        }
 
-            // Mid Deck: Plaque + Scaled 5 Cards (190f weight for enlarged, high-legibility cards)
-            MidDeck(
-                state = state,
-                palette = palette,
-                onToggleHold = viewModel::onToggleHold,
-                onSetHold = viewModel::onSetHold,
-                modifier = Modifier.weight(190f)
-            )
+        CompositionLocalProvider(LocalResponsiveMetrics provides metrics) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = metrics.outerPadH, vertical = metrics.outerPadV),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Top Deck: Pay Table + Hold Panel scaled proportionally to window height
+                TopDeck(
+                    state = state,
+                    palette = palette,
+                    onOpenOverlay = viewModel::openOverlay,
+                    modifier = Modifier.weight(metrics.topWeight)
+                )
 
-            // Bottom Deck: Compact Status Row + 10 Action Buttons + Footer (82f weight)
-            BottomDeck(
-                state = state,
-                palette = palette,
-                onDealDraw = viewModel::onDealDraw,
-                onBetOne = viewModel::onBetOne,
-                onBetMax = viewModel::onBetMax,
-                onCycleSpeed = viewModel::onCycleSpeed,
-                onToggleWinCurrency = viewModel::onToggleWinCurrency,
-                onToggleBetCurrency = viewModel::onToggleBetCurrency,
-                onToggleCreditCurrency = viewModel::onToggleCreditCurrency,
-                onOpenAddMoney = viewModel::onOpenAddMoney,
-                onCashOut = viewModel::onCashOut,
-                onToggleVolumePopup = viewModel::onToggleVolumePopup,
-                onVolumeChange = viewModel::onVolumeChange,
-                onOpenOverlay = viewModel::openOverlay,
-                modifier = Modifier.weight(82f)
-            )
+                // Mid Deck: Plaque + Dynamically Sized 5 Cards
+                MidDeck(
+                    state = state,
+                    palette = palette,
+                    onToggleHold = viewModel::onToggleHold,
+                    onSetHold = viewModel::onSetHold,
+                    modifier = Modifier.weight(metrics.midWeight)
+                )
+
+                // Bottom Deck: HUD Status Row (anchored to deck width) + Scaled Action Buttons + Footer
+                BottomDeck(
+                    state = state,
+                    palette = palette,
+                    onDealDraw = viewModel::onDealDraw,
+                    onBetOne = viewModel::onBetOne,
+                    onBetMax = viewModel::onBetMax,
+                    onCycleSpeed = viewModel::onCycleSpeed,
+                    onToggleWinCurrency = viewModel::onToggleWinCurrency,
+                    onToggleBetCurrency = viewModel::onToggleBetCurrency,
+                    onToggleCreditCurrency = viewModel::onToggleCreditCurrency,
+                    onOpenAddMoney = viewModel::onOpenAddMoney,
+                    onCashOut = viewModel::onCashOut,
+                    onToggleVolumePopup = viewModel::onToggleVolumePopup,
+                    onVolumeChange = viewModel::onVolumeChange,
+                    onOpenOverlay = viewModel::openOverlay,
+                    modifier = Modifier.weight(metrics.bottomWeight)
+                )
+            }
         }
 
         // Modal Overlays (Help, More Games, Options, Denom, See Pays, Add Money, Cash Out)

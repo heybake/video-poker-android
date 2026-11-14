@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
 
 @Composable
@@ -41,16 +42,18 @@ fun SoundButton(
     onVolumeChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scale = LocalResponsiveMetrics.current.uiScale
+
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         // Speaker Icon Canvas (Click to toggle volume slider popup)
         Box(
             modifier = Modifier
-                .size(24.dp)
+                .size((24f * scale).dp)
                 .clickable { onTogglePopup() },
             contentAlignment = Alignment.Center
         ) {
             val iconColor = palette.soundIconColor
-            Canvas(modifier = Modifier.size(18.dp)) {
+            Canvas(modifier = Modifier.size((18f * scale).dp)) {
                 val w = size.width
                 val h = size.height
 
@@ -75,7 +78,7 @@ fun SoundButton(
                         useCenter = false,
                         topLeft = Offset(w * 0.45f, h * 0.25f),
                         size = androidx.compose.ui.geometry.Size(w * 0.5f, h * 0.5f),
-                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                        style = Stroke(width = (2f * scale).dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
                 if (volume > 0.5f) {
@@ -86,7 +89,7 @@ fun SoundButton(
                         useCenter = false,
                         topLeft = Offset(w * 0.55f, h * 0.1f),
                         size = androidx.compose.ui.geometry.Size(w * 0.7f, h * 0.8f),
-                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                        style = Stroke(width = (2f * scale).dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
             }
@@ -96,7 +99,7 @@ fun SoundButton(
         if (isPopupOpen) {
             Popup(
                 alignment = Alignment.TopCenter,
-                offset = IntOffset(0, -110),
+                offset = IntOffset(0, (-110 * scale).toInt()),
                 onDismissRequest = onTogglePopup
             ) {
                 Box(
@@ -105,22 +108,22 @@ fun SoundButton(
                         .clip(RoundedCornerShape(8.dp))
                         .background(palette.overlayBgColor)
                         .border(1.5.dp, palette.goldColor, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .padding(horizontal = (10f * scale).dp, vertical = (6f * scale).dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
                     ) {
                         Text(
                             text = "VOL",
                             color = palette.goldColor,
-                            fontSize = 11.sp,
+                            fontSize = (11f * scale).sp,
                             fontWeight = FontWeight.Bold
                         )
                         Slider(
                             value = volume,
                             onValueChange = onVolumeChange,
-                            modifier = Modifier.width(120.dp),
+                            modifier = Modifier.width((120f * scale).dp),
                             colors = SliderDefaults.colors(
                                 thumbColor = palette.goldColor,
                                 activeTrackColor = palette.goldColor,
@@ -130,13 +133,13 @@ fun SoundButton(
                         Text(
                             text = "${(volume * 100).toInt()}%",
                             color = Color.White,
-                            fontSize = 11.sp,
+                            fontSize = (11f * scale).sp,
                             fontWeight = FontWeight.Bold
                         )
                         // Close button '✕' to return to just the volume icon
                         Box(
                             modifier = Modifier
-                                .size(20.dp)
+                                .size((20f * scale).dp)
                                 .clip(CircleShape)
                                 .background(Color(0x33FFFFFF))
                                 .clickable { onTogglePopup() },
@@ -145,7 +148,7 @@ fun SoundButton(
                             Text(
                                 text = "✕",
                                 color = Color.White,
-                                fontSize = 11.sp,
+                                fontSize = (11f * scale).sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }

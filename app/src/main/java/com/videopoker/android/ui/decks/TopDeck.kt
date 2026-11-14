@@ -4,17 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.videopoker.android.ui.components.HoldPanel
 import com.videopoker.android.ui.components.PayTableGrid
+import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
+import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
-
-import com.videopoker.android.ui.state.ActiveOverlay
 
 @Composable
 fun TopDeck(
@@ -23,11 +21,13 @@ fun TopDeck(
     onOpenOverlay: (ActiveOverlay) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val metrics = LocalResponsiveMetrics.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = metrics.s(4f), vertical = metrics.s(2f)),
+        horizontalArrangement = Arrangement.spacedBy(metrics.s(8f))
     ) {
         if (state.currentMode == GameMode.CASINO) {
             // Full-width 5-coin pay table
@@ -40,14 +40,14 @@ fun TopDeck(
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            // Split View: 375dp Pay Table + Hold Choices Panel
+            // Proportional Split View (~41% Pay Table / ~59% Hold Choices Panel across phone & tablet)
             PayTableGrid(
                 game = state.currentGame,
                 currentBet = state.currentBet,
                 winningRank = state.handRank,
                 mode = state.currentMode,
                 palette = palette,
-                modifier = Modifier.width(375.dp)
+                modifier = Modifier.weight(0.41f)
             )
 
             HoldPanel(
@@ -60,7 +60,7 @@ fun TopDeck(
                 practiceMadeTopChoice = state.practiceMadeTopChoice,
                 palette = palette,
                 onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(0.59f)
             )
         }
     }
