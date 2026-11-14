@@ -1,8 +1,12 @@
 package com.videopoker.android.ui.components
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,11 +30,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -37,14 +44,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -57,6 +69,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.round
@@ -484,6 +498,8 @@ private fun OptionsContent(
     onToggleRecordingSession: () -> Unit,
     onClose: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -494,143 +510,250 @@ private fun OptionsContent(
             CloseButton(palette = palette, onClose = onClose)
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Mode Selector Pills
-        Text(text = "TRAINING MODE", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(3.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GameMode.entries.forEach { mode ->
-                val isCur = (state.currentMode == mode)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                        .clickable { onModeToggle(mode) }
-                        .padding(vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = mode.displayName,
-                        color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Visual Themes (8 Authentic Themes)
-        Text(text = "AUTHENTIC THEMES", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(3.dp))
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.height(76.dp)
-        ) {
-            items(AppTheme.entries) { theme ->
-                val isCur = (state.currentTheme == theme)
-                val p = ThemeManager.getPalette(theme)
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                        .border(1.dp, if (isCur) Color.White else Color(0x44FFFFFF), RoundedCornerShape(6.dp))
-                        .clickable { onThemeSelect(theme) }
-                        .padding(horizontal = 6.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(11.dp)
-                            .clip(CircleShape)
-                            .background(p.swatchColor)
-                            .border(1.dp, Color.White, CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = theme.displayName,
-                        color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Master Volume Slider
-        Text(text = "SOUND VOLUME (${(state.soundVolume * 100).toInt()}%)", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-        Slider(
-            value = state.soundVolume,
-            onValueChange = onVolumeChange,
-            modifier = Modifier.height(26.dp),
-            colors = SliderDefaults.colors(
-                thumbColor = palette.goldColor,
-                activeTrackColor = palette.goldColor,
-                inactiveTrackColor = Color(0x44FFFFFF)
-            )
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Session Recording Toggle
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(if (state.isRecordingSession) Color(0x33D6293B) else Color(0x22FFFFFF))
-                .border(
-                    width = 1.dp,
-                    color = if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF),
-                    shape = RoundedCornerShape(6.dp)
-                )
-                .clickable { onToggleRecordingSession() }
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(if (state.isRecordingSession) Color(0xFFE53935) else Color(0xFF888888))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = "RECORD PLAY SESSION",
-                        color = Color(0xFFF5F0E6),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = if (state.isRecordingSession) "Logging all hands to session history" else "Session logging is disabled",
-                        color = Color(0xFFB0A495),
-                        fontSize = 9.5.sp
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .verticalScroll(scrollState)
+                    .padding(bottom = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Mode Selector Pills
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "TRAINING MODE", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GameMode.entries.forEach { mode ->
+                            val isCur = (state.currentMode == mode)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                                    .clickable { onModeToggle(mode) }
+                                    .padding(vertical = 7.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = mode.displayName,
+                                    color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Visual Themes (expandable multi-row grid)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "THEMES", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        AppTheme.entries.chunked(4).forEach { rowThemes ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                rowThemes.forEach { theme ->
+                                    val isCur = (state.currentTheme == theme)
+                                    val p = ThemeManager.getPalette(theme)
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                                            .border(1.dp, if (isCur) Color.White else Color(0x44FFFFFF), RoundedCornerShape(6.dp))
+                                            .clickable { onThemeSelect(theme) }
+                                            .padding(horizontal = 6.dp, vertical = 7.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(11.dp)
+                                                .clip(CircleShape)
+                                                .background(p.swatchColor)
+                                                .border(1.dp, Color.White, CircleShape)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = theme.displayName,
+                                            color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                                repeat(4 - rowThemes.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Master Volume Slider
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = "SOUND VOLUME (${(state.soundVolume * 100).toInt()}%)", color = palette.goldColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                    Slider(
+                        value = state.soundVolume,
+                        onValueChange = onVolumeChange,
+                        modifier = Modifier.height(28.dp),
+                        colors = SliderDefaults.colors(
+                            thumbColor = palette.goldColor,
+                            activeTrackColor = palette.goldColor,
+                            inactiveTrackColor = Color(0x44FFFFFF)
+                        )
                     )
                 }
+
+                // Session Recording Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (state.isRecordingSession) Color(0x33D6293B) else Color(0x22FFFFFF))
+                        .border(
+                            width = 1.dp,
+                            color = if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF),
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .clickable { onToggleRecordingSession() }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(if (state.isRecordingSession) Color(0xFFE53935) else Color(0xFF888888))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "RECORD PLAY SESSION",
+                                color = Color(0xFFF5F0E6),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (state.isRecordingSession) "Logging all hands to session history" else "Session logging is disabled",
+                                color = Color(0xFFB0A495),
+                                fontSize = 9.5.sp
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = if (state.isRecordingSession) "ON" else "OFF",
+                            color = Color.White,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                }
             }
-            Box(
+
+            OptionsVerticalScrollbar(
+                scrollState = scrollState,
+                palette = palette,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF))
-                    .padding(horizontal = 10.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text = if (state.isRecordingSession) "ON" else "OFF",
-                    color = Color.White,
-                    fontSize = 10.5.sp,
-                    fontWeight = FontWeight.Black
-                )
+                    .width(12.dp)
+                    .fillMaxHeight()
+            )
+        }
+    }
+}
+
+/**
+ * Interactive vertical scrollbar synchronized with the Options & Settings ScrollState.
+ */
+@Composable
+private fun OptionsVerticalScrollbar(
+    scrollState: ScrollState,
+    palette: ThemePalette,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val canScroll = scrollState.maxValue > 0
+
+    fun scrollToFraction(fraction: Float) {
+        if (!canScroll) return
+        val target = (fraction.coerceIn(0f, 1f) * scrollState.maxValue).roundToInt()
+        coroutineScope.launch {
+            scrollState.scrollTo(target)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .pointerInput(scrollState.maxValue) {
+                detectTapGestures { offset ->
+                    if (size.height > 0) {
+                        scrollToFraction(offset.y / size.height.toFloat())
+                    }
+                }
             }
+            .pointerInput(scrollState.maxValue) {
+                detectVerticalDragGestures { change, _ ->
+                    change.consume()
+                    if (size.height > 0) {
+                        scrollToFraction(change.position.y / size.height.toFloat())
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val trackWidth = 4.dp.toPx()
+            val trackLeft = (size.width - trackWidth) / 2f
+            val corner = CornerRadius(trackWidth / 2f, trackWidth / 2f)
+
+            drawRoundRect(
+                color = Color(0x28FFFFFF),
+                topLeft = Offset(trackLeft, 0f),
+                size = Size(trackWidth, size.height),
+                cornerRadius = corner
+            )
+
+            val totalContent = (scrollState.viewportSize + scrollState.maxValue).toFloat()
+            val thumbFraction = if (canScroll && totalContent > 0f) {
+                (scrollState.viewportSize.toFloat() / totalContent).coerceIn(0.24f, 0.90f)
+            } else 1f
+            val scrollProgress = if (canScroll) {
+                (scrollState.value.toFloat() / scrollState.maxValue.toFloat()).coerceIn(0f, 1f)
+            } else 0f
+
+            val thumbHeight = size.height * thumbFraction
+            val thumbTop = (size.height - thumbHeight) * scrollProgress
+            val thumbWidth = 6.dp.toPx()
+            val thumbLeft = (size.width - thumbWidth) / 2f
+            val thumbColor = if (canScroll) palette.goldColor.copy(alpha = 0.85f) else Color(0x44FFFFFF)
+
+            drawRoundRect(
+                color = thumbColor,
+                topLeft = Offset(thumbLeft, thumbTop),
+                size = Size(thumbWidth, thumbHeight),
+                cornerRadius = CornerRadius(thumbWidth / 2f, thumbWidth / 2f)
+            )
         }
     }
 }
