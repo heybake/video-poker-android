@@ -2,6 +2,7 @@ package com.videopoker.android
 
 import com.videopoker.android.ui.theme.ResponsiveLayoutCalculator
 import com.videopoker.android.ui.theme.calculateCardDeckLayout
+import com.videopoker.android.ui.theme.calculateModalLayout
 import com.videopoker.android.ui.theme.calculateResponsiveMetrics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -70,5 +71,24 @@ class ResponsiveMetricsTest {
         val compact = calculateResponsiveMetrics(viewportWidthDp = 800f, viewportHeightDp = 360f)
         assertTrue(compact.actionBarWidth.value <= compact.contentAvailWidth.value)
         assertTrue(compact.feltRailWidth.value <= compact.contentAvailWidth.value)
+    }
+
+    @Test
+    fun modalLayoutsScaleProportionallyAcrossPhoneAndTablet() {
+        val phone = calculateResponsiveMetrics(viewportWidthDp = 914f, viewportHeightDp = 411f)
+        val tablet = calculateResponsiveMetrics(viewportWidthDp = 1280f, viewportHeightDp = 800f)
+
+        val phoneModal = calculateModalLayout(phone, isWideList = false)
+        val tabletModal = calculateModalLayout(tablet, isWideList = false)
+        val tabletWideModal = calculateModalLayout(tablet, isWideList = true)
+
+        assertTrue("Phone modal width ratio out of range", phoneModal.width.value / 914f in 0.72f..0.85f)
+        assertTrue("Phone modal height ratio out of range", phoneModal.height.value / 411f in 0.75f..0.88f)
+        assertTrue("Tablet modal width ratio out of range", tabletModal.width.value / 1280f in 0.75f..0.86f)
+        assertTrue("Tablet modal height ratio out of range", tabletModal.height.value / 800f in 0.75f..0.86f)
+        assertTrue("Tablet wide list modal should exceed standard modal width", tabletWideModal.width.value > tabletModal.width.value)
+
+        assertTrue("Expected tablet modal scale >= 1.5x, was ${tabletModal.scale}", tabletModal.scale >= 1.5f)
+        assertTrue("Phone modal scale should stay near 1.0x, was ${phoneModal.scale}", phoneModal.scale in 0.95f..1.10f)
     }
 }

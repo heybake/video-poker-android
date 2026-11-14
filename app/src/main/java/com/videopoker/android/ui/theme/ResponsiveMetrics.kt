@@ -157,3 +157,51 @@ fun calculateCardDeckLayout(
         cardScale = cardScale
     )
 }
+
+/**
+ * Viewport-relative dimensions and content scale for modal overlays (Help, More Games,
+ * Options, Denom, See Pays, Insert Cash, Cash Out, and Complete Strategy List).
+ */
+data class ModalLayout(
+    val width: Dp,
+    val height: Dp,
+    val maxHeightForIme: Dp,
+    val cornerRadius: Dp,
+    val borderWidth: Dp,
+    val contentPadding: Dp,
+    val scale: Float
+)
+
+fun calculateModalLayout(
+    metrics: ResponsiveMetrics,
+    isWideList: Boolean = false
+): ModalLayout {
+    val vw = metrics.viewportWidth.value
+    val vh = metrics.viewportHeight.value
+
+    val widthRatio = if (isWideList) 0.84f else 0.78f
+    val heightRatio = if (isWideList) 0.85f else 0.83f
+
+    val minMarginH = if (vw >= 1050f) 96f else 48f
+    val minMarginV = if (vh >= 550f) 64f else 32f
+
+    val modalW = (vw * widthRatio).coerceIn(320f, (vw - minMarginH).coerceAtLeast(320f))
+    val modalH = (vh * heightRatio).coerceIn(260f, (vh - minMarginV).coerceAtLeast(260f))
+
+    val baseW = if (isWideList) 580f else 540f
+    val baseH = 340f
+    val widthScale = modalW / baseW
+    val heightScale = modalH / baseH
+    val modalScale = minOf(widthScale, heightScale, metrics.uiScale * 1.08f)
+        .coerceIn(0.84f, 1.68f)
+
+    return ModalLayout(
+        width = modalW.dp,
+        height = modalH.dp,
+        maxHeightForIme = (vh - 16f).coerceAtLeast(220f).dp,
+        cornerRadius = (14f * modalScale).dp,
+        borderWidth = (2f * modalScale).coerceIn(1.5f, 3.5f).dp,
+        contentPadding = (16f * modalScale).dp,
+        scale = modalScale
+    )
+}

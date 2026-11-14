@@ -94,23 +94,23 @@ fun MainScreen(viewModel: GameViewModel) {
                     modifier = Modifier.weight(metrics.bottomWeight)
                 )
             }
-        }
 
-        // Modal Overlays (Help, More Games, Options, Denom, See Pays, Add Money, Cash Out)
-        OverlayDialogs(
-            state = state,
-            palette = palette,
-            onClose = viewModel::closeOverlay,
-            onModeToggle = viewModel::onModeToggle,
-            onThemeSelect = viewModel::onThemeSelect,
-            onDenomSelect = viewModel::onDenomSelect,
-            onGameSelect = viewModel::onGameSelect,
-            onVolumeChange = viewModel::onVolumeChange,
-            onAddCashAmount = viewModel::onAddCashAmount,
-            onConfirmCashOut = viewModel::onConfirmCashOut,
-            onToggleRecordingSession = viewModel::onToggleRecordingSession,
-            onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
-            onShareSession = { path -> viewModel.onShareSession(context, path) }
-        )
+            // Modal Overlays (Help, More Games, Options, Denom, See Pays, Add Money, Cash Out)
+            OverlayDialogs(
+                state = state,
+                palette = palette,
+                onClose = viewModel::closeOverlay,
+                onModeToggle = viewModel::onModeToggle,
+                onThemeSelect = viewModel::onThemeSelect,
+                onDenomSelect = viewModel::onDenomSelect,
+                onGameSelect = viewModel::onGameSelect,
+                onVolumeChange = viewModel::onVolumeChange,
+                onAddCashAmount = viewModel::onAddCashAmount,
+                onConfirmCashOut = viewModel::onConfirmCashOut,
+                onToggleRecordingSession = viewModel::onToggleRecordingSession,
+                onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
+                onShareSession = { path -> viewModel.onShareSession(context, path) }
+            )
+        }
     }
 }
