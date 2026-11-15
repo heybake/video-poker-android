@@ -155,7 +155,7 @@ fun PayTableGrid(
                                             if (isWinningCell) {
                                                 Modifier.background(Color(0xFFE5B800), RoundedCornerShape(2.dp))
                                             } else if (isCurrentBetCol) {
-                                                Modifier.background(palette.payTableGridColor, RoundedCornerShape(2.dp))
+                                                Modifier.background(palette.payTableActiveColBg, RoundedCornerShape(2.dp))
                                             } else {
                                                 Modifier
                                             }
@@ -167,7 +167,7 @@ fun PayTableGrid(
                                         color = when {
                                             isWinningCell -> Color(0xFF111111)
                                             isWinRow -> palette.winRowText
-                                            isCurrentBetCol -> palette.goldColor
+                                            isCurrentBetCol -> palette.payTableActiveColText
                                             else -> palette.payTableTextColor
                                         },
                                         style = TextStyle(
