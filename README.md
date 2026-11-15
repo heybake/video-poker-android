@@ -1,6 +1,6 @@
 # Video Poker Android
 
-**Version 1.0.23**
+**Version 1.0.24**
 
 Standalone, offline Video Poker trainer and player for Android (Pixel 10 Pro / Pixel 10 Pro XL).
 

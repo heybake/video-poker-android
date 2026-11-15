@@ -13,6 +13,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -793,6 +795,7 @@ private fun OptionsContent(
 
                 // Bankroll Targets (Win Goal % & Stop-Loss %)
                 Column(verticalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
+                    val targetPresets = listOf(5, 10, 25, 50, 75, 100)
                     Text(
                         text = "BANKROLL TARGETS",
                         color = palette.goldColor,
@@ -803,7 +806,7 @@ private fun OptionsContent(
                         title = "WIN GOAL (+% ABOVE BUY-IN)",
                         enabled = state.bankrollTargets.winGoalEnabled,
                         currentPercent = state.bankrollTargets.winGoalPercent,
-                        presets = listOf(25, 50, 100, 150),
+                        presets = targetPresets,
                         minPercent = BankrollTargets.MIN_WIN_GOAL_PERCENT,
                         maxPercent = BankrollTargets.MAX_WIN_GOAL_PERCENT,
                         accentColor = Color(0xFF4ADE80),
@@ -831,7 +834,7 @@ private fun OptionsContent(
                         title = "STOP-LOSS (-% BELOW BUY-IN)",
                         enabled = state.bankrollTargets.stopLossEnabled,
                         currentPercent = state.bankrollTargets.stopLossPercent,
-                        presets = listOf(25, 50, 75),
+                        presets = targetPresets,
                         minPercent = BankrollTargets.MIN_STOP_LOSS_PERCENT,
                         maxPercent = BankrollTargets.MAX_STOP_LOSS_PERCENT,
                         accentColor = Color(0xFFF87171),
@@ -1071,6 +1074,7 @@ private fun OptionsContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BankrollTargetConfigRow(
     title: String,
@@ -1168,10 +1172,11 @@ private fun BankrollTargetConfigRow(
             }
         }
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy((5f * scale).dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy((4f * scale).dp),
+            itemVerticalAlignment = Alignment.CenterVertically
         ) {
             presets.forEach { preset ->
                 val isSelected = enabled && (currentPercent == preset)
@@ -1197,11 +1202,9 @@ private fun BankrollTargetConfigRow(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
             Box(
                 modifier = Modifier
-                    .width((58f * scale).dp)
+                    .width((60f * scale).dp)
                     .clip(RoundedCornerShape((5f * scale).dp))
                     .background(Color(0x2A000000))
                     .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape((5f * scale).dp))
