@@ -361,7 +361,7 @@ object ThemeManager {
         dealButtonBorderColor = Color(0xFFF1E4CF),
         statusLabelColor = Color(0xFFE8C27A),
         statusValueColor = Color(0xFFF6ECDC),
-        footerTextColor = Color(0xFF5A4025),
+        footerTextColor = Color(0xFFF6ECDC),
         soundIconColor = Color(0xFFF6ECDC),
         choice1Color = Color(0xFFE8C27A),
         choice2Color = Color(0xFFE0582A),
