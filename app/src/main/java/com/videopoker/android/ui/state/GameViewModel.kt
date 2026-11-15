@@ -55,6 +55,14 @@ class GameViewModel : ViewModel() {
             .also { prefs = it }
         val savedDeck = CardDeck.fromId(appPrefs.getString("card_deck", null))
         val savedTicketNum = appPrefs.getInt("next_voucher_ticket", 3914).coerceAtLeast(3914)
+        val savedTargets = BankrollTargets(
+            winGoalEnabled = appPrefs.getBoolean("win_goal_enabled", true),
+            winGoalPercent = appPrefs.getInt("win_goal_percent", BankrollTargets.DEFAULT_WIN_GOAL_PERCENT)
+                .coerceIn(BankrollTargets.MIN_WIN_GOAL_PERCENT, BankrollTargets.MAX_WIN_GOAL_PERCENT),
+            stopLossEnabled = appPrefs.getBoolean("stop_loss_enabled", true),
+            stopLossPercent = appPrefs.getInt("stop_loss_percent", BankrollTargets.DEFAULT_STOP_LOSS_PERCENT)
+                .coerceIn(BankrollTargets.MIN_STOP_LOSS_PERCENT, BankrollTargets.MAX_STOP_LOSS_PERCENT)
+        )
         val root = File(context.applicationContext.filesDir, "recorded_sessions").apply { mkdirs() }
         sessionsRoot = root
 
@@ -87,6 +95,7 @@ class GameViewModel : ViewModel() {
                         allGames = loadedList,
                         currentCardDeck = savedDeck,
                         nextVoucherTicketNumber = savedTicketNum,
+                        bankrollTargets = savedTargets,
                         currentGame = null,
                         cards = emptyList(),
                         heldMask = listOf(false, false, false, false, false),
@@ -211,52 +220,16 @@ class GameViewModel : ViewModel() {
 
                     if (unheldIndices.isEmpty()) {
                         // All 5 cards held (pat hand)
-                        val payKeys = game.payTable.rows.map { it.key }.toSet()
-                        val finalRank = HandClassifier.classifyHand(state.cards, payKeys)
-                        val payoutCredits = game.payTable.getPayout(finalRank.key, state.currentBet)
-                        val wonCash = payoutCredits * state.currentDenom
-                        val isWin = payoutCredits > 0
-                        val nextState = if (isWin) DealState.SHOWDOWN_WIN else DealState.SHOWDOWN_NO_WIN
-
-                        if (isWin) {
-                            soundManager?.playWinByPayout(payoutCredits)
-                        } else {
-                            soundManager?.play(SoundEffect.NO_WIN)
-                        }
-
-                        val topChoice = state.holdChoices.firstOrNull()
-                        val didMakeTopChoice = (topChoice != null && state.heldMask == topChoice.holdMask)
-
-                        val newCashBalance = _uiState.value.cashBalance + wonCash
-                        val minDenom = game.denominations.minOrNull() ?: state.currentDenom
-                        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minDenom * 100.0).roundToLong()
-                        if (_uiState.value.isRecordingSession) {
-                            logSessionHand(
-                                game = game,
-                                denom = state.currentDenom,
-                                bet = state.currentBet,
-                                dealt = state.cards,
-                                held = state.heldMask,
-                                drawn = emptyList(),
-                                finalCards = state.cards,
-                                rank = finalRank,
-                                payoutCredits = payoutCredits,
-                                mode = state.currentMode,
-                                wentBroke = wentBroke
-                            )
-                        }
-
-                        _uiState.update {
-                            it.copy(
-                                dealState = nextState,
-                                handRank = finalRank,
-                                winAmount = payoutCredits,
-                                cashBalance = it.cashBalance + wonCash,
-                                totalHandsPlayed = it.totalHandsPlayed + 1,
-                                handsAtCurrentDenom = it.handsAtCurrentDenom + 1,
-                                practiceMadeTopChoice = didMakeTopChoice
-                            )
-                        }
+                        finalizeHandSettlement(
+                            game = game,
+                            bet = state.currentBet,
+                            denom = state.currentDenom,
+                            dealtCards = state.cards,
+                            heldMask = state.heldMask,
+                            drawnCards = emptyList(),
+                            finalCardList = state.cards,
+                            mode = state.currentMode
+                        )
                     } else {
                         _uiState.update { it.copy(isAnimating = true) }
 
@@ -283,58 +256,18 @@ class GameViewModel : ViewModel() {
                             }
                         }
 
-                        val payKeys = game.payTable.rows.map { it.key }.toSet()
-                        val finalRank = HandClassifier.classifyHand(workingCards, payKeys)
-                        val payoutCredits = game.payTable.getPayout(finalRank.key, state.currentBet)
-                        val wonCash = payoutCredits * state.currentDenom
-                        val isWin = payoutCredits > 0
-                        val nextState = if (isWin) DealState.SHOWDOWN_WIN else DealState.SHOWDOWN_NO_WIN
-
-                        if (isWin) {
-                            soundManager?.playWinByPayout(payoutCredits)
-                        } else {
-                            soundManager?.play(SoundEffect.NO_WIN)
-                        }
-
-                        val topChoice = state.holdChoices.firstOrNull()
-                        val didMakeTopChoice = (topChoice != null && state.heldMask == topChoice.holdMask)
-
                         val finalCardList = workingCards.toList()
                         val drawnList = unheldIndices.map { finalCardList[it] }
-                        val newCashBalance = _uiState.value.cashBalance + wonCash
-                        val minDenom = game.denominations.minOrNull() ?: state.currentDenom
-                        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minDenom * 100.0).roundToLong()
-
-                        if (_uiState.value.isRecordingSession) {
-                            logSessionHand(
-                                game = game,
-                                denom = state.currentDenom,
-                                bet = state.currentBet,
-                                dealt = state.cards,
-                                held = state.heldMask,
-                                drawn = drawnList,
-                                finalCards = finalCardList,
-                                rank = finalRank,
-                                payoutCredits = payoutCredits,
-                                mode = state.currentMode,
-                                wentBroke = wentBroke
-                            )
-                        }
-
-                        _uiState.update {
-                            it.copy(
-                                isAnimating = false,
-                                dealState = nextState,
-                                cards = finalCardList,
-                                revealedMask = listOf(true, true, true, true, true),
-                                handRank = finalRank,
-                                winAmount = payoutCredits,
-                                cashBalance = it.cashBalance + wonCash,
-                                totalHandsPlayed = it.totalHandsPlayed + 1,
-                                handsAtCurrentDenom = it.handsAtCurrentDenom + 1,
-                                practiceMadeTopChoice = didMakeTopChoice
-                            )
-                        }
+                        finalizeHandSettlement(
+                            game = game,
+                            bet = state.currentBet,
+                            denom = state.currentDenom,
+                            dealtCards = state.cards,
+                            heldMask = state.heldMask,
+                            drawnCards = drawnList,
+                            finalCardList = finalCardList,
+                            mode = state.currentMode
+                        )
                     }
                 }
             }
@@ -472,6 +405,7 @@ class GameViewModel : ViewModel() {
                 handsAtCurrentDenom = 0,
                 recordedHandsCount = 0,
                 nextVoucherTicketNumber = nextTicket,
+                bankrollHistory = emptyList(),
                 activeOverlay = null
             )
         }
@@ -484,17 +418,57 @@ class GameViewModel : ViewModel() {
     }
 
     fun onAddCash() {
-        soundManager?.play(SoundEffect.COUNT_TICK)
-        _uiState.update { it.copy(cashBalance = it.cashBalance + 100.0) }
+        recordCashAddition(100.0)
     }
 
     fun onAddCashAmount(amount: Double) {
+        recordCashAddition(amount)
+    }
+
+    private fun recordCashAddition(amount: Double) {
         if (amount <= 0.0 || !amount.isFinite()) return
         soundManager?.play(SoundEffect.COUNT_TICK)
         if (activePlayedLog != null) {
             sessionMoneyInCents += (amount * 100.0).roundToLong()
         }
-        _uiState.update { it.copy(cashBalance = it.cashBalance + amount) }
+        _uiState.update { state ->
+            val updatedBalance = state.cashBalance + amount
+            state.copy(
+                cashBalance = updatedBalance,
+                bankrollHistory = SessionBankrollTracker.onCashInserted(
+                    history = state.bankrollHistory,
+                    addedAmount = amount,
+                    newBalanceDollars = updatedBalance
+                )
+            )
+        }
+    }
+
+    fun onSetBankrollTargets(
+        winGoalEnabled: Boolean = _uiState.value.bankrollTargets.winGoalEnabled,
+        winGoalPercent: Int = _uiState.value.bankrollTargets.winGoalPercent,
+        stopLossEnabled: Boolean = _uiState.value.bankrollTargets.stopLossEnabled,
+        stopLossPercent: Int = _uiState.value.bankrollTargets.stopLossPercent
+    ) {
+        val clamped = BankrollTargets(
+            winGoalEnabled = winGoalEnabled,
+            winGoalPercent = winGoalPercent.coerceIn(
+                BankrollTargets.MIN_WIN_GOAL_PERCENT,
+                BankrollTargets.MAX_WIN_GOAL_PERCENT
+            ),
+            stopLossEnabled = stopLossEnabled,
+            stopLossPercent = stopLossPercent.coerceIn(
+                BankrollTargets.MIN_STOP_LOSS_PERCENT,
+                BankrollTargets.MAX_STOP_LOSS_PERCENT
+            )
+        )
+        prefs?.edit()
+            ?.putBoolean("win_goal_enabled", clamped.winGoalEnabled)
+            ?.putInt("win_goal_percent", clamped.winGoalPercent)
+            ?.putBoolean("stop_loss_enabled", clamped.stopLossEnabled)
+            ?.putInt("stop_loss_percent", clamped.stopLossPercent)
+            ?.apply()
+        _uiState.update { it.copy(bankrollTargets = clamped) }
     }
 
     fun onOpenAddMoney() {
@@ -633,6 +607,76 @@ class GameViewModel : ViewModel() {
                 PlayedGameLog.listRecordedSessions(root)
             }
             _uiState.update { it.copy(recordedSessions = saved) }
+        }
+    }
+
+    private suspend fun finalizeHandSettlement(
+        game: GameConfig,
+        bet: Int,
+        denom: Double,
+        dealtCards: List<Card>,
+        heldMask: List<Boolean>,
+        drawnCards: List<Card>,
+        finalCardList: List<Card>,
+        mode: GameMode
+    ) {
+        val payKeys = game.payTable.rows.map { it.key }.toSet()
+        val finalRank = HandClassifier.classifyHand(finalCardList, payKeys)
+        val payoutCredits = game.payTable.getPayout(finalRank.key, bet)
+        val wonCash = payoutCredits * denom
+        val isWin = payoutCredits > 0
+        val nextState = if (isWin) DealState.SHOWDOWN_WIN else DealState.SHOWDOWN_NO_WIN
+
+        if (isWin) {
+            soundManager?.playWinByPayout(payoutCredits)
+        } else {
+            soundManager?.play(SoundEffect.NO_WIN)
+        }
+
+        val currentSnapshot = _uiState.value
+        val topChoice = currentSnapshot.holdChoices.firstOrNull()
+        val didMakeTopChoice = (topChoice != null && heldMask == topChoice.holdMask)
+        val isSuboptimal = (topChoice != null && !didMakeTopChoice)
+
+        val newCashBalance = currentSnapshot.cashBalance + wonCash
+        val minDenom = game.denominations.minOrNull() ?: denom
+        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minDenom * 100.0).roundToLong()
+
+        if (currentSnapshot.isRecordingSession) {
+            logSessionHand(
+                game = game,
+                denom = denom,
+                bet = bet,
+                dealt = dealtCards,
+                held = heldMask,
+                drawn = drawnCards,
+                finalCards = finalCardList,
+                rank = finalRank,
+                payoutCredits = payoutCredits,
+                mode = mode,
+                wentBroke = wentBroke
+            )
+        }
+
+        _uiState.update { state ->
+            val settledBalance = state.cashBalance + wonCash
+            state.copy(
+                isAnimating = false,
+                dealState = nextState,
+                cards = finalCardList,
+                revealedMask = listOf(true, true, true, true, true),
+                handRank = finalRank,
+                winAmount = payoutCredits,
+                cashBalance = settledBalance,
+                totalHandsPlayed = state.totalHandsPlayed + 1,
+                handsAtCurrentDenom = state.handsAtCurrentDenom + 1,
+                practiceMadeTopChoice = didMakeTopChoice,
+                bankrollHistory = SessionBankrollTracker.onHandSettled(
+                    history = state.bankrollHistory,
+                    settledBalanceDollars = settledBalance,
+                    isSuboptimalHold = isSuboptimal
+                )
+            )
         }
     }
 

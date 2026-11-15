@@ -87,6 +87,7 @@ import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HoldCatalogue
 import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.state.ActiveOverlay
+import com.videopoker.android.ui.state.BankrollTargets
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.theme.AppTheme
@@ -109,6 +110,7 @@ fun OverlayDialogs(
     onVolumeChange: (Float) -> Unit,
     onAddCashAmount: (Double) -> Unit,
     onConfirmCashOut: () -> Unit,
+    onSetBankrollTargets: (Boolean, Int, Boolean, Int) -> Unit = { _, _, _, _ -> },
     onToggleRecordingSession: () -> Unit,
     onSaveSessionToDownloads: (String) -> Unit = {},
     onShareSession: (String) -> Unit = {}
@@ -117,6 +119,7 @@ fun OverlayDialogs(
 
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val compactForIme = isImeVisible && activeOverlay == ActiveOverlay.ADD_MONEY
+    val shrinkOptionsForIme = isImeVisible && activeOverlay == ActiveOverlay.OPTIONS
     val metrics = LocalResponsiveMetrics.current
     val isWideList = activeOverlay == ActiveOverlay.COMPLETE_HOLD_LIST
     val modal = remember(metrics, isWideList) {
@@ -137,10 +140,10 @@ fun OverlayDialogs(
             modifier = Modifier
                 .width(modal.width)
                 .then(
-                    if (compactForIme) {
-                        Modifier.wrapContentHeight().heightIn(max = minOf(modal.height, modal.maxHeightForIme))
-                    } else {
-                        Modifier.height(modal.height)
+                    when {
+                        compactForIme -> Modifier.wrapContentHeight().heightIn(max = minOf(modal.height, modal.maxHeightForIme))
+                        shrinkOptionsForIme -> Modifier.height(minOf(modal.height, modal.maxHeightForIme))
+                        else -> Modifier.height(modal.height)
                     }
                 )
                 .clickable(
@@ -172,6 +175,7 @@ fun OverlayDialogs(
                     onModeToggle = onModeToggle,
                     onThemeSelect = onThemeSelect,
                     onCardDeckSelect = onCardDeckSelect,
+                    onSetBankrollTargets = onSetBankrollTargets,
                     onVolumeChange = onVolumeChange,
                     onToggleRecordingSession = onToggleRecordingSession,
                     onSaveSessionToDownloads = onSaveSessionToDownloads,
@@ -566,6 +570,7 @@ private fun OptionsContent(
     onModeToggle: (GameMode) -> Unit,
     onThemeSelect: (AppTheme) -> Unit,
     onCardDeckSelect: (CardDeck) -> Unit,
+    onSetBankrollTargets: (Boolean, Int, Boolean, Int) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onToggleRecordingSession: () -> Unit,
     onSaveSessionToDownloads: (String) -> Unit,
@@ -786,6 +791,72 @@ private fun OptionsContent(
                     }
                 }
 
+                // Bankroll Targets (Win Goal % & Stop-Loss %)
+                Column(verticalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
+                    Text(
+                        text = "BANKROLL TARGETS",
+                        color = palette.goldColor,
+                        fontSize = (10.5f * scale).sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    BankrollTargetConfigRow(
+                        title = "WIN GOAL (+% ABOVE BUY-IN)",
+                        enabled = state.bankrollTargets.winGoalEnabled,
+                        currentPercent = state.bankrollTargets.winGoalPercent,
+                        presets = listOf(25, 50, 100, 150),
+                        minPercent = BankrollTargets.MIN_WIN_GOAL_PERCENT,
+                        maxPercent = BankrollTargets.MAX_WIN_GOAL_PERCENT,
+                        accentColor = Color(0xFF4ADE80),
+                        signPrefix = "+",
+                        palette = palette,
+                        scale = scale,
+                        onToggleEnabled = { enabled ->
+                            onSetBankrollTargets(
+                                enabled,
+                                state.bankrollTargets.winGoalPercent,
+                                state.bankrollTargets.stopLossEnabled,
+                                state.bankrollTargets.stopLossPercent
+                            )
+                        },
+                        onSelectPercent = { pct ->
+                            onSetBankrollTargets(
+                                true,
+                                pct,
+                                state.bankrollTargets.stopLossEnabled,
+                                state.bankrollTargets.stopLossPercent
+                            )
+                        }
+                    )
+                    BankrollTargetConfigRow(
+                        title = "STOP-LOSS (-% BELOW BUY-IN)",
+                        enabled = state.bankrollTargets.stopLossEnabled,
+                        currentPercent = state.bankrollTargets.stopLossPercent,
+                        presets = listOf(25, 50, 75),
+                        minPercent = BankrollTargets.MIN_STOP_LOSS_PERCENT,
+                        maxPercent = BankrollTargets.MAX_STOP_LOSS_PERCENT,
+                        accentColor = Color(0xFFF87171),
+                        signPrefix = "-",
+                        palette = palette,
+                        scale = scale,
+                        onToggleEnabled = { enabled ->
+                            onSetBankrollTargets(
+                                state.bankrollTargets.winGoalEnabled,
+                                state.bankrollTargets.winGoalPercent,
+                                enabled,
+                                state.bankrollTargets.stopLossPercent
+                            )
+                        },
+                        onSelectPercent = { pct ->
+                            onSetBankrollTargets(
+                                state.bankrollTargets.winGoalEnabled,
+                                state.bankrollTargets.winGoalPercent,
+                                true,
+                                pct
+                            )
+                        }
+                    )
+                }
+
                 // Master Volume Slider
                 Column(verticalArrangement = Arrangement.spacedBy((2f * scale).dp)) {
                     Text(
@@ -996,6 +1067,193 @@ private fun OptionsContent(
                     .width((12f * scale).dp)
                     .fillMaxHeight()
             )
+        }
+    }
+}
+
+@Composable
+private fun BankrollTargetConfigRow(
+    title: String,
+    enabled: Boolean,
+    currentPercent: Int,
+    presets: List<Int>,
+    minPercent: Int,
+    maxPercent: Int,
+    accentColor: Color,
+    signPrefix: String,
+    palette: ThemePalette,
+    scale: Float,
+    onToggleEnabled: (Boolean) -> Unit,
+    onSelectPercent: (Int) -> Unit
+) {
+    val pillCorner = (6f * scale).dp
+    var customText by remember(currentPercent) { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    fun submitCustomPercent() {
+        val parsed = customText.trim().toIntOrNull() ?: return
+        val clamped = parsed.coerceIn(minPercent, maxPercent)
+        customText = ""
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        onSelectPercent(clamped)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(pillCorner))
+            .background(Color(0x1EFFFFFF))
+            .border(
+                width = 1.dp,
+                color = if (enabled) accentColor.copy(alpha = 0.55f) else Color(0x33FFFFFF),
+                shape = RoundedCornerShape(pillCorner)
+            )
+            .padding(horizontal = (10f * scale).dp, vertical = (7f * scale).dp),
+        verticalArrangement = Arrangement.spacedBy((6f * scale).dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size((8f * scale).dp)
+                        .clip(CircleShape)
+                        .background(if (enabled) accentColor else Color(0xFF777777))
+                )
+                Text(
+                    text = title,
+                    color = Color(0xFFF5F0E6),
+                    fontSize = (9.5f * scale).sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+            ) {
+                Text(
+                    text = if (enabled) "$signPrefix$currentPercent%" else "OFF",
+                    color = if (enabled) accentColor else Color(0xFF9E9487),
+                    fontSize = (10f * scale).sp,
+                    fontWeight = FontWeight.Black
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape((4f * scale).dp))
+                        .background(if (enabled) accentColor.copy(alpha = 0.25f) else Color(0x33FFFFFF))
+                        .border(
+                            1.dp,
+                            if (enabled) accentColor else Color(0x44FFFFFF),
+                            RoundedCornerShape((4f * scale).dp)
+                        )
+                        .clickable { onToggleEnabled(!enabled) }
+                        .padding(horizontal = (8f * scale).dp, vertical = (2.5f * scale).dp)
+                ) {
+                    Text(
+                        text = if (enabled) "ON" else "OFF",
+                        color = if (enabled) accentColor else Color(0xFFD6CEC2),
+                        fontSize = (9f * scale).sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy((5f * scale).dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            presets.forEach { preset ->
+                val isSelected = enabled && (currentPercent == preset)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape((5f * scale).dp))
+                        .background(if (isSelected) palette.goldColor else Color(0x22FFFFFF))
+                        .border(
+                            width = 1.dp,
+                            color = if (isSelected) Color.White else Color(0x33FFFFFF),
+                            shape = RoundedCornerShape((5f * scale).dp)
+                        )
+                        .clickable { onSelectPercent(preset) }
+                        .padding(horizontal = (9f * scale).dp, vertical = (4f * scale).dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "$preset%",
+                        color = if (isSelected) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                        fontSize = (9.5f * scale).sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier
+                    .width((58f * scale).dp)
+                    .clip(RoundedCornerShape((5f * scale).dp))
+                    .background(Color(0x2A000000))
+                    .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape((5f * scale).dp))
+                    .padding(horizontal = (6f * scale).dp, vertical = (4f * scale).dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (customText.isEmpty()) {
+                    Text(
+                        text = "Custom %",
+                        color = Color(0x88F5F0E6),
+                        fontSize = (8.5f * scale).sp,
+                        maxLines = 1
+                    )
+                }
+                BasicTextField(
+                    value = customText,
+                    onValueChange = { input ->
+                        if (input.length <= 3 && input.all { it.isDigit() }) {
+                            customText = input
+                        }
+                    },
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        color = Color(0xFFF5F0E6),
+                        fontSize = (9.5f * scale).sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    cursorBrush = SolidColor(palette.goldColor),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { submitCustomPercent() }),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape((5f * scale).dp))
+                    .background(palette.goldColor.copy(alpha = if (customText.isNotEmpty()) 1f else 0.35f))
+                    .clickable(enabled = customText.isNotEmpty()) { submitCustomPercent() }
+                    .padding(horizontal = (8f * scale).dp, vertical = (4f * scale).dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "SET",
+                    color = Color(0xFF14100A),
+                    fontSize = (9f * scale).sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
         }
     }
 }
@@ -1250,6 +1508,7 @@ private fun SeePaysContent(
             winningRank = null,
             mode = GameMode.CASINO,
             palette = palette,
+            showFullTable = true,
             modifier = Modifier.weight(1f).fillMaxWidth()
         )
     }

@@ -114,6 +114,7 @@ fun MainScreen(viewModel: GameViewModel) {
                 onVolumeChange = viewModel::onVolumeChange,
                 onAddCashAmount = viewModel::onAddCashAmount,
                 onConfirmCashOut = viewModel::onConfirmCashOut,
+                onSetBankrollTargets = viewModel::onSetBankrollTargets,
                 onToggleRecordingSession = viewModel::onToggleRecordingSession,
                 onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
                 onShareSession = { path -> viewModel.onShareSession(context, path) }

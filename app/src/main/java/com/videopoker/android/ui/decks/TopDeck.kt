@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.videopoker.android.ui.components.HoldPanel
 import com.videopoker.android.ui.components.PayTableGrid
+import com.videopoker.android.ui.components.SessionBankrollPanel
 import com.videopoker.android.ui.state.ActiveOverlay
+import com.videopoker.android.ui.state.DealState
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
@@ -22,6 +24,11 @@ fun TopDeck(
     modifier: Modifier = Modifier
 ) {
     val metrics = LocalResponsiveMetrics.current
+    val showBankrollInPracticePreDraw = (
+        state.currentMode == GameMode.PRACTICE &&
+            (state.dealState == DealState.READY_TO_DEAL || state.dealState == DealState.DEALT_CHOOSING_HOLDS)
+        )
+    val showBankrollPanel = (state.currentMode == GameMode.CASINO) || showBankrollInPracticePreDraw
 
     Row(
         modifier = modifier
@@ -29,27 +36,28 @@ fun TopDeck(
             .padding(horizontal = metrics.s(4f), vertical = metrics.s(2f)),
         horizontalArrangement = Arrangement.spacedBy(metrics.s(8f))
     ) {
-        if (state.currentMode == GameMode.CASINO) {
-            // Full-width 5-coin pay table
-            PayTableGrid(
-                game = state.currentGame,
-                currentBet = state.currentBet,
-                winningRank = state.handRank,
-                mode = state.currentMode,
+        // Proportional Split View (~41% Single-Column Pay Table / ~59% Strategy or Session Bankroll Panel)
+        PayTableGrid(
+            game = state.currentGame,
+            currentBet = state.currentBet,
+            winningRank = state.handRank,
+            mode = state.currentMode,
+            palette = palette,
+            showFullTable = false,
+            modifier = Modifier.weight(0.41f)
+        )
+
+        if (showBankrollPanel) {
+            SessionBankrollPanel(
+                points = state.bankrollHistory,
+                targets = state.bankrollTargets,
+                cashBalance = state.cashBalance,
                 palette = palette,
-                modifier = Modifier.fillMaxWidth()
+                showCompleteListButton = showBankrollInPracticePreDraw,
+                onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
+                modifier = Modifier.weight(0.59f)
             )
         } else {
-            // Proportional Split View (~41% Pay Table / ~59% Hold Choices Panel across phone & tablet)
-            PayTableGrid(
-                game = state.currentGame,
-                currentBet = state.currentBet,
-                winningRank = state.handRank,
-                mode = state.currentMode,
-                palette = palette,
-                modifier = Modifier.weight(0.41f)
-            )
-
             HoldPanel(
                 choices = state.holdChoices,
                 playerHeldMask = state.heldMask,

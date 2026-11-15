@@ -42,10 +42,11 @@ fun PayTableGrid(
     winningRank: HandRank?,
     mode: GameMode,
     palette: ThemePalette,
+    showFullTable: Boolean = (mode == GameMode.CASINO),
     modifier: Modifier = Modifier
 ) {
     val rows = game?.payTable?.rows ?: emptyList()
-    val isCasino = (mode == GameMode.CASINO)
+    val isCasino = showFullTable
     val metrics = LocalResponsiveMetrics.current
     val scale = metrics.uiScale
     val cornerRadius = (8f * scale).dp
