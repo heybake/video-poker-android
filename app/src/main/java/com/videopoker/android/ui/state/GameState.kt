@@ -47,6 +47,8 @@ data class GameState(
     val totalHandsPlayed: Int = 0,
     val handsAtCurrentDenom: Int = 0,
     val allGames: List<GameConfig> = emptyList(),
+    val nextVoucherTicketNumber: Int = 3914,
+    val activeVoucherSerial: String = "07-4931-8205-9764-1183",
     val isRecordingSession: Boolean = false,
     val recordedHandsCount: Int = 0,
     val recordedSessions: List<RecordedSessionInfo> = emptyList(),
@@ -57,7 +59,7 @@ data class GameState(
     val showSplash: Boolean = true
 ) {
     companion object {
-        const val APP_VERSION = "1.0.18"
+        const val APP_VERSION = "1.0.19"
     }
 }
 

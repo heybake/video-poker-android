@@ -16,6 +16,7 @@ import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.sound.SoundEffect
 import com.videopoker.android.sound.SoundManager
+import com.videopoker.android.ui.components.TitoVoucherFormatter
 import com.videopoker.android.ui.theme.AppTheme
 import com.videopoker.android.ui.theme.CardDeck
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class GameViewModel : ViewModel() {
             .getSharedPreferences("vp_prefs", Context.MODE_PRIVATE)
             .also { prefs = it }
         val savedDeck = CardDeck.fromId(appPrefs.getString("card_deck", null))
+        val savedTicketNum = appPrefs.getInt("next_voucher_ticket", 3914).coerceAtLeast(3914)
         val root = File(context.applicationContext.filesDir, "recorded_sessions").apply { mkdirs() }
         sessionsRoot = root
 
@@ -84,6 +86,7 @@ class GameViewModel : ViewModel() {
                     current.copy(
                         allGames = loadedList,
                         currentCardDeck = savedDeck,
+                        nextVoucherTicketNumber = savedTicketNum,
                         currentGame = null,
                         cards = emptyList(),
                         heldMask = listOf(false, false, false, false, false),
@@ -425,11 +428,14 @@ class GameViewModel : ViewModel() {
     fun onCashOut() {
         if (_uiState.value.isAnimating || _uiState.value.dealState == DealState.DEALT_CHOOSING_HOLDS) return
         soundManager?.play(SoundEffect.CASH_OUT)
+        _uiState.update { it.copy(activeVoucherSerial = TitoVoucherFormatter.generateValidationNumber()) }
         openOverlay(ActiveOverlay.CASH_OUT)
     }
 
     fun onConfirmCashOut() {
         val cashOutCents = (_uiState.value.cashBalance * 100.0).roundToLong()
+        val nextTicket = _uiState.value.nextVoucherTicketNumber + 1
+        prefs?.edit()?.putInt("next_voucher_ticket", nextTicket)?.apply()
         val log = activePlayedLog
         val moneyIn = sessionMoneyInCents
         activePlayedLog = null
@@ -465,6 +471,7 @@ class GameViewModel : ViewModel() {
                 totalHandsPlayed = 0,
                 handsAtCurrentDenom = 0,
                 recordedHandsCount = 0,
+                nextVoucherTicketNumber = nextTicket,
                 activeOverlay = null
             )
         }

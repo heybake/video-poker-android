@@ -61,13 +61,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -201,6 +204,8 @@ fun OverlayDialogs(
                 ActiveOverlay.CASH_OUT -> CashOutContent(
                     cashBalance = state.cashBalance,
                     currentDenom = state.currentDenom,
+                    ticketNumber = state.nextVoucherTicketNumber,
+                    validationSerial = state.activeVoucherSerial,
                     palette = palette,
                     scale = s,
                     onConfirmCashOut = onConfirmCashOut,
@@ -1563,10 +1568,57 @@ private fun AddMoneyContent(
     }
 }
 
+private fun Modifier.verticalTicketRotate(degrees: Float): Modifier = this
+    .layout { measurable, constraints ->
+        val placeable = measurable.measure(
+            constraints.copy(
+                minWidth = constraints.minHeight,
+                maxWidth = constraints.maxHeight,
+                minHeight = constraints.minWidth,
+                maxHeight = constraints.maxWidth
+            )
+        )
+        layout(placeable.height, placeable.width) {
+            placeable.place(
+                x = -(placeable.width / 2 - placeable.height / 2),
+                y = -(placeable.height / 2 - placeable.width / 2)
+            )
+        }
+    }
+    .graphicsLayer { rotationZ = degrees }
+
+@Composable
+private fun Code128BarcodeCanvas(
+    text: String,
+    barColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val runs = remember(text) { Code128Encoder.encodeRunsB(text) }
+    val totalUnits = remember(runs) { runs.sumOf { it.second }.coerceAtLeast(1) }
+
+    Canvas(modifier = modifier) {
+        val unitW = size.width / totalUnits.toFloat()
+        var cursor = 0f
+        for ((isBar, units) in runs) {
+            val w = units * unitW
+            if (isBar) {
+                drawRect(
+                    color = barColor,
+                    topLeft = Offset(cursor, 0f),
+                    size = Size(w.coerceAtLeast(1f), size.height)
+                )
+            }
+            cursor += w
+        }
+    }
+}
+
 @Composable
 private fun CashOutContent(
     cashBalance: Double,
     currentDenom: Double,
+    ticketNumber: Int,
+    validationSerial: String,
     palette: ThemePalette,
     scale: Float,
     onConfirmCashOut: () -> Unit,
@@ -1574,6 +1626,19 @@ private fun CashOutContent(
 ) {
     val voucherCorner = (8f * scale).dp
     val btnCorner = (6f * scale).dp
+    val details = remember(cashBalance, currentDenom, ticketNumber, validationSerial) {
+        TitoVoucherFormatter.createDetails(
+            cashBalance = cashBalance,
+            currentDenom = currentDenom,
+            ticketNumber = ticketNumber,
+            validationNumber = validationSerial
+        )
+    }
+
+    val inkDark = Color(0xFF181818)
+    val inkMuted = Color(0xFF4A473E)
+    val paperBg = Color(0xFFF6F0DE)
+    val paperBorder = Color(0xFFC2B79B)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -1588,50 +1653,192 @@ private fun CashOutContent(
             Text(
                 text = "CASH OUT / TICKET VOUCHER",
                 color = palette.goldColor,
-                fontSize = (15f * scale).sp,
+                fontSize = (14f * scale).sp,
                 fontWeight = FontWeight.Black,
-                letterSpacing = (1f * scale).sp
+                letterSpacing = (0.8f * scale).sp
             )
             CloseButton(palette = palette, scale = scale, onClose = onClose)
         }
 
+        // Authentic Vegas TITO Thermal Ticket Card
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .weight(1f)
+                .fillMaxWidth(0.95f)
+                .padding(vertical = (6f * scale).dp)
+                .shadow((6f * scale).dp, RoundedCornerShape(voucherCorner))
                 .clip(RoundedCornerShape(voucherCorner))
-                .background(Color(0xFFFFFDF0))
-                .border((2f * scale).dp, Color(0xFF333333), RoundedCornerShape(voucherCorner))
-                .padding((14f * scale).dp),
+                .background(paperBg)
+                .border((1.5f * scale).dp, paperBorder, RoundedCornerShape(voucherCorner))
+                .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "CASINO CASHIER VOUCHER",
-                    color = Color(0xFF111111),
-                    fontSize = (13f * scale).sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (1f * scale).sp
-                )
-                Spacer(modifier = Modifier.height((4f * scale).dp))
-                Text(
-                    text = "VALIDATION TICKET #849201",
-                    color = Color(0xFF666666),
-                    fontSize = (9f * scale).sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height((8f * scale).dp))
-                Text(
-                    text = String.format("$%.2f", cashBalance),
-                    color = Color(0xFF007A33),
-                    fontSize = (24f * scale).sp,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = "${(cashBalance / currentDenom).toInt()} credits cashed out",
-                    color = Color(0xFF444444),
-                    fontSize = (10f * scale).sp,
-                    fontWeight = FontWeight.Bold
-                )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Left Side Rail: INSERT THIS SIDE UP
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = (2f * scale).dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "INSERT THIS SIDE UP",
+                        color = inkDark,
+                        fontSize = (7.5f * scale).sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (0.6f * scale).sp,
+                        maxLines = 1,
+                        modifier = Modifier.verticalTicketRotate(-90f)
+                    )
+                }
+
+                // Main Center Ticket Content
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(horizontal = (6f * scale).dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text(
+                        text = TitoVoucherFormatter.CASINO_NAME,
+                        color = inkDark,
+                        fontSize = (14.5f * scale).sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Serif,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    )
+
+                    Text(
+                        text = "${TitoVoucherFormatter.CASINO_ADDRESS_LINE_1}  •  ${TitoVoucherFormatter.CASINO_ADDRESS_LINE_2}  •  ${TitoVoucherFormatter.CASINO_URL}",
+                        color = inkMuted,
+                        fontSize = (6.3f * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    )
+
+                    Text(
+                        text = "G A M I N G   V O U C H E R",
+                        color = inkDark,
+                        fontSize = (11f * scale).sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    )
+
+                    // Genuine scannable Code 128B Barcode ("ROYAL FLUSH NOT FOUND")
+                    Code128BarcodeCanvas(
+                        text = TitoVoucherFormatter.BARCODE_EASTER_EGG_TEXT,
+                        barColor = inkDark,
+                        modifier = Modifier
+                            .fillMaxWidth(0.76f)
+                            .height((28f * scale).dp)
+                    )
+
+                    Text(
+                        text = details.validationNumber,
+                        color = inkDark,
+                        fontSize = (8.5f * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy((1.5f * scale).dp)
+                    ) {
+                        Text(
+                            text = "VALIDATION   ${details.validationNumber}",
+                            color = inkDark,
+                            fontSize = (7.8f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            maxLines = 1,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                        )
+                        Text(
+                            text = "${details.dateText}    ${details.timeText}    TICKET # ${details.ticketNumber}",
+                            color = inkMuted,
+                            fontSize = (7.3f * scale).sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Monospace,
+                            maxLines = 1,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                        )
+                    }
+
+                    Text(
+                        text = details.amountWords,
+                        color = inkDark,
+                        fontSize = (8f * scale).sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    )
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = details.amountText,
+                            color = inkDark,
+                            fontSize = (18.5f * scale).sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                        Text(
+                            text = "ASSET# ${details.assetNumber}",
+                            color = inkMuted,
+                            fontSize = (7.2f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            maxLines = 1,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
+                            modifier = Modifier.align(Alignment.BottomEnd)
+                        )
+                    }
+                }
+
+                // Right Side Rails: vertical Validation Serial + INSERT THIS SIDE UP
+                Row(
+                    modifier = Modifier.fillMaxHeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy((4f * scale).dp)
+                ) {
+                    Text(
+                        text = details.validationNumber,
+                        color = inkMuted,
+                        fontSize = (6.8f * scale).sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        modifier = Modifier.verticalTicketRotate(90f)
+                    )
+                    Text(
+                        text = "INSERT THIS SIDE UP",
+                        color = inkDark,
+                        fontSize = (7.5f * scale).sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (0.6f * scale).sp,
+                        maxLines = 1,
+                        modifier = Modifier.verticalTicketRotate(90f)
+                    )
+                }
             }
         }
 
@@ -1639,26 +1846,26 @@ private fun CashOutContent(
             Box(
                 modifier = Modifier
                     .width((130f * scale).dp)
-                    .height((38f * scale).dp)
+                    .height((34f * scale).dp)
                     .shadow((4f * scale).dp, RoundedCornerShape(btnCorner))
                     .clip(RoundedCornerShape(btnCorner))
                     .background(Color(0xFFD6293B))
                     .clickable { onConfirmCashOut() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "TAKE VOUCHER", color = Color.White, fontSize = (12f * scale).sp, fontWeight = FontWeight.Black)
+                Text(text = "TAKE VOUCHER", color = Color.White, fontSize = (11.5f * scale).sp, fontWeight = FontWeight.Black)
             }
 
             Box(
                 modifier = Modifier
                     .width((110f * scale).dp)
-                    .height((38f * scale).dp)
+                    .height((34f * scale).dp)
                     .clip(RoundedCornerShape(btnCorner))
                     .background(Color(0x33FFFFFF))
                     .clickable(onClick = onClose),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "KEEP PLAYING", color = Color.White, fontSize = (12f * scale).sp, fontWeight = FontWeight.Bold)
+                Text(text = "KEEP PLAYING", color = Color.White, fontSize = (11.5f * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
     }
