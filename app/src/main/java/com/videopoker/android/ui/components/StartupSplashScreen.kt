@@ -44,6 +44,8 @@ import com.videopoker.android.R
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import kotlinx.coroutines.delay
 
+const val SPLASH_SUBTITLE = "STRATEGIC TRAINER"
+
 data class SplashLayoutMetrics(
     val scale: Float,
     val borderInsetDp: Float,
@@ -226,7 +228,7 @@ fun StartupSplashScreen(
                     )
                 }
                 Text(
-                    text = "STRATEGY TRAINER  •  41 CLASSIC GAMES",
+                    text = SPLASH_SUBTITLE,
                     color = subtleGold,
                     style = TextStyle(
                         fontSize = splashMetrics.subtitleSizeSp.sp,

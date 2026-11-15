@@ -1,9 +1,17 @@
 package com.videopoker.android.ui.components
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SplashScreenLayoutTest {
+
+    @Test
+    fun `splash subtitle shows Strategic Trainer without game count`() {
+        assertEquals("STRATEGIC TRAINER", SPLASH_SUBTITLE)
+        assertFalse(SPLASH_SUBTITLE.any { it.isDigit() })
+    }
 
     @Test
     fun `phone and tablet splash metrics scale cleanly inside viewport bounds`() {
