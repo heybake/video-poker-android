@@ -64,6 +64,8 @@ fun SessionBankrollPanel(
     cashBalance: Double,
     palette: ThemePalette,
     showCompleteListButton: Boolean = false,
+    showReviewToggleButton: Boolean = false,
+    onShowReview: () -> Unit = {},
     onOpenCompleteList: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -106,7 +108,7 @@ fun SessionBankrollPanel(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Row: Title, compact inline legend, optional LIVE snap pill & COMPLETE LIST button
+            // Header Row 1: Title and action buttons (LIVE ▸, SHOW REVIEW, COMPLETE LIST / cash balance)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,21 +133,6 @@ fun SessionBankrollPanel(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
-                    ) {
-                        ChartLegendItem(label = "Bal", color = balanceColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
-                        ChartLegendItem(label = "In", color = buyInColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
-                        if (targets.winGoalEnabled) {
-                            ChartLegendItem(label = "Goal", color = winGoalColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
-                        }
-                        if (targets.stopLossEnabled) {
-                            ChartLegendItem(label = "Stop", color = stopLossColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
-                        }
-                        ChartLegendItem(label = "Err", color = suboptimalDotColor, isDashed = false, isDot = true, scale = scale, textColor = palette.payTableTextColor)
-                    }
-
                     if (viewport.canPan && !viewport.isLiveEdge) {
                         val liveRadius = (4f * scale).dp
                         Box(
@@ -160,9 +147,37 @@ fun SessionBankrollPanel(
                             Text(
                                 text = "LIVE ▸",
                                 color = Color(0xFF14100A),
+                                maxLines = 1,
+                                softWrap = false,
                                 style = TextStyle(
                                     fontSize = (8.5f * scale).sp,
                                     fontWeight = FontWeight.Black,
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                                )
+                            )
+                        }
+                    }
+
+                    if (showReviewToggleButton) {
+                        val btnRadius = (4f * scale).dp
+                        Box(
+                            modifier = Modifier
+                                .height((22f * scale).dp)
+                                .clip(RoundedCornerShape(btnRadius))
+                                .background(Color(0x22FFD700))
+                                .border(1.dp, palette.goldColor.copy(alpha = 0.7f), RoundedCornerShape(btnRadius))
+                                .clickable { onShowReview() }
+                                .padding(horizontal = (7f * scale).dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SHOW REVIEW",
+                                color = palette.goldColor,
+                                maxLines = 1,
+                                softWrap = false,
+                                style = TextStyle(
+                                    fontSize = (9.0f * scale).sp,
+                                    fontWeight = FontWeight.Bold,
                                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                                 )
                             )
@@ -184,6 +199,8 @@ fun SessionBankrollPanel(
                             Text(
                                 text = "COMPLETE LIST",
                                 color = palette.goldColor,
+                                maxLines = 1,
+                                softWrap = false,
                                 style = TextStyle(
                                     fontSize = (9.0f * scale).sp,
                                     fontWeight = FontWeight.Bold,
@@ -195,6 +212,8 @@ fun SessionBankrollPanel(
                         Text(
                             text = String.format(Locale.US, "$%.2f", cashBalance),
                             color = palette.goldColor,
+                            maxLines = 1,
+                            softWrap = false,
                             style = TextStyle(
                                 fontSize = (10.5f * scale).sp,
                                 fontWeight = FontWeight.Black,
@@ -203,6 +222,38 @@ fun SessionBankrollPanel(
                         )
                     }
                 }
+            }
+
+            // Header Row 2: Compact inline legend + running Mistakes count and percentage
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = (3f * scale).dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                ) {
+                    ChartLegendItem(label = "Bal", color = balanceColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                    ChartLegendItem(label = "In", color = buyInColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                    if (targets.winGoalEnabled) {
+                        ChartLegendItem(label = "Goal", color = winGoalColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                    }
+                    if (targets.stopLossEnabled) {
+                        ChartLegendItem(label = "Stop", color = stopLossColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                    }
+                }
+
+                ChartLegendItem(
+                    label = SessionBankrollTracker.formatMistakesLabel(points),
+                    color = suboptimalDotColor,
+                    isDashed = false,
+                    isDot = true,
+                    scale = scale,
+                    textColor = palette.payTableTextColor
+                )
             }
 
             if (points.isEmpty()) {

@@ -71,6 +71,7 @@ fun HoldPanel(
     practiceMadeTopChoice: Boolean?,
     palette: ThemePalette,
     onOpenCompleteList: () -> Unit = {},
+    onShowPlot: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isPracticeWait = (mode == GameMode.PRACTICE && dealState == DealState.DEALT_CHOOSING_HOLDS)
@@ -115,25 +116,52 @@ fun HoldPanel(
                 )
 
                 val btnRadius = (4f * scale).dp
-                Box(
-                    modifier = Modifier
-                        .height((24f * scale).dp)
-                        .clip(RoundedCornerShape(btnRadius))
-                        .background(Color(0x22FFD700))
-                        .border(1.dp, palette.goldColor.copy(alpha = 0.7f), RoundedCornerShape(btnRadius))
-                        .clickable { onOpenCompleteList() }
-                        .padding(horizontal = (8f * scale).dp),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
                 ) {
-                    Text(
-                        text = "COMPLETE LIST",
-                        color = palette.goldColor,
-                        style = TextStyle(
-                            fontSize = (9.5f * scale).sp,
-                            fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    if (mode == GameMode.PRACTICE && isAfterDraw) {
+                        Box(
+                            modifier = Modifier
+                                .height((22f * scale).dp)
+                                .clip(RoundedCornerShape(btnRadius))
+                                .background(palette.goldColor)
+                                .clickable { onShowPlot() }
+                                .padding(horizontal = (7f * scale).dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SHOW PLOT",
+                                color = Color(0xFF14100A),
+                                style = TextStyle(
+                                    fontSize = (9.0f * scale).sp,
+                                    fontWeight = FontWeight.Black,
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                                )
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .height((22f * scale).dp)
+                            .clip(RoundedCornerShape(btnRadius))
+                            .background(Color(0x22FFD700))
+                            .border(1.dp, palette.goldColor.copy(alpha = 0.7f), RoundedCornerShape(btnRadius))
+                            .clickable { onOpenCompleteList() }
+                            .padding(horizontal = (7f * scale).dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "COMPLETE LIST",
+                            color = palette.goldColor,
+                            style = TextStyle(
+                                fontSize = (9.0f * scale).sp,
+                                fontWeight = FontWeight.Bold,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            )
                         )
-                    )
+                    }
                 }
             }
 

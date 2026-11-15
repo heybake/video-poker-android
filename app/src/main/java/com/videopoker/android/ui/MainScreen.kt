@@ -69,6 +69,7 @@ fun MainScreen(viewModel: GameViewModel) {
                     state = state,
                     palette = palette,
                     onOpenOverlay = viewModel::openOverlay,
+                    onTogglePracticePlot = viewModel::onTogglePracticePlot,
                     modifier = Modifier.weight(metrics.topWeight)
                 )
 

@@ -85,4 +85,40 @@ class SessionBankrollTest {
         assertEquals(20f, panned.endHand, 1e-4f)
         assertFalse(panned.isLiveEdge)
     }
+
+    @Test
+    fun `mistake stats track count percentage and session reset`() {
+        // Empty history and Hand 0 cash-in both start at 0 (0.0%)
+        assertEquals("Mistakes: 0 (0.0%)", SessionBankrollTracker.formatMistakesLabel(emptyList()))
+
+        var history = SessionBankrollTracker.onCashInserted(emptyList(), 20.0, 20.0)
+        assertEquals("Mistakes: 0 (0.0%)", SessionBankrollTracker.formatMistakesLabel(history))
+
+        // 2 optimal + 1 suboptimal => 1 of 3 = 33.3%
+        history = SessionBankrollTracker.onHandSettled(history, 18.75, isSuboptimalHold = false)
+        history = SessionBankrollTracker.onHandSettled(history, 17.50, isSuboptimalHold = true)
+        history = SessionBankrollTracker.onHandSettled(history, 22.50, isSuboptimalHold = false)
+
+        val stats = SessionBankrollTracker.calculateMistakeStats(history)
+        assertEquals(1, stats.mistakeCount)
+        assertEquals(3, stats.completedHands)
+        assertEquals(33.333333, stats.mistakePercent, 1e-3)
+        assertEquals("Mistakes: 1 (33.3%)", SessionBankrollTracker.formatMistakesLabel(history))
+
+        // Cash out clears history -> back to 0 (0.0%)
+        assertEquals("Mistakes: 0 (0.0%)", SessionBankrollTracker.formatMistakesLabel(emptyList()))
+    }
+
+    @Test
+    fun `mistake stats show zero percent when all completed hands are optimal`() {
+        var history = SessionBankrollTracker.onCashInserted(emptyList(), 20.0, 20.0)
+        history = SessionBankrollTracker.onHandSettled(history, 18.75, isSuboptimalHold = false)
+        history = SessionBankrollTracker.onHandSettled(history, 17.50, isSuboptimalHold = false)
+
+        val stats = SessionBankrollTracker.calculateMistakeStats(history)
+        assertEquals(0, stats.mistakeCount)
+        assertEquals(2, stats.completedHands)
+        assertEquals(0.0, stats.mistakePercent, 1e-6)
+        assertEquals("Mistakes: 0 (0.0%)", SessionBankrollTracker.formatMistakesLabel(history))
+    }
 }

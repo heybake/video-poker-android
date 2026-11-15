@@ -185,7 +185,8 @@ class GameViewModel : ViewModel() {
                             cashBalance = it.cashBalance - cost,
                             dealState = DealState.DEALT_CHOOSING_HOLDS,
                             practiceFeedback = null,
-                            practiceMadeTopChoice = null
+                            practiceMadeTopChoice = null,
+                            showPracticePlot = false
                         )
                     }
 
@@ -406,6 +407,7 @@ class GameViewModel : ViewModel() {
                 recordedHandsCount = 0,
                 nextVoucherTicketNumber = nextTicket,
                 bankrollHistory = emptyList(),
+                showPracticePlot = false,
                 activeOverlay = null
             )
         }
@@ -531,8 +533,12 @@ class GameViewModel : ViewModel() {
             } else {
                 state.heldMask
             }
-            state.copy(currentMode = mode, heldMask = autoMask)
+            state.copy(currentMode = mode, heldMask = autoMask, showPracticePlot = false)
         }
+    }
+
+    fun onTogglePracticePlot() {
+        _uiState.update { it.copy(showPracticePlot = !it.showPracticePlot) }
     }
 
     fun onCycleSpeed() {
@@ -671,6 +677,7 @@ class GameViewModel : ViewModel() {
                 totalHandsPlayed = state.totalHandsPlayed + 1,
                 handsAtCurrentDenom = state.handsAtCurrentDenom + 1,
                 practiceMadeTopChoice = didMakeTopChoice,
+                showPracticePlot = false,
                 bankrollHistory = SessionBankrollTracker.onHandSettled(
                     history = state.bankrollHistory,
                     settledBalanceDollars = settledBalance,

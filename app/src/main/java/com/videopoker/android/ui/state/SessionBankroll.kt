@@ -58,6 +58,12 @@ data class BankrollViewport(
     val maxY: Double
 )
 
+data class MistakeStats(
+    val mistakeCount: Int,
+    val completedHands: Int,
+    val mistakePercent: Double
+)
+
 object SessionBankrollTracker {
 
     const val DEFAULT_WINDOW_HANDS = 20
@@ -196,5 +202,21 @@ object SessionBankrollTracker {
             kotlin.math.abs(safe - kotlin.math.round(safe)) < 0.05 -> String.format(Locale.US, "$%.0f", kotlin.math.round(safe))
             else -> String.format(Locale.US, "$%.2f", safe)
         }
+    }
+
+    fun calculateMistakeStats(points: List<BankrollPoint>): MistakeStats {
+        val completed = points.count { it.handNumber >= 1 }
+        val mistakes = points.count { it.handNumber >= 1 && it.isSuboptimalHold }
+        val pct = if (completed > 0) (mistakes.toDouble() / completed.toDouble()) * 100.0 else 0.0
+        return MistakeStats(
+            mistakeCount = mistakes,
+            completedHands = completed,
+            mistakePercent = pct
+        )
+    }
+
+    fun formatMistakesLabel(points: List<BankrollPoint>): String {
+        val stats = calculateMistakeStats(points)
+        return String.format(Locale.US, "Mistakes: %d (%.1f%%)", stats.mistakeCount, stats.mistakePercent)
     }
 }

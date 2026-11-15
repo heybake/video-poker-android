@@ -21,14 +21,21 @@ fun TopDeck(
     state: GameState,
     palette: ThemePalette,
     onOpenOverlay: (ActiveOverlay) -> Unit = {},
+    onTogglePracticePlot: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val metrics = LocalResponsiveMetrics.current
-    val showBankrollInPracticePreDraw = (
+    val isPracticeAfterDraw = (
         state.currentMode == GameMode.PRACTICE &&
-            (state.dealState == DealState.READY_TO_DEAL || state.dealState == DealState.DEALT_CHOOSING_HOLDS)
+            (state.dealState == DealState.SHOWDOWN_WIN || state.dealState == DealState.SHOWDOWN_NO_WIN)
         )
-    val showBankrollPanel = (state.currentMode == GameMode.CASINO) || showBankrollInPracticePreDraw
+    val showBankrollInPracticePreDraw = (
+        state.currentMode == GameMode.PRACTICE && !isPracticeAfterDraw
+        )
+    val showBankrollInPracticePostDraw = (isPracticeAfterDraw && state.showPracticePlot)
+    val showBankrollPanel = (state.currentMode == GameMode.CASINO) ||
+        showBankrollInPracticePreDraw ||
+        showBankrollInPracticePostDraw
 
     Row(
         modifier = modifier
@@ -53,7 +60,9 @@ fun TopDeck(
                 targets = state.bankrollTargets,
                 cashBalance = state.cashBalance,
                 palette = palette,
-                showCompleteListButton = showBankrollInPracticePreDraw,
+                showCompleteListButton = (state.currentMode == GameMode.PRACTICE),
+                showReviewToggleButton = showBankrollInPracticePostDraw,
+                onShowReview = onTogglePracticePlot,
                 onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
                 modifier = Modifier.weight(0.59f)
             )
@@ -68,6 +77,7 @@ fun TopDeck(
                 practiceMadeTopChoice = state.practiceMadeTopChoice,
                 palette = palette,
                 onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
+                onShowPlot = onTogglePracticePlot,
                 modifier = Modifier.weight(0.59f)
             )
         }
