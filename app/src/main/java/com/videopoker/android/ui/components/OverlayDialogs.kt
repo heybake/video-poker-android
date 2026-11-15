@@ -1635,8 +1635,8 @@ private fun CashOutContent(
         )
     }
 
-    val inkDark = Color(0xFF181818)
-    val inkMuted = Color(0xFF4A473E)
+    val inkDark = Color(0xFF0E0E0E)
+    val inkSecondary = Color(0xFF24221D)
     val paperBg = Color(0xFFF6F0DE)
     val paperBorder = Color(0xFFC2B79B)
 
@@ -1664,13 +1664,13 @@ private fun CashOutContent(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(0.95f)
-                .padding(vertical = (6f * scale).dp)
+                .fillMaxWidth(0.985f)
+                .padding(top = (2f * scale).dp, bottom = (4f * scale).dp)
                 .shadow((6f * scale).dp, RoundedCornerShape(voucherCorner))
                 .clip(RoundedCornerShape(voucherCorner))
                 .background(paperBg)
                 .border((1.5f * scale).dp, paperBorder, RoundedCornerShape(voucherCorner))
-                .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp),
+                .padding(horizontal = (6f * scale).dp, vertical = (4f * scale).dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -1688,9 +1688,9 @@ private fun CashOutContent(
                     Text(
                         text = "INSERT THIS SIDE UP",
                         color = inkDark,
-                        fontSize = (7.5f * scale).sp,
+                        fontSize = (10f * scale).sp,
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (0.6f * scale).sp,
+                        letterSpacing = (0.7f * scale).sp,
                         maxLines = 1,
                         modifier = Modifier.verticalTicketRotate(-90f)
                     )
@@ -1708,7 +1708,7 @@ private fun CashOutContent(
                     Text(
                         text = TitoVoucherFormatter.CASINO_NAME,
                         color = inkDark,
-                        fontSize = (14.5f * scale).sp,
+                        fontSize = (21f * scale).sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Serif,
                         maxLines = 1,
@@ -1716,20 +1716,34 @@ private fun CashOutContent(
                         style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                     )
 
-                    Text(
-                        text = "${TitoVoucherFormatter.CASINO_ADDRESS_LINE_1}  •  ${TitoVoucherFormatter.CASINO_ADDRESS_LINE_2}  •  ${TitoVoucherFormatter.CASINO_URL}",
-                        color = inkMuted,
-                        fontSize = (6.3f * scale).sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy((1.5f * scale).dp)
+                    ) {
+                        Text(
+                            text = TitoVoucherFormatter.CASINO_ADDRESS_LINE_1,
+                            color = inkSecondary,
+                            fontSize = (10.5f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                        )
+                        Text(
+                            text = "${TitoVoucherFormatter.CASINO_ADDRESS_LINE_2}  •  ${TitoVoucherFormatter.CASINO_URL}",
+                            color = inkSecondary,
+                            fontSize = (10.5f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                        )
+                    }
 
                     Text(
                         text = "G A M I N G   V O U C H E R",
                         color = inkDark,
-                        fontSize = (11f * scale).sp,
+                        fontSize = (15f * scale).sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,
                         maxLines = 1,
@@ -1741,15 +1755,15 @@ private fun CashOutContent(
                         text = TitoVoucherFormatter.BARCODE_EASTER_EGG_TEXT,
                         barColor = inkDark,
                         modifier = Modifier
-                            .fillMaxWidth(0.76f)
-                            .height((28f * scale).dp)
+                            .fillMaxWidth(0.86f)
+                            .height((34f * scale).dp)
                     )
 
                     Text(
                         text = details.validationNumber,
                         color = inkDark,
-                        fontSize = (8.5f * scale).sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = (12f * scale).sp,
+                        fontWeight = FontWeight.ExtraBold,
                         fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
@@ -1757,22 +1771,22 @@ private fun CashOutContent(
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy((1.5f * scale).dp)
+                        verticalArrangement = Arrangement.spacedBy((2f * scale).dp)
                     ) {
                         Text(
                             text = "VALIDATION   ${details.validationNumber}",
                             color = inkDark,
-                            fontSize = (7.8f * scale).sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = (11.5f * scale).sp,
+                            fontWeight = FontWeight.ExtraBold,
                             fontFamily = FontFamily.Monospace,
                             maxLines = 1,
                             style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                         )
                         Text(
                             text = "${details.dateText}    ${details.timeText}    TICKET # ${details.ticketNumber}",
-                            color = inkMuted,
-                            fontSize = (7.3f * scale).sp,
-                            fontWeight = FontWeight.SemiBold,
+                            color = inkSecondary,
+                            fontSize = (11f * scale).sp,
+                            fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             maxLines = 1,
                             style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
@@ -1782,10 +1796,11 @@ private fun CashOutContent(
                     Text(
                         text = details.amountWords,
                         color = inkDark,
-                        fontSize = (8f * scale).sp,
+                        fontSize = (11.5f * scale).sp,
                         fontWeight = FontWeight.ExtraBold,
                         fontFamily = FontFamily.Monospace,
-                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                     )
@@ -1794,7 +1809,7 @@ private fun CashOutContent(
                         Text(
                             text = details.amountText,
                             color = inkDark,
-                            fontSize = (18.5f * scale).sp,
+                            fontSize = (27f * scale).sp,
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Serif,
                             maxLines = 1,
@@ -1803,8 +1818,8 @@ private fun CashOutContent(
                         )
                         Text(
                             text = "ASSET# ${details.assetNumber}",
-                            color = inkMuted,
-                            fontSize = (7.2f * scale).sp,
+                            color = inkSecondary,
+                            fontSize = (10.5f * scale).sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             maxLines = 1,
@@ -1822,9 +1837,9 @@ private fun CashOutContent(
                 ) {
                     Text(
                         text = details.validationNumber,
-                        color = inkMuted,
-                        fontSize = (6.8f * scale).sp,
-                        fontWeight = FontWeight.SemiBold,
+                        color = inkSecondary,
+                        fontSize = (9.5f * scale).sp,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         modifier = Modifier.verticalTicketRotate(90f)
@@ -1832,9 +1847,9 @@ private fun CashOutContent(
                     Text(
                         text = "INSERT THIS SIDE UP",
                         color = inkDark,
-                        fontSize = (7.5f * scale).sp,
+                        fontSize = (10f * scale).sp,
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (0.6f * scale).sp,
+                        letterSpacing = (0.7f * scale).sp,
                         maxLines = 1,
                         modifier = Modifier.verticalTicketRotate(90f)
                     )
@@ -1845,27 +1860,27 @@ private fun CashOutContent(
         Row(horizontalArrangement = Arrangement.spacedBy((16f * scale).dp)) {
             Box(
                 modifier = Modifier
-                    .width((130f * scale).dp)
-                    .height((34f * scale).dp)
+                    .width((134f * scale).dp)
+                    .height((33f * scale).dp)
                     .shadow((4f * scale).dp, RoundedCornerShape(btnCorner))
                     .clip(RoundedCornerShape(btnCorner))
                     .background(Color(0xFFD6293B))
                     .clickable { onConfirmCashOut() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "TAKE VOUCHER", color = Color.White, fontSize = (11.5f * scale).sp, fontWeight = FontWeight.Black)
+                Text(text = "TAKE VOUCHER", color = Color.White, fontSize = (12f * scale).sp, fontWeight = FontWeight.Black)
             }
 
             Box(
                 modifier = Modifier
-                    .width((110f * scale).dp)
-                    .height((34f * scale).dp)
+                    .width((114f * scale).dp)
+                    .height((33f * scale).dp)
                     .clip(RoundedCornerShape(btnCorner))
                     .background(Color(0x33FFFFFF))
                     .clickable(onClick = onClose),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "KEEP PLAYING", color = Color.White, fontSize = (11.5f * scale).sp, fontWeight = FontWeight.Bold)
+                Text(text = "KEEP PLAYING", color = Color.White, fontSize = (12f * scale).sp, fontWeight = FontWeight.Bold)
             }
         }
     }
