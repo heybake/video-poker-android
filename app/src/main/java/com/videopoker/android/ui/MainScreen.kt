@@ -108,6 +108,7 @@ fun MainScreen(viewModel: GameViewModel) {
                 onClose = viewModel::closeOverlay,
                 onModeToggle = viewModel::onModeToggle,
                 onThemeSelect = viewModel::onThemeSelect,
+                onCardDeckSelect = viewModel::onCardDeckSelect,
                 onDenomSelect = viewModel::onDenomSelect,
                 onGameSelect = viewModel::onGameSelect,
                 onVolumeChange = viewModel::onVolumeChange,

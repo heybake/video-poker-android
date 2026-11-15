@@ -2,6 +2,21 @@ package com.videopoker.android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+enum class CardDeck(
+    val id: String,
+    val displayName: String,
+    val subtitle: String,
+    val assetFolder: String
+) {
+    MODERN("modern", "Modern Crest", "Custom court & crest back", "cards"),
+    CLASSIC_IGT("classic_igt", "Classic IGT", "1990s arcade CRT & lattice", "cards_classic");
+
+    companion object {
+        fun fromId(id: String?): CardDeck =
+            entries.firstOrNull { it.id == id } ?: MODERN
+    }
+}
+
 enum class AppTheme(val id: String, val displayName: String) {
     BRASS("brass", "Smoke & Brass"),
     CLASSIC("classic", "Classic Blue"),

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.ui.state.GameMode
+import com.videopoker.android.ui.theme.CardDeck
 import com.videopoker.android.ui.theme.ThemePalette
 
 @Composable
@@ -48,6 +49,7 @@ fun CardSlot(
     choicesHoldingCard: List<Int>, // 1-based choices holding this card (e.g. [1, 2])
     mode: GameMode,
     palette: ThemePalette,
+    cardDeck: CardDeck = CardDeck.MODERN,
     cardWidth: Dp = 100.dp,
     cardHeight: Dp = 140.dp,
     onToggleHold: () -> Unit = {}
@@ -57,11 +59,11 @@ fun CardSlot(
     val cardScale = (cardWidth.value / 100f).coerceIn(0.6f, 2.6f)
     val cardRadius = (8f * cardScale).dp
 
-    // Load card image from assets
-    val cardBitmap = remember(card) {
+    // Load card image from selected deck assets folder
+    val cardBitmap = remember(card, cardDeck) {
         val fileName = card?.assetFileName ?: "back.png"
         try {
-            context.assets.open("cards/$fileName").use { stream ->
+            context.assets.open("${cardDeck.assetFolder}/$fileName").use { stream ->
                 BitmapFactory.decodeStream(stream)?.asImageBitmap()
             }
         } catch (e: Exception) {

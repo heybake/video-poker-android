@@ -166,6 +166,7 @@ fun MidDeck(
                             choicesHoldingCard = choicesHoldingCard,
                             mode = state.currentMode,
                             palette = palette,
+                            cardDeck = state.currentCardDeck,
                             cardWidth = cardWidth,
                             cardHeight = cardHeight,
                             onToggleHold = { onToggleHold(idx) }

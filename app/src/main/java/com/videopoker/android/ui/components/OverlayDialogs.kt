@@ -1,6 +1,8 @@
 package com.videopoker.android.ui.components
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,7 +60,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -83,6 +87,7 @@ import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.theme.AppTheme
+import com.videopoker.android.ui.theme.CardDeck
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemeManager
 import com.videopoker.android.ui.theme.ThemePalette
@@ -95,6 +100,7 @@ fun OverlayDialogs(
     onClose: () -> Unit,
     onModeToggle: (GameMode) -> Unit,
     onThemeSelect: (AppTheme) -> Unit,
+    onCardDeckSelect: (CardDeck) -> Unit,
     onDenomSelect: (Double) -> Unit,
     onGameSelect: (GameConfig) -> Unit,
     onVolumeChange: (Float) -> Unit,
@@ -162,6 +168,7 @@ fun OverlayDialogs(
                     scale = s,
                     onModeToggle = onModeToggle,
                     onThemeSelect = onThemeSelect,
+                    onCardDeckSelect = onCardDeckSelect,
                     onVolumeChange = onVolumeChange,
                     onToggleRecordingSession = onToggleRecordingSession,
                     onSaveSessionToDownloads = onSaveSessionToDownloads,
@@ -553,6 +560,7 @@ private fun OptionsContent(
     scale: Float,
     onModeToggle: (GameMode) -> Unit,
     onThemeSelect: (AppTheme) -> Unit,
+    onCardDeckSelect: (CardDeck) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onToggleRecordingSession: () -> Unit,
     onSaveSessionToDownloads: (String) -> Unit,
@@ -674,6 +682,99 @@ private fun OptionsContent(
                                 }
                                 repeat(4 - rowThemes.size) {
                                     Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Selectable Card Deck (Modern Crest vs Classic IGT)
+                Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
+                    val context = LocalContext.current
+                    Text(
+                        text = "CARD DECK",
+                        color = palette.goldColor,
+                        fontSize = (10.5f * scale).sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
+                    ) {
+                        CardDeck.entries.forEach { cardDeck ->
+                            val isCur = (state.currentCardDeck == cardDeck)
+                            val backBmp = remember(cardDeck) {
+                                try {
+                                    context.assets.open("${cardDeck.assetFolder}/back.png").use {
+                                        BitmapFactory.decodeStream(it)?.asImageBitmap()
+                                    }
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            }
+                            val aceBmp = remember(cardDeck) {
+                                try {
+                                    context.assets.open("${cardDeck.assetFolder}/As.png").use {
+                                        BitmapFactory.decodeStream(it)?.asImageBitmap()
+                                    }
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(pillCorner))
+                                    .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isCur) Color.White else Color(0x44FFFFFF),
+                                        shape = RoundedCornerShape(pillCorner)
+                                    )
+                                    .clickable { onCardDeckSelect(cardDeck) }
+                                    .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                            ) {
+                                Row(horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)) {
+                                    if (backBmp != null) {
+                                        Image(
+                                            bitmap = backBmp,
+                                            contentDescription = "${cardDeck.displayName} back",
+                                            modifier = Modifier
+                                                .size(width = (22f * scale).dp, height = (31f * scale).dp)
+                                                .clip(RoundedCornerShape((3f * scale).dp))
+                                                .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
+                                        )
+                                    }
+                                    if (aceBmp != null) {
+                                        Image(
+                                            bitmap = aceBmp,
+                                            contentDescription = "${cardDeck.displayName} Ace of Spades",
+                                            modifier = Modifier
+                                                .size(width = (22f * scale).dp, height = (31f * scale).dp)
+                                                .clip(RoundedCornerShape((3f * scale).dp))
+                                                .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
+                                        )
+                                    }
+                                }
+                                Column(verticalArrangement = Arrangement.spacedBy((1f * scale).dp)) {
+                                    Text(
+                                        text = cardDeck.displayName,
+                                        color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                                        fontSize = (10.5f * scale).sp,
+                                        fontWeight = FontWeight.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = cardDeck.subtitle,
+                                        color = if (isCur) Color(0xFF332917) else Color(0xCCDFD8CC),
+                                        fontSize = (8.5f * scale).sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                             }
                         }

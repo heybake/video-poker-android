@@ -6,6 +6,7 @@ import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.theme.AppTheme
+import com.videopoker.android.ui.theme.CardDeck
 
 enum class GameMode(val displayName: String) {
     LEARN("Learn"),
@@ -37,6 +38,7 @@ data class GameState(
     val creditAsCash: Boolean = false,
     val displayCurrency: Boolean = false, // legacy fallback
     val currentTheme: AppTheme = AppTheme.BRASS,
+    val currentCardDeck: CardDeck = CardDeck.MODERN,
     val soundVolume: Float = 0.8f,
     val isVolumePopupOpen: Boolean = false,
     val speedLevel: Int = 2, // 1..3, default 2 (matching desktop SPEED_MS = [250, 170, 100])
@@ -55,7 +57,7 @@ data class GameState(
     val showSplash: Boolean = true
 ) {
     companion object {
-        const val APP_VERSION = "1.0.17"
+        const val APP_VERSION = "1.0.18"
     }
 }
 

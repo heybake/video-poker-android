@@ -17,6 +17,7 @@ import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.sound.SoundEffect
 import com.videopoker.android.sound.SoundManager
 import com.videopoker.android.ui.theme.AppTheme
+import com.videopoker.android.ui.theme.CardDeck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,7 @@ class GameViewModel : ViewModel() {
 
     private var deck: Deck = Deck()
     private var soundManager: SoundManager? = null
+    private var prefs: android.content.SharedPreferences? = null
     private var sessionsRoot: File? = null
     private var activePlayedLog: PlayedGameLog? = null
     private var sessionMoneyInCents: Long = 0L
@@ -47,6 +49,10 @@ class GameViewModel : ViewModel() {
             soundManager = SoundManager(context.applicationContext)
             soundManager?.setVolume(_uiState.value.soundVolume)
         }
+        val appPrefs = prefs ?: context.applicationContext
+            .getSharedPreferences("vp_prefs", Context.MODE_PRIVATE)
+            .also { prefs = it }
+        val savedDeck = CardDeck.fromId(appPrefs.getString("card_deck", null))
         val root = File(context.applicationContext.filesDir, "recorded_sessions").apply { mkdirs() }
         sessionsRoot = root
 
@@ -77,6 +83,7 @@ class GameViewModel : ViewModel() {
                 _uiState.update { current ->
                     current.copy(
                         allGames = loadedList,
+                        currentCardDeck = savedDeck,
                         currentGame = null,
                         cards = emptyList(),
                         heldMask = listOf(false, false, false, false, false),
@@ -529,6 +536,11 @@ class GameViewModel : ViewModel() {
 
     fun onThemeSelect(theme: AppTheme) {
         _uiState.update { it.copy(currentTheme = theme) }
+    }
+
+    fun onCardDeckSelect(cardDeck: CardDeck) {
+        prefs?.edit()?.putString("card_deck", cardDeck.id)?.apply()
+        _uiState.update { it.copy(currentCardDeck = cardDeck) }
     }
 
     fun onModeToggle(mode: GameMode) {
