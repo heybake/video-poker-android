@@ -1,0 +1,20 @@
+package com.videopoker.android.ui.components
+
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class SplashScreenLayoutTest {
+
+    @Test
+    fun `phone and tablet splash metrics scale cleanly inside viewport bounds`() {
+        val phone = calculateSplashLayoutMetrics(viewportWidthDp = 914f, viewportHeightDp = 411f)
+        val tablet = calculateSplashLayoutMetrics(viewportWidthDp = 1280f, viewportHeightDp = 800f)
+
+        assertTrue(phone.scale in 0.9f..1.1f)
+        assertTrue(tablet.scale > phone.scale)
+        assertTrue(tablet.borderInsetDp > phone.borderInsetDp)
+        assertTrue(tablet.titleSizeSp > phone.titleSizeSp)
+        assertTrue(phone.heroFillFractionH in 0.8f..0.95f)
+        assertTrue(tablet.heroFillFractionH in 0.8f..0.95f)
+    }
+}

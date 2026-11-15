@@ -402,8 +402,8 @@ fun BottomDeck(
             )
 
             Text(
-                text = "v1.0.14",
-                color = palette.goldColor,
+                text = "v${GameState.APP_VERSION}",
+                color = palette.footerVersionColor,
                 style = TextStyle(
                     fontSize = (10.5f * scale).sp,
                     fontWeight = FontWeight.Black,

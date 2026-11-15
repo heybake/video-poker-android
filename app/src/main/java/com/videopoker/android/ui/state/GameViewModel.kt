@@ -52,24 +52,27 @@ class GameViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                val assetManager = context.assets
-                val files = assetManager.list("games") ?: emptyArray()
-                val loadedList = mutableListOf<GameConfig>()
+                val (loadedList, saved) = withContext(Dispatchers.IO) {
+                    val assetManager = context.applicationContext.assets
+                    val files = assetManager.list("games") ?: emptyArray()
+                    val games = mutableListOf<GameConfig>()
 
-                for (file in files) {
-                    if (file.endsWith(".json")) {
-                        assetManager.open("games/$file").use { stream ->
-                            val reader = InputStreamReader(stream)
-                            val json = JsonParser.parseReader(reader).asJsonObject
-                            val config = StrategyEngine.parseGameConfig(json, file)
-                            loadedList.add(config)
+                    for (file in files) {
+                        if (file.endsWith(".json")) {
+                            assetManager.open("games/$file").use { stream ->
+                                val reader = InputStreamReader(stream)
+                                val json = JsonParser.parseReader(reader).asJsonObject
+                                val config = StrategyEngine.parseGameConfig(json, file)
+                                games.add(config)
+                            }
                         }
                     }
-                }
 
-                // Sort games: Double Bonus 10/7 first, then alphabetical
-                loadedList.sortBy { if (it.variant.contains("double_bonus_10_7")) "000" else it.displayName }
-                val saved = withContext(Dispatchers.IO) { PlayedGameLog.listRecordedSessions(root) }
+                    // Sort games: Double Bonus 10/7 first, then alphabetical
+                    games.sortBy { if (it.variant.contains("double_bonus_10_7")) "000" else it.displayName }
+                    val recorded = PlayedGameLog.listRecordedSessions(root)
+                    games to recorded
+                }
 
                 _uiState.update { current ->
                     current.copy(
@@ -89,6 +92,10 @@ class GameViewModel : ViewModel() {
                 e.printStackTrace()
             }
         }
+    }
+
+    fun dismissSplash() {
+        _uiState.update { it.copy(showSplash = false) }
     }
 
     fun onDealDraw() {

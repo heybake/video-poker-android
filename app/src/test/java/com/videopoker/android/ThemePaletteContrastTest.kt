@@ -36,6 +36,11 @@ class ThemePaletteContrastTest {
                 "Footer contrast for ${theme.displayName} is too low: $ratio:1",
                 ratio >= 4.5
             )
+            val versionRatio = contrastRatio(palette.footerVersionColor, palette.backgroundColorEnd)
+            assertTrue(
+                "Footer version contrast for ${theme.displayName} is too low: $versionRatio:1",
+                versionRatio >= 4.5
+            )
         }
     }
 }

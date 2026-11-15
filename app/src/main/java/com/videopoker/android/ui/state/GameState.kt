@@ -51,8 +51,13 @@ data class GameState(
     val sessionExportStatus: String? = null,
     val activeOverlay: ActiveOverlay? = null,
     val practiceFeedback: String? = null,
-    val practiceMadeTopChoice: Boolean? = null
-)
+    val practiceMadeTopChoice: Boolean? = null,
+    val showSplash: Boolean = true
+) {
+    companion object {
+        const val APP_VERSION = "1.0.15"
+    }
+}
 
 enum class ActiveOverlay {
     HELP,

@@ -58,6 +58,10 @@ class MainActivity : ComponentActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
+            if (viewModel.uiState.value.showSplash) {
+                viewModel.dismissSplash()
+                return true
+            }
             if (viewModel.uiState.value.activeOverlay != null) {
                 if (event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
                     viewModel.closeOverlay()

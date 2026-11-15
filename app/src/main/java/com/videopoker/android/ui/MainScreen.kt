@@ -1,5 +1,9 @@
 package com.videopoker.android.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +22,11 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import com.videopoker.android.ui.components.OverlayDialogs
+import com.videopoker.android.ui.components.StartupSplashScreen
 import com.videopoker.android.ui.decks.BottomDeck
 import com.videopoker.android.ui.decks.MidDeck
 import com.videopoker.android.ui.decks.TopDeck
+import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.state.GameViewModel
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemeManager
@@ -111,6 +117,18 @@ fun MainScreen(viewModel: GameViewModel) {
                 onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
                 onShareSession = { path -> viewModel.onShareSession(context, path) }
             )
+
+            AnimatedVisibility(
+                visible = state.showSplash,
+                enter = EnterTransition.None,
+                exit = fadeOut(animationSpec = tween(durationMillis = 380))
+            ) {
+                StartupSplashScreen(
+                    gamesReady = state.allGames.isNotEmpty(),
+                    appVersion = GameState.APP_VERSION,
+                    onDismiss = viewModel::dismissSplash
+                )
+            }
         }
     }
 }

@@ -55,7 +55,8 @@ data class ThemePalette(
     val choice1Color: Color,
     val choice2Color: Color,
     val choice3Color: Color,
-    val overlayBgColor: Color = panelColor
+    val overlayBgColor: Color = panelColor,
+    val footerVersionColor: Color = goldColor
 )
 
 object ThemeManager {
@@ -411,7 +412,8 @@ object ThemeManager {
         choice1Color = Color(0xFFF4E7B8),
         choice2Color = Color(0xFFC3B9FF),
         choice3Color = Color(0xFFBFE0B8),
-        overlayBgColor = Color(0xFF0F1D1A)
+        overlayBgColor = Color(0xFF0F1D1A),
+        footerVersionColor = Color(0xFF4A3D26)
     )
 
     fun getPalette(theme: AppTheme): ThemePalette {
