@@ -9,7 +9,7 @@ enum class CardDeck(
     val assetFolder: String
 ) {
     MODERN("modern", "Modern Crest", "Custom court & crest back", "cards"),
-    CLASSIC_IGT("classic_igt", "Classic IGT", "1990s arcade CRT & lattice", "cards_classic");
+    VINTAGE_CREST("vintage_crest", "Vintage Crest", "Traditional court & lattice back", "cards_classic");
 
     companion object {
         fun fromId(id: String?): CardDeck =

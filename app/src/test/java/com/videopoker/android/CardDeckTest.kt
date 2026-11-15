@@ -11,7 +11,7 @@ class CardDeckTest {
     @Test
     fun fromIdResolvesKnownAndFallsBackToModern() {
         assertEquals(CardDeck.MODERN, CardDeck.fromId("modern"))
-        assertEquals(CardDeck.CLASSIC_IGT, CardDeck.fromId("classic_igt"))
+        assertEquals(CardDeck.VINTAGE_CREST, CardDeck.fromId("vintage_crest"))
         assertEquals(CardDeck.MODERN, CardDeck.fromId(null))
         assertEquals(CardDeck.MODERN, CardDeck.fromId("unknown_deck"))
     }

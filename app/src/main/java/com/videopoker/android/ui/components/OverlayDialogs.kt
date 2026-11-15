@@ -693,7 +693,7 @@ private fun OptionsContent(
                     }
                 }
 
-                // Selectable Card Deck (Modern Crest vs Classic IGT)
+                // Selectable Card Deck (Modern Crest vs Vintage Crest)
                 Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
                     val context = LocalContext.current
                     Text(

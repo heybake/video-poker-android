@@ -9,7 +9,7 @@ Standardized geometry used by custom playing-card decks in `app/src/main/assets/
 - **Supersampling**: Render vector pips, typography, and borders at `2×`–`4×` resolution and downsample with `LANCZOS` resampling.
 - **Corner Radius**: `32 px` (`7.11%` of width)
 - **Interior Fill**: `#FFFFFF` (transparent outside the rounded card mask)
-- **Outer Frame Border (Modern Crest style)**: `3 px` `#000000` rounded stroke (optional; omitted on borderless arcade styles like Classic IGT)
+- **Outer Frame Border (Modern Crest style)**: `3 px` `#000000` rounded stroke (optional; omitted on borderless arcade styles like Vintage Crest)
 
 ---
 
