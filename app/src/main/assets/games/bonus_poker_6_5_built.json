@@ -3,14 +3,7 @@
   "config_file": "bonus_poker_6_5.json",
   "job_type": "simulation",
   "variant": "bonus_poker_6_5",
-  "denominations": [
-    0.05,
-    0.25,
-    0.5,
-    1.0,
-    2.0,
-    5.0
-  ],
+  "denominations": [0.05, 0.25, 0.5, 1.0, 2.0, 5.0],
   "denomination": 0.25,
   "credits_played": 5,
   "starting_balance": 40.0,
@@ -32,7 +25,9 @@
       "two_pair": 12.9254,
       "jacks_or_better": 21.5176,
       "non_paying_hands": 54.4959
-    }
+    },
+    "built_list_rtp": 96.8585,
+    "loss_vs_perfect_pct": 0.0103
   },
   "paytable": {
     "royal_flush": 800,
@@ -97,519 +92,44 @@
     }
   },
   "hold_priority_list": [
-    {
-      "id": "straight_flush",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 5,
-          "sequence": {
-            "length": 5,
-            "gaps": 0,
-            "span": 5
-          }
-        }
-      },
-      "hold": "all"
-    },
-    {
-      "id": "three_aces",
-      "query": {
-        "group_by": "rank",
-        "having": {
-          "count": 3,
-          "in_ranks": [
-            "A"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "4_to_royal_flush",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 4,
-          "in_ranks": [
-            "T",
-            "J",
-            "Q",
-            "K",
-            "A"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "straight",
-      "query": {
-        "sequence": {
-          "length": 5,
-          "gaps": 0,
-          "span": 5
-        }
-      },
-      "hold": "all"
-    },
-    {
-      "id": "full_house",
-      "query": {
-        "group_by": "rank",
-        "having_counts": [
-          3,
-          2
-        ]
-      },
-      "hold": "all"
-    },
-    {
-      "id": "four_of_a_kind",
-      "query": {
-        "group_by": "rank",
-        "having": {
-          "count": 4
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "flush",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 5
-        }
-      },
-      "hold": "all"
-    },
-    {
-      "id": "4_to_straight_flush_open",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 4,
-          "sequence": {
-            "length": 4,
-            "gaps": 0,
-            "span": 4,
-            "outside": true
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "4_to_straight_flush_inside",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 4,
-          "sequence": {
-            "length": 4,
-            "gaps": 1,
-            "span": 5
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "two_pair",
-      "query": {
-        "group_by": "rank",
-        "having_counts": [
-          2,
-          2
-        ]
-      },
-      "hold": "matching_groups"
-    },
-    {
-      "id": "three_of_a_kind",
-      "query": {
-        "group_by": "rank",
-        "having": {
-          "count": 3
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "high_pair",
-      "query": {
-        "group_by": "rank",
-        "having": {
-          "count": 2,
-          "in_ranks": [
-            "J",
-            "Q",
-            "K",
-            "A"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "3_to_royal_flush",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "in_ranks": [
-            "T",
-            "J",
-            "Q",
-            "K",
-            "A"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "4_to_flush",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 4
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "akqj_unsuited",
-      "query": {
-        "exact_ranks": [
-          "A",
-          "K",
-          "Q",
-          "J"
-        ],
-        "suited": false
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "low_pair",
-      "query": {
-        "group_by": "rank",
-        "having": {
-          "count": 2,
-          "in_ranks": [
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "T"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "4_to_outside_straight",
-      "query": {
-        "sequence": {
-          "length": 4,
-          "gaps": 0,
-          "span": 4,
-          "outside": true
-        }
-      },
-      "hold": "matching_sequence"
-    },
-    {
-      "id": "3_to_straight_flush_type_2_high",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "sequence": {
-            "length": 3,
-            "gaps": 2,
-            "span": 5,
-            "min_high_cards": 2
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "suited_kq_kj",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 2,
-          "match_any": [
-            [
-              "K",
-              "Q"
-            ],
-            [
-              "K",
-              "J"
-            ]
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "3_to_straight_flush_type_1_gap",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "sequence": {
-            "length": 3,
-            "gaps": 1,
-            "span": 4,
-            "min_high_cards": 1
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "suited_qj",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 2,
-          "exact_ranks": [
-            "Q",
-            "J"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "3_to_straight_flush_type_1",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "sequence": {
-            "length": 3,
-            "gaps": 0,
-            "span": 3,
-            "outside": true
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "4_to_inside_straight_3_high",
-      "query": {
-        "sequence": {
-          "length": 4,
-          "gaps": 1,
-          "span": 5,
-          "min_high_cards": 3
-        }
-      },
-      "hold": "matching_sequence"
-    },
-    {
-      "id": "kqj_unsuited",
-      "query": {
-        "exact_ranks": [
-          "K",
-          "Q",
-          "J"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "3_to_straight_flush_type_3_ace",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "in_ranks": [
-            "A",
-            "2",
-            "3",
-            "4",
-            "5"
-          ],
-          "must_include": "A"
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "qj_unsuited",
-      "query": {
-        "exact_ranks": [
-          "Q",
-          "J"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "suited_jt",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 2,
-          "exact_ranks": [
-            "J",
-            "T"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "ak_aq_aj_unsuited",
-      "query": {
-        "match_any": [
-          [
-            "A",
-            "K"
-          ],
-          [
-            "A",
-            "Q"
-          ],
-          [
-            "A",
-            "J"
-          ]
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "3_to_straight_flush_type_2_low",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "sequence": {
-            "length": 3,
-            "gaps": 1,
-            "span": 4,
-            "high_cards": 0
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "kq_kj_unsuited",
-      "query": {
-        "match_any": [
-          [
-            "K",
-            "Q"
-          ],
-          [
-            "K",
-            "J"
-          ]
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "suited_kt",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 2,
-          "exact_ranks": [
-            "K",
-            "T"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "suited_qt",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 2,
-          "exact_ranks": [
-            "Q",
-            "T"
-          ]
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "single_ace",
-      "query": {
-        "exact_ranks": [
-          "A"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "single_jack",
-      "query": {
-        "exact_ranks": [
-          "J"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "single_queen",
-      "query": {
-        "exact_ranks": [
-          "Q"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "single_king",
-      "query": {
-        "exact_ranks": [
-          "K"
-        ]
-      },
-      "hold": "matching_cards"
-    },
-    {
-      "id": "3_to_straight_flush_type_3_low",
-      "query": {
-        "group_by": "suit",
-        "having": {
-          "count": 3,
-          "sequence": {
-            "length": 3,
-            "gaps": 2,
-            "span": 5,
-            "high_cards": 0
-          }
-        }
-      },
-      "hold": "matching_group"
-    },
-    {
-      "id": "discard_all",
-      "query": {
-        "any": true
-      },
-      "hold": "none"
-    }
+    { "id": "straight_flush", "query": { "group_by": "suit", "having": { "count": 5, "sequence": { "length": 5, "gaps": 0, "span": 5 } } }, "hold": "all" },
+    { "id": "three_aces", "query": { "group_by": "rank", "having": { "count": 3, "in_ranks": ["A"] } }, "hold": "matching_group" },
+    { "id": "4_to_royal_flush", "query": { "group_by": "suit", "having": { "count": 4, "in_ranks": ["T", "J", "Q", "K", "A"] } }, "hold": "matching_group" },
+    { "id": "straight", "query": { "sequence": { "length": 5, "gaps": 0, "span": 5 } }, "hold": "all" },
+    { "id": "full_house", "query": { "group_by": "rank", "having_counts": [3, 2] }, "hold": "all" },
+    { "id": "four_of_a_kind", "query": { "group_by": "rank", "having": { "count": 4 } }, "hold": "matching_group" },
+    { "id": "flush", "query": { "group_by": "suit", "having": { "count": 5 } }, "hold": "all" },
+    { "id": "4_to_straight_flush_open", "query": { "group_by": "suit", "having": { "count": 4, "sequence": { "length": 4, "gaps": 0, "span": 4, "outside": true } } }, "hold": "matching_group" },
+    { "id": "4_to_straight_flush_inside", "query": { "group_by": "suit", "having": { "count": 4, "sequence": { "length": 4, "gaps": 1, "span": 5 } } }, "hold": "matching_group" },
+    { "id": "two_pair", "query": { "group_by": "rank", "having_counts": [2, 2] }, "hold": "matching_groups" },
+    { "id": "three_of_a_kind", "query": { "group_by": "rank", "having": { "count": 3 } }, "hold": "matching_group" },
+    { "id": "high_pair", "query": { "group_by": "rank", "having": { "count": 2, "in_ranks": ["J", "Q", "K", "A"] } }, "hold": "matching_group" },
+    { "id": "3_to_royal_flush", "query": { "group_by": "suit", "having": { "count": 3, "in_ranks": ["T", "J", "Q", "K", "A"] } }, "hold": "matching_group" },
+    { "id": "4_to_flush", "query": { "group_by": "suit", "having": { "count": 4 } }, "hold": "matching_group" },
+    { "id": "akqj_unsuited", "query": { "exact_ranks": ["A", "K", "Q", "J"], "suited": false }, "hold": "matching_cards" },
+    { "id": "low_pair", "query": { "group_by": "rank", "having": { "count": 2, "in_ranks": ["2", "3", "4", "5", "6", "7", "8", "9", "T"] } }, "hold": "matching_group" },
+    { "id": "4_to_outside_straight", "query": { "sequence": { "length": 4, "gaps": 0, "span": 4, "outside": true } }, "hold": "matching_sequence" },
+    { "id": "3_to_straight_flush_type_2_high", "query": { "group_by": "suit", "having": { "count": 3, "sequence": { "length": 3, "gaps": 2, "span": 5, "min_high_cards": 2 } } }, "hold": "matching_group" },
+    { "id": "suited_kq_kj", "query": { "group_by": "suit", "having": { "count": 2, "match_any": [["K", "Q"], ["K", "J"]] } }, "hold": "matching_group" },
+    { "id": "3_to_straight_flush_type_1_gap", "query": { "group_by": "suit", "having": { "count": 3, "sequence": { "length": 3, "gaps": 1, "span": 4, "min_high_cards": 1 } } }, "hold": "matching_group" },
+    { "id": "suited_qj", "query": { "group_by": "suit", "having": { "count": 2, "exact_ranks": ["Q", "J"] } }, "hold": "matching_group" },
+    { "id": "suited_ak_aq_aj", "query": { "group_by": "suit", "having": { "count": 2, "match_any": [["A", "K"], ["A", "Q"], ["A", "J"]] } }, "hold": "matching_group" },
+    { "id": "3_to_straight_flush_type_1", "query": { "group_by": "suit", "having": { "count": 3, "sequence": { "length": 3, "gaps": 0, "span": 3, "outside": true } } }, "hold": "matching_group" },
+    { "id": "4_to_inside_straight_3_high", "query": { "sequence": { "length": 4, "gaps": 1, "span": 5, "min_high_cards": 3 } }, "hold": "matching_sequence" },
+    { "id": "kqj_unsuited", "query": { "exact_ranks": ["K", "Q", "J"] }, "hold": "matching_cards" },
+    { "id": "3_to_straight_flush_type_3_ace", "query": { "group_by": "suit", "having": { "count": 3, "in_ranks": ["A", "2", "3", "4", "5"], "must_include": "A" } }, "hold": "matching_group" },
+    { "id": "qj_unsuited", "query": { "exact_ranks": ["Q", "J"] }, "hold": "matching_cards" },
+    { "id": "3_to_straight_flush_type_2_low", "query": { "group_by": "suit", "having": { "count": 3, "sequence": { "length": 3, "gaps": 1, "span": 4, "high_cards": 0 } } }, "hold": "matching_group" },
+    { "id": "kq_kj_unsuited", "query": { "match_any": [["K", "Q"], ["K", "J"]] }, "hold": "matching_cards" },
+    { "id": "suited_jt", "query": { "group_by": "suit", "having": { "count": 2, "exact_ranks": ["J", "T"] } }, "hold": "matching_group" },
+    { "id": "ak_aq_aj_unsuited", "query": { "match_any": [["A", "K"], ["A", "Q"], ["A", "J"]] }, "hold": "matching_cards" },
+    { "id": "suited_kt", "query": { "group_by": "suit", "having": { "count": 2, "exact_ranks": ["K", "T"] } }, "hold": "matching_group" },
+    { "id": "suited_qt", "query": { "group_by": "suit", "having": { "count": 2, "exact_ranks": ["Q", "T"] } }, "hold": "matching_group" },
+    { "id": "single_ace", "query": { "exact_ranks": ["A"] }, "hold": "matching_cards" },
+    { "id": "single_jack", "query": { "exact_ranks": ["J"] }, "hold": "matching_cards" },
+    { "id": "single_queen", "query": { "exact_ranks": ["Q"] }, "hold": "matching_cards" },
+    { "id": "single_king", "query": { "exact_ranks": ["K"] }, "hold": "matching_cards" },
+    { "id": "3_to_straight_flush_type_3_low", "query": { "group_by": "suit", "having": { "count": 3, "sequence": { "length": 3, "gaps": 2, "span": 5, "high_cards": 0 } } }, "hold": "matching_group" },
+    { "id": "discard_all", "query": { "any": true }, "hold": "none" }
   ]
 }

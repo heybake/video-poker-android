@@ -62,7 +62,7 @@ data class GameState(
     val showSplash: Boolean = true
 ) {
     companion object {
-        const val APP_VERSION = "1.0.26"
+        const val APP_VERSION = "1.0.27"
     }
 }
 

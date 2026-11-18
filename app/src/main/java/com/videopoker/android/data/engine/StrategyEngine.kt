@@ -296,6 +296,14 @@ object StrategyEngine {
                 if (candidateCards.size != targetCount) continue
             }
 
+            if (having.has("extra_card")) {
+                val extraConfig = having.getAsJsonObject("extra_card")
+                val extraInRanks = extraConfig?.getAsJsonArray("in_ranks")?.map { it.asString } ?: emptyList()
+                val matchedSet = candidateCards.toSet()
+                val extra = deal.firstOrNull { it !in matchedSet && it.rank.toString() in extraInRanks } ?: continue
+                candidateCards = candidateCards + extra
+            }
+
             val highCount = candidateCards.count { it.isHigh }
             if (having.has("min_high_cards") && highCount < having.get("min_high_cards").asInt) continue
             if (having.has("max_high_cards") && highCount > having.get("max_high_cards").asInt) continue
