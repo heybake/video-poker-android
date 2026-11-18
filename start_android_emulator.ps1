@@ -15,6 +15,8 @@ $Emulator = Join-Path $SdkDir 'emulator\emulator.exe'
 $ApkPath  = Join-Path $RepoDir 'app\build\outputs\apk\debug\app-debug.apk'
 $GradleFile = Join-Path $RepoDir 'app\build.gradle.kts'
 $PkgName  = 'com.videopoker.android'
+$OutLog   = Join-Path $env:TEMP 'vp_android_emulator_stdout.log'
+$ErrLog   = Join-Path $env:TEMP 'vp_android_emulator_stderr.log'
 
 function Fail($msg) {
     Write-Host "ERROR: $msg" -ForegroundColor Red
@@ -63,8 +65,10 @@ if (Test-Path $AvdDir) {
 }
 
 # 4. Cold-boot the visible desktop emulator window (-no-snapshot-load prevents snapshot hangs & stale package sessions).
+#    Redirect stdout/stderr to %TEMP% logs so emulator.exe does not keep the launching PowerShell window open.
+Remove-Item $OutLog, $ErrLog -Force -ErrorAction SilentlyContinue
 Write-Host "Launching Android emulator ($AvdName)..."
-$emuProc = Start-Process -FilePath $Emulator -ArgumentList @('-avd', $AvdName, '-no-snapshot-load') -WindowStyle Normal -PassThru
+$emuProc = Start-Process -FilePath $Emulator -ArgumentList @('-avd', $AvdName, '-no-snapshot-load') -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog -WindowStyle Normal -PassThru
 
 # 5. Wait for Android OS boot to complete cleanly.
 Write-Host "Waiting for Android phone to finish booting (usually 15-30 seconds)..."
