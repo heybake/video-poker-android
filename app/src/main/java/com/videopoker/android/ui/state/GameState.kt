@@ -59,10 +59,11 @@ data class GameState(
     val bankrollHistory: List<BankrollPoint> = emptyList(),
     val bankrollTargets: BankrollTargets = BankrollTargets(),
     val showPracticePlot: Boolean = false,
+    val gameSelectedBanner: String? = null,
     val showSplash: Boolean = true
 ) {
     companion object {
-        const val APP_VERSION = "1.0.27"
+        const val APP_VERSION = "1.0.28"
     }
 }
 

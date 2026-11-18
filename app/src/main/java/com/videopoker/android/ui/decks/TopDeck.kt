@@ -16,6 +16,8 @@ import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
 
+fun shouldShowBankrollMistakes(mode: GameMode): Boolean = mode != GameMode.CASINO
+
 @Composable
 fun TopDeck(
     state: GameState,
@@ -62,6 +64,7 @@ fun TopDeck(
                 palette = palette,
                 showCompleteListButton = (state.currentMode == GameMode.PRACTICE),
                 showReviewToggleButton = showBankrollInPracticePostDraw,
+                showMistakesSummary = shouldShowBankrollMistakes(state.currentMode),
                 onShowReview = onTogglePracticePlot,
                 onOpenCompleteList = { onOpenOverlay(ActiveOverlay.COMPLETE_HOLD_LIST) },
                 modifier = Modifier.weight(0.59f)

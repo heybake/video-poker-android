@@ -65,6 +65,7 @@ fun SessionBankrollPanel(
     palette: ThemePalette,
     showCompleteListButton: Boolean = false,
     showReviewToggleButton: Boolean = false,
+    showMistakesSummary: Boolean = true,
     onShowReview: () -> Unit = {},
     onOpenCompleteList: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -246,14 +247,16 @@ fun SessionBankrollPanel(
                     }
                 }
 
-                ChartLegendItem(
-                    label = SessionBankrollTracker.formatMistakesLabel(points),
-                    color = suboptimalDotColor,
-                    isDashed = false,
-                    isDot = true,
-                    scale = scale,
-                    textColor = palette.payTableTextColor
-                )
+                if (showMistakesSummary) {
+                    ChartLegendItem(
+                        label = SessionBankrollTracker.formatMistakesLabel(points),
+                        color = suboptimalDotColor,
+                        isDashed = false,
+                        isDot = true,
+                        scale = scale,
+                        textColor = palette.payTableTextColor
+                    )
+                }
             }
 
             if (points.isEmpty()) {

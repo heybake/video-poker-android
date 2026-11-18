@@ -20,6 +20,7 @@ import com.videopoker.android.ui.components.TitoVoucherFormatter
 import com.videopoker.android.ui.theme.AppTheme
 import com.videopoker.android.ui.theme.CardDeck
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +45,7 @@ class GameViewModel : ViewModel() {
     private var activePlayedLog: PlayedGameLog? = null
     private var sessionMoneyInCents: Long = 0L
     private var pendingAllHoldChoices: List<HoldChoice> = emptyList()
+    private var gameSelectedBannerJob: Job? = null
 
     fun loadGames(context: Context) {
         if (soundManager == null) {
@@ -120,6 +122,7 @@ class GameViewModel : ViewModel() {
     fun onDealDraw() {
         val state = _uiState.value
         if (state.isAnimating) return
+        clearGameSelectedBanner()
         if (state.currentGame == null) {
             openOverlay(ActiveOverlay.MORE_GAMES)
             return
@@ -503,15 +506,47 @@ class GameViewModel : ViewModel() {
             }
         }
         _uiState.update { state ->
+            applyGameSelection(
+                state = state,
+                game = game,
+                keepRecordedCount = (activePlayedLog != null)
+            )
+        }
+        gameSelectedBannerJob?.cancel()
+        gameSelectedBannerJob = viewModelScope.launch {
+            delay(GAME_SELECTED_BANNER_DURATION_MS)
+            _uiState.update { it.copy(gameSelectedBanner = null) }
+        }
+    }
+
+    private fun clearGameSelectedBanner() {
+        gameSelectedBannerJob?.cancel()
+        gameSelectedBannerJob = null
+        if (_uiState.value.gameSelectedBanner != null) {
+            _uiState.update { it.copy(gameSelectedBanner = null) }
+        }
+    }
+
+    companion object {
+        internal const val GAME_SELECTED_BANNER_DURATION_MS = 3500L
+
+        fun formatGameSelectedBanner(displayName: String): String =
+            "GAME SELECTED: $displayName — press DEAL"
+
+        fun applyGameSelection(
+            state: GameState,
+            game: GameConfig,
+            keepRecordedCount: Boolean = false
+        ): GameState {
             val payKeys = game.payTable.rows.map { it.key }.toSet()
             val newRank = if (state.cards.size == 5) HandClassifier.classifyHand(state.cards, payKeys) else HandRank.NOTHING
             val choices = if (state.cards.size == 5) StrategyEngine.evaluateHoldChoices(state.cards, game) else emptyList()
-
-            state.copy(
+            return state.copy(
                 currentGame = game,
                 handRank = newRank,
                 holdChoices = choices,
-                recordedHandsCount = if (activePlayedLog != null) state.recordedHandsCount else 0,
+                recordedHandsCount = if (keepRecordedCount) state.recordedHandsCount else 0,
+                gameSelectedBanner = formatGameSelectedBanner(game.displayName),
                 activeOverlay = null
             )
         }
@@ -574,6 +609,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun openOverlay(overlay: ActiveOverlay) {
+        clearGameSelectedBanner()
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
         }
