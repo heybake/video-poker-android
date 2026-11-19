@@ -181,7 +181,6 @@ fun MainScreen(viewModel: GameViewModel) {
             ) {
                 StartupSplashScreen(
                     gamesReady = state.allGames.isNotEmpty(),
-                    appVersion = GameState.APP_VERSION,
                     onDismiss = viewModel::dismissSplash
                 )
             }

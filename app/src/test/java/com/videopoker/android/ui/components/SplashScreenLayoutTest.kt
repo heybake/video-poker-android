@@ -25,4 +25,11 @@ class SplashScreenLayoutTest {
         assertTrue(phone.heroFillFractionH in 0.8f..0.95f)
         assertTrue(tablet.heroFillFractionH in 0.8f..0.95f)
     }
+
+    @Test
+    fun `splash screen omits tap-to-deal prompt and version badge`() {
+        val splashSource = java.io.File("src/main/java/com/videopoker/android/ui/components/StartupSplashScreen.kt").readText()
+        assertFalse(splashSource.contains("Tap anywhere to deal"))
+        assertFalse(splashSource.contains("appVersion"))
+    }
 }

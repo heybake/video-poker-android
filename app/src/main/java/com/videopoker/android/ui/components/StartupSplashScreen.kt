@@ -37,7 +37,6 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.R
@@ -51,8 +50,7 @@ data class SplashLayoutMetrics(
     val borderInsetDp: Float,
     val heroFillFractionH: Float,
     val titleSizeSp: Float,
-    val subtitleSizeSp: Float,
-    val hintSizeSp: Float
+    val subtitleSizeSp: Float
 )
 
 fun calculateSplashLayoutMetrics(
@@ -69,15 +67,13 @@ fun calculateSplashLayoutMetrics(
         borderInsetDp = if (isTablet) 16f else 8f,
         heroFillFractionH = if (isTablet) 0.88f else 0.90f,
         titleSizeSp = (22f * scale).coerceIn(18f, 40f),
-        subtitleSizeSp = (9.5f * scale).coerceIn(8f, 17f),
-        hintSizeSp = (11f * scale).coerceIn(9.5f, 19f)
+        subtitleSizeSp = (9.5f * scale).coerceIn(8f, 17f)
     )
 }
 
 @Composable
 fun StartupSplashScreen(
     gamesReady: Boolean,
-    appVersion: String,
     onDismiss: () -> Unit
 ) {
     val metrics = LocalResponsiveMetrics.current
@@ -238,35 +234,6 @@ fun StartupSplashScreen(
                     )
                 )
             }
-        }
-
-        // Bottom prompt tucked crisply over the dark bar edge
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = (splashMetrics.borderInsetDp + 8f * s).dp)
-                .background(
-                    color = Color(0xB80F0507),
-                    shape = RoundedCornerShape((14f * s).dp)
-                )
-                .border(
-                    width = 0.75.dp,
-                    color = goldAccent.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape((14f * s).dp)
-                )
-                .padding(horizontal = (14f * s).dp, vertical = (4f * s).dp)
-        ) {
-            Text(
-                text = "Tap anywhere to deal  •  v$appVersion",
-                color = brightChampagne.copy(alpha = 0.90f),
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = splashMetrics.hintSizeSp.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (0.7f * s).sp,
-                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                )
-            )
         }
     }
 }
