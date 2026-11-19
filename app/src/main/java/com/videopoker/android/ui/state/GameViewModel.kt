@@ -33,9 +33,11 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import kotlin.math.roundToLong
 
-class GameViewModel : ViewModel() {
+class GameViewModel @JvmOverloads constructor(
+    initialState: GameState = GameState()
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(GameState())
+    private val _uiState = MutableStateFlow(initialState)
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
 
     private var deck: Deck = Deck()
@@ -186,7 +188,9 @@ class GameViewModel : ViewModel() {
                             handRank = HandRank.NOTHING,
                             winAmount = 0,
                             cashBalance = it.cashBalance - cost,
+                            dealtDenom = state.currentDenom,
                             dealState = DealState.DEALT_CHOOSING_HOLDS,
+                            activeOverlay = if (it.activeOverlay == ActiveOverlay.DENOM) null else it.activeOverlay,
                             practiceFeedback = null,
                             practiceMadeTopChoice = null,
                             showPracticePlot = false
@@ -217,6 +221,7 @@ class GameViewModel : ViewModel() {
             }
             DealState.DEALT_CHOOSING_HOLDS -> {
                 // DRAW REPLACEMENTS
+                val settlementDenom = resolveSettlementDenom(state)
                 val unheldIndices = (0 until 5).filter { !state.heldMask.getOrElse(it) { false } }
 
                 viewModelScope.launch {
@@ -227,7 +232,7 @@ class GameViewModel : ViewModel() {
                         finalizeHandSettlement(
                             game = game,
                             bet = state.currentBet,
-                            denom = state.currentDenom,
+                            denom = settlementDenom,
                             dealtCards = state.cards,
                             heldMask = state.heldMask,
                             drawnCards = emptyList(),
@@ -265,7 +270,7 @@ class GameViewModel : ViewModel() {
                         finalizeHandSettlement(
                             game = game,
                             bet = state.currentBet,
-                            denom = state.currentDenom,
+                            denom = settlementDenom,
                             dealtCards = state.cards,
                             heldMask = state.heldMask,
                             drawnCards = drawnList,
@@ -402,6 +407,7 @@ class GameViewModel : ViewModel() {
                 handRank = HandRank.NOTHING,
                 winAmount = 0,
                 holdChoices = emptyList(),
+                dealtDenom = null,
                 dealState = DealState.READY_TO_DEAL,
                 practiceFeedback = null,
                 practiceMadeTopChoice = null,
@@ -481,6 +487,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun onDenomSelect(denom: Double) {
+        if (!canChangeDenom(_uiState.value)) return
         soundManager?.play(SoundEffect.COUNT_TICK)
         _uiState.update {
             it.copy(
@@ -529,6 +536,12 @@ class GameViewModel : ViewModel() {
 
     companion object {
         internal const val GAME_SELECTED_BANNER_DURATION_MS = 3500L
+
+        fun canChangeDenom(state: GameState): Boolean =
+            !state.isAnimating && state.dealState != DealState.DEALT_CHOOSING_HOLDS
+
+        fun resolveSettlementDenom(state: GameState): Double =
+            state.dealtDenom ?: state.currentDenom
 
         fun formatGameSelectedBanner(displayName: String): String =
             "GAME SELECTED: $displayName — press DEAL"
@@ -609,6 +622,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun openOverlay(overlay: ActiveOverlay) {
+        if (overlay == ActiveOverlay.DENOM && !canChangeDenom(_uiState.value)) return
         clearGameSelectedBanner()
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
@@ -704,6 +718,7 @@ class GameViewModel : ViewModel() {
             val settledBalance = state.cashBalance + wonCash
             state.copy(
                 isAnimating = false,
+                dealtDenom = null,
                 dealState = nextState,
                 cards = finalCardList,
                 revealedMask = listOf(true, true, true, true, true),

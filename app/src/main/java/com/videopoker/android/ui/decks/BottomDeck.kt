@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -246,12 +247,15 @@ fun BottomDeck(
                 onClick = onOpenAddMoney
             )
 
+            val betweenHands = !state.isAnimating && state.dealState != DealState.DEALT_CHOOSING_HOLDS
+
             // CASH OUT
             ActionButton(
                 text = "CASH\nOUT",
                 width = 72,
                 scale = scale,
                 palette = palette,
+                enabled = betweenHands,
                 onClick = onCashOut
             )
 
@@ -298,6 +302,7 @@ fun BottomDeck(
                 width = 58,
                 scale = scale,
                 palette = palette,
+                enabled = betweenHands,
                 onClick = onBetOne
             )
 
@@ -307,6 +312,7 @@ fun BottomDeck(
                 width = 58,
                 scale = scale,
                 palette = palette,
+                enabled = betweenHands,
                 onClick = onBetMax
             )
 
@@ -319,6 +325,7 @@ fun BottomDeck(
             Box(
                 modifier = Modifier
                     .size(metrics.s(36f))
+                    .alpha(if (betweenHands) 1f else 0.45f)
                     .shadow(metrics.s(4f), CircleShape)
                     .clip(CircleShape)
                     .background(
@@ -327,7 +334,7 @@ fun BottomDeck(
                         )
                     )
                     .border(2.dp, palette.goldColor, CircleShape)
-                    .clickable { onOpenOverlay(ActiveOverlay.DENOM) },
+                    .clickable(enabled = betweenHands) { onOpenOverlay(ActiveOverlay.DENOM) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -435,6 +442,7 @@ fun ActionButton(
     width: Int,
     scale: Float = 1f,
     palette: ThemePalette,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val radius = (5f * scale).dp
@@ -442,6 +450,7 @@ fun ActionButton(
         modifier = Modifier
             .width((width * scale).dp)
             .fillMaxHeight()
+            .alpha(if (enabled) 1f else 0.45f)
             .shadow((3f * scale).dp, RoundedCornerShape(radius))
             .clip(RoundedCornerShape(radius))
             .background(
@@ -450,7 +459,7 @@ fun ActionButton(
                 )
             )
             .border(1.dp, palette.buttonBorderColor, RoundedCornerShape(radius))
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(

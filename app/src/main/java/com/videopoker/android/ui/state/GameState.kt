@@ -26,6 +26,7 @@ data class GameState(
     val currentMode: GameMode = GameMode.LEARN,
     val currentBet: Int = 5,
     val currentDenom: Double = 0.25,
+    val dealtDenom: Double? = null,
     val cashBalance: Double = 0.0,
     val dealState: DealState = DealState.READY_TO_DEAL,
     val cards: List<Card> = emptyList(),
@@ -63,7 +64,7 @@ data class GameState(
     val showSplash: Boolean = true
 ) {
     companion object {
-        const val APP_VERSION = "1.0.29"
+        const val APP_VERSION = "1.0.30"
     }
 }
 
