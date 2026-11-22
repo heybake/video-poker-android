@@ -48,6 +48,24 @@ class GameViewModel @JvmOverloads constructor(
     private var sessionMoneyInCents: Long = 0L
     private var pendingAllHoldChoices: List<HoldChoice> = emptyList()
     private var gameSelectedBannerJob: Job? = null
+    private var dealtDockJob: Job? = null
+    private var multiRevealJob: Job? = null
+    private var pendingMultiSettlement: PendingMultiSettlement? = null
+
+    private data class PendingMultiSettlement(
+        val game: GameConfig,
+        val betPerHand: Int,
+        val denom: Double,
+        val dealtCards: List<Card>,
+        val heldMask: List<Boolean>,
+        val bestDrawnCards: List<Card>,
+        val bestFinalCards: List<Card>,
+        val bestRank: HandRank,
+        val allLines: List<MultiHandLine>,
+        val totalWinCredits: Int,
+        val totalWonCash: Double,
+        var committed: Boolean = false
+    )
 
     fun loadGames(context: Context) {
         if (soundManager == null) {
@@ -123,6 +141,10 @@ class GameViewModel @JvmOverloads constructor(
 
     fun onDealDraw() {
         val state = _uiState.value
+        if (state.isRevealingMultiDraw) {
+            skipMultiReveal()
+            return
+        }
         if (state.isAnimating) return
         clearGameSelectedBanner()
         if (state.currentGame == null) {
@@ -130,6 +152,11 @@ class GameViewModel @JvmOverloads constructor(
             return
         }
         val game = state.currentGame
+
+        if (state.isMultiHand) {
+            handleMultiDealDraw(state, game)
+            return
+        }
 
         // Authentic speeds from desktop SPEED_MS = [250, 170, 100]
         val speedDelays = listOf(250L, 170L, 100L)
@@ -164,7 +191,8 @@ class GameViewModel @JvmOverloads constructor(
                             startingCents = startingCents,
                             startedAt = LocalDateTime.now(),
                             startingDenomination = state.currentDenom,
-                            startingCredits = state.currentBet
+                            startingCredits = state.currentBet,
+                            handsPerDeal = 1
                         )
                     }
                 }
@@ -283,26 +311,385 @@ class GameViewModel @JvmOverloads constructor(
         }
     }
 
+    private fun handleMultiDealDraw(state: GameState, game: GameConfig) {
+        val hands = state.handsPerDeal
+        val dealMs = listOf(190L, 110L, 55L).getOrElse(state.speedLevel - 1) { 110L }
+        val drawCardMs = listOf(160L, 95L, 45L).getOrElse(state.speedLevel - 1) { 95L }
+        val handStepMs = listOf(240L, 130L, 58L).getOrElse(state.speedLevel - 1) { 130L }
+
+        when (state.dealState) {
+            DealState.READY_TO_DEAL, DealState.SHOWDOWN_WIN, DealState.SHOWDOWN_NO_WIN -> {
+                val totalBet = state.currentBet * hands
+                val cost = totalBet * state.currentDenom
+                if (state.cashBalance < cost) {
+                    openOverlay(ActiveOverlay.ADD_MONEY)
+                    return
+                }
+
+                deck = Deck()
+                val newDeal = deck.deal(5)
+                val payKeys = game.payTable.rows.map { it.key }.toSet()
+                val dealtRank = HandClassifier.classifyHand(newDeal, payKeys)
+                val dealtWin = if (dealtRank != HandRank.NOTHING) {
+                    game.payTable.getPayout(dealtRank.key, state.currentBet)
+                } else {
+                    0
+                }
+
+                if (state.isRecordingSession && activePlayedLog == null) {
+                    val root = sessionsRoot
+                    if (root != null) {
+                        val startingCents = (state.cashBalance * 100.0).roundToLong()
+                        sessionMoneyInCents = startingCents
+                        activePlayedLog = PlayedGameLog(
+                            game = game,
+                            outputRoot = root,
+                            startingCents = startingCents,
+                            startedAt = LocalDateTime.now(),
+                            startingDenomination = state.currentDenom,
+                            startingCredits = state.currentBet,
+                            handsPerDeal = hands
+                        )
+                    }
+                }
+
+                dealtDockJob?.cancel()
+                dealtDockJob = null
+                multiRevealJob?.cancel()
+                pendingMultiSettlement = null
+                pendingAllHoldChoices = StrategyEngine.evaluateHoldChoices(newDeal, game, maxChoices = Int.MAX_VALUE)
+
+                viewModelScope.launch {
+                    soundManager?.play(SoundEffect.DEAL)
+                    _uiState.update {
+                        it.copy(
+                            isAnimating = true,
+                            isRevealingMultiDraw = false,
+                            cards = newDeal,
+                            revealedMask = listOf(false, false, false, false, false),
+                            heldMask = listOf(false, false, false, false, false),
+                            holdChoices = emptyList(),
+                            handRank = HandRank.NOTHING,
+                            dealtPayingRank = HandRank.NOTHING,
+                            dealtWinCredits = 0,
+                            dealtBadgeDocked = false,
+                            upperLines = List(hands - 1) { idx -> MultiHandLine(index = idx) },
+                            mainLineWinRank = HandRank.NOTHING,
+                            mainLineWinCredits = 0,
+                            isMainLineSettled = false,
+                            hideMultiWinBadges = false,
+                            winAmount = 0,
+                            cashBalance = it.cashBalance - cost,
+                            dealtDenom = state.currentDenom,
+                            dealState = DealState.DEALT_CHOOSING_HOLDS,
+                            activeOverlay = if (it.activeOverlay == ActiveOverlay.DENOM) null else it.activeOverlay,
+                            practiceFeedback = null,
+                            practiceMadeTopChoice = null,
+                            showPracticePlot = false
+                        )
+                    }
+
+                    for (i in 0 until 5) {
+                        delay(dealMs)
+                        _uiState.update { s ->
+                            val mask = s.revealedMask.toMutableList()
+                            mask[i] = true
+                            s.copy(revealedMask = mask)
+                        }
+                    }
+
+                    _uiState.update { s ->
+                        s.copy(
+                            isAnimating = false,
+                            revealedMask = listOf(true, true, true, true, true),
+                            dealtPayingRank = if (dealtWin > 0) dealtRank else HandRank.NOTHING,
+                            dealtWinCredits = dealtWin
+                        )
+                    }
+
+                    if (dealtWin > 0) {
+                        soundManager?.play(SoundEffect.MADE_HAND)
+                        dealtDockJob = viewModelScope.launch {
+                            delay(1100L)
+                            _uiState.update { s ->
+                                if (s.dealState == DealState.DEALT_CHOOSING_HOLDS && s.dealtWinCredits > 0) {
+                                    s.copy(dealtBadgeDocked = true)
+                                } else {
+                                    s
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            DealState.DEALT_CHOOSING_HOLDS -> {
+                val settlementDenom = resolveSettlementDenom(state)
+                val betPerHand = state.currentBet
+                val dealtCards = state.cards
+                val holdMask = state.heldMask
+                val unheldIndices = (0 until 5).filter { !holdMask.getOrElse(it) { false } }
+                val payKeys = game.payTable.rows.map { it.key }.toSet()
+
+                dealtDockJob?.cancel()
+                dealtDockJob = null
+
+                val allLines = List(hands) { idx ->
+                    val lineFinal = deck.draw(dealtCards, holdMask)
+                    val lineRank = HandClassifier.classifyHand(lineFinal, payKeys)
+                    val lineWin = if (lineRank != HandRank.NOTHING) {
+                        game.payTable.getPayout(lineRank.key, betPerHand)
+                    } else {
+                        0
+                    }
+                    MultiHandLine(
+                        index = idx,
+                        cards = lineFinal,
+                        rank = lineRank,
+                        winCredits = lineWin,
+                        isRevealed = false
+                    )
+                }
+                val totalWinCredits = allLines.sumOf { it.winCredits }
+                val totalWonCash = totalWinCredits * settlementDenom
+                val bestIdx = allLines.indices.maxByOrNull { allLines[it].winCredits } ?: (hands - 1)
+                val bestLine = allLines[bestIdx]
+                val bestFinalCards = bestLine.cards.filterNotNull()
+                val bestDrawnCards = unheldIndices.map { bestFinalCards[it] }
+
+                val settlement = PendingMultiSettlement(
+                    game = game,
+                    betPerHand = betPerHand,
+                    denom = settlementDenom,
+                    dealtCards = dealtCards,
+                    heldMask = holdMask,
+                    bestDrawnCards = bestDrawnCards,
+                    bestFinalCards = bestFinalCards,
+                    bestRank = bestLine.rank,
+                    allLines = allLines,
+                    totalWinCredits = totalWinCredits,
+                    totalWonCash = totalWonCash
+                )
+                pendingMultiSettlement = settlement
+
+                multiRevealJob?.cancel()
+                multiRevealJob = viewModelScope.launch {
+                    soundManager?.play(SoundEffect.DRAW)
+                    val mainLine = allLines.last()
+                    val mainFinal = mainLine.cards.filterNotNull()
+                    val workingMain = dealtCards.toMutableList()
+                    val upperTemplate = allLines.dropLast(1).map { line ->
+                        line.copy(
+                            cards = List(5) { ci -> if (holdMask[ci]) dealtCards[ci] else null },
+                            isRevealed = false
+                        )
+                    }
+
+                    _uiState.update { s ->
+                        s.copy(
+                            isAnimating = true,
+                            isRevealingMultiDraw = true,
+                            dealtPayingRank = HandRank.NOTHING,
+                            dealtWinCredits = 0,
+                            dealtBadgeDocked = false,
+                            hideMultiWinBadges = false,
+                            winAmount = 0,
+                            isMainLineSettled = false,
+                            mainLineWinRank = HandRank.NOTHING,
+                            mainLineWinCredits = 0,
+                            upperLines = upperTemplate,
+                            revealedMask = List(5) { idx -> holdMask.getOrElse(idx) { false } }
+                        )
+                    }
+
+                    if (unheldIndices.isEmpty()) {
+                        delay(80L)
+                    } else {
+                        for (idx in unheldIndices) {
+                            delay(drawCardMs)
+                            workingMain[idx] = mainFinal[idx]
+                            _uiState.update { s ->
+                                val rMask = s.revealedMask.toMutableList()
+                                rMask[idx] = true
+                                s.copy(cards = workingMain.toList(), revealedMask = rMask)
+                            }
+                        }
+                        delay(maxOf(70L, (handStepMs * 0.7f).toLong()))
+                    }
+
+                    var runningWin = 0
+                    val mainEffect = soundManager?.winEffectForLine(mainLine.rank, mainLine.winCredits, betPerHand)
+                    if (mainEffect != null) {
+                        runningWin += mainLine.winCredits
+                    }
+                    _uiState.update { s ->
+                        s.copy(
+                            cards = mainFinal,
+                            revealedMask = listOf(true, true, true, true, true),
+                            isMainLineSettled = true,
+                            mainLineWinRank = mainLine.rank,
+                            mainLineWinCredits = mainLine.winCredits,
+                            winAmount = runningWin
+                        )
+                    }
+                    if (mainEffect != null) {
+                        val dur = soundManager?.playWithDuration(mainEffect) ?: 650L
+                        delay(dur + 70L)
+                    } else {
+                        delay(handStepMs)
+                    }
+
+                    for (li in upperRevealOrder(hands)) {
+                        val revealedLine = allLines[li].copy(isRevealed = true)
+                        val lineEffect = soundManager?.winEffectForLine(
+                            revealedLine.rank,
+                            revealedLine.winCredits,
+                            betPerHand
+                        )
+                        if (lineEffect != null) {
+                            runningWin += revealedLine.winCredits
+                        }
+                        _uiState.update { s ->
+                            val updatedUpper = s.upperLines.toMutableList()
+                            if (li in updatedUpper.indices) {
+                                updatedUpper[li] = revealedLine
+                            }
+                            s.copy(upperLines = updatedUpper, winAmount = runningWin)
+                        }
+                        if (lineEffect != null) {
+                            val dur = soundManager?.playWithDuration(lineEffect) ?: 650L
+                            delay(dur + 70L)
+                        } else {
+                            soundManager?.play(SoundEffect.DRAW)
+                            delay(handStepMs)
+                        }
+                    }
+
+                    if (totalWinCredits == 0) {
+                        soundManager?.play(SoundEffect.NO_WIN)
+                    }
+                    commitPendingMultiSettlement(settlement)
+                }
+            }
+        }
+    }
+
+    fun skipMultiReveal() {
+        multiRevealJob?.cancel()
+        multiRevealJob = null
+        soundManager?.stopAll()
+        val pending = pendingMultiSettlement ?: return
+        viewModelScope.launch {
+            commitPendingMultiSettlement(pending)
+        }
+    }
+
+    private suspend fun commitPendingMultiSettlement(settlement: PendingMultiSettlement) {
+        if (settlement.committed) return
+        settlement.committed = true
+        pendingMultiSettlement = null
+
+        val mainLine = settlement.allLines.last()
+        val mainFinal = mainLine.cards.filterNotNull()
+        val isWin = settlement.totalWinCredits > 0
+        val nextState = if (isWin) DealState.SHOWDOWN_WIN else DealState.SHOWDOWN_NO_WIN
+        val currentSnapshot = _uiState.value
+        val newCashBalance = currentSnapshot.cashBalance + settlement.totalWonCash
+        val minDenom = settlement.game.denominations.minOrNull() ?: settlement.denom
+        val minWager = settlement.allLines.size * minDenom
+        val wentBroke = (newCashBalance * 100.0).roundToLong() < (minWager * 100.0).roundToLong()
+
+        val topChoice = pendingAllHoldChoices.firstOrNull()
+        val isSuboptimal = (topChoice != null && settlement.heldMask != topChoice.holdMask)
+
+        if (currentSnapshot.isRecordingSession) {
+            logSessionHand(
+                game = settlement.game,
+                denom = settlement.denom,
+                bet = settlement.betPerHand * settlement.allLines.size,
+                dealt = settlement.dealtCards,
+                held = settlement.heldMask,
+                drawn = settlement.bestDrawnCards,
+                finalCards = settlement.bestFinalCards,
+                rank = settlement.bestRank,
+                payoutCredits = settlement.totalWinCredits,
+                mode = GameMode.CASINO,
+                wentBroke = wentBroke,
+                lineClassifications = settlement.allLines.map { it.rank.key },
+                lineCreditsWon = settlement.allLines.map { it.winCredits }
+            )
+        }
+
+        _uiState.update { s ->
+            val settledBalance = s.cashBalance + settlement.totalWonCash
+            s.copy(
+                isAnimating = false,
+                isRevealingMultiDraw = false,
+                dealtDenom = null,
+                dealState = nextState,
+                cards = mainFinal,
+                revealedMask = listOf(true, true, true, true, true),
+                upperLines = settlement.allLines.dropLast(1).map { it.copy(isRevealed = true) },
+                isMainLineSettled = true,
+                mainLineWinRank = mainLine.rank,
+                mainLineWinCredits = mainLine.winCredits,
+                handRank = mainLine.rank,
+                winAmount = settlement.totalWinCredits,
+                cashBalance = settledBalance,
+                totalHandsPlayed = s.totalHandsPlayed + 1,
+                handsAtCurrentDenom = s.handsAtCurrentDenom + 1,
+                practiceMadeTopChoice = null,
+                showPracticePlot = false,
+                bankrollHistory = SessionBankrollTracker.onHandSettled(
+                    history = s.bankrollHistory,
+                    settledBalanceDollars = settledBalance,
+                    isSuboptimalHold = isSuboptimal
+                )
+            )
+        }
+    }
+
+    private fun applyHoldMaskUpdate(newMask: List<Boolean>) {
+        dealtDockJob?.cancel()
+        dealtDockJob = null
+        _uiState.update { state ->
+            val updatedUpper = if (state.isMultiHand && state.cards.size == 5) {
+                state.upperLines.map { line ->
+                    line.copy(
+                        cards = List(5) { ci -> if (newMask[ci]) state.cards[ci] else null }
+                    )
+                }
+            } else {
+                state.upperLines
+            }
+            val shouldDock = state.isMultiHand && state.dealtWinCredits > 0
+            state.copy(
+                heldMask = newMask,
+                upperLines = updatedUpper,
+                dealtBadgeDocked = if (shouldDock) true else state.dealtBadgeDocked
+            )
+        }
+    }
+
     fun onToggleHold(index: Int) {
-        if (_uiState.value.isAnimating || _uiState.value.dealState != DealState.DEALT_CHOOSING_HOLDS) return
-        val currentHeld = _uiState.value.heldMask.getOrElse(index) { false }
+        val snap = _uiState.value
+        if (snap.isAnimating || snap.dealState != DealState.DEALT_CHOOSING_HOLDS) return
+        if (index !in 0..4) return
+        val currentHeld = snap.heldMask.getOrElse(index) { false }
         if (!currentHeld) {
             soundManager?.play(SoundEffect.HOLD)
         } else {
             soundManager?.play(SoundEffect.RELEASE)
         }
-
-        _uiState.update { state ->
-            val newMask = state.heldMask.toMutableList()
-            newMask[index] = !newMask[index]
-            state.copy(heldMask = newMask)
-        }
+        val newMask = snap.heldMask.toMutableList()
+        newMask[index] = !newMask[index]
+        applyHoldMaskUpdate(newMask)
     }
 
     fun onSetHold(index: Int, hold: Boolean) {
-        if (_uiState.value.isAnimating || _uiState.value.dealState != DealState.DEALT_CHOOSING_HOLDS) return
+        val snap = _uiState.value
+        if (snap.isAnimating || snap.dealState != DealState.DEALT_CHOOSING_HOLDS) return
         if (index !in 0..4) return
-        val currentHeld = _uiState.value.heldMask.getOrElse(index) { false }
+        val currentHeld = snap.heldMask.getOrElse(index) { false }
         if (currentHeld == hold) return
 
         if (hold) {
@@ -310,12 +697,9 @@ class GameViewModel @JvmOverloads constructor(
         } else {
             soundManager?.play(SoundEffect.RELEASE)
         }
-
-        _uiState.update { state ->
-            val newMask = state.heldMask.toMutableList()
-            newMask[index] = hold
-            state.copy(heldMask = newMask)
-        }
+        val newMask = snap.heldMask.toMutableList()
+        newMask[index] = hold
+        applyHoldMaskUpdate(newMask)
     }
 
     fun onToggleRecordingSession() {
@@ -356,7 +740,11 @@ class GameViewModel @JvmOverloads constructor(
         soundManager?.play(SoundEffect.BET)
         _uiState.update { state ->
             val nextBet = if (state.currentBet >= 5) 1 else state.currentBet + 1
-            state.copy(currentBet = nextBet)
+            state.copy(
+                currentBet = nextBet,
+                hideMultiWinBadges = true,
+                winAmount = if (state.isMultiHand) 0 else state.winAmount
+            )
         }
     }
 
@@ -405,6 +793,15 @@ class GameViewModel @JvmOverloads constructor(
                 heldMask = listOf(false, false, false, false, false),
                 revealedMask = listOf(false, false, false, false, false),
                 handRank = HandRank.NOTHING,
+                dealtPayingRank = HandRank.NOTHING,
+                dealtWinCredits = 0,
+                dealtBadgeDocked = false,
+                upperLines = emptyList(),
+                mainLineWinRank = HandRank.NOTHING,
+                mainLineWinCredits = 0,
+                isMainLineSettled = false,
+                hideMultiWinBadges = false,
+                isRevealingMultiDraw = false,
                 winAmount = 0,
                 holdChoices = emptyList(),
                 dealtDenom = null,
@@ -498,9 +895,11 @@ class GameViewModel @JvmOverloads constructor(
         }
     }
 
-    fun onGameSelect(game: GameConfig) {
+    fun onGameSelect(game: GameConfig, handsPerDeal: Int = _uiState.value.handsPerDeal) {
+        if (!_uiState.value.canChangeGameOrMode) return
+        val normalizedHands = if (handsPerDeal in GameState.SUPPORTED_HANDS_OPTIONS) handsPerDeal else 1
         val log = activePlayedLog
-        if (log != null && _uiState.value.currentGame?.variant != game.variant) {
+        if (log != null && (_uiState.value.currentGame?.variant != game.variant || _uiState.value.handsPerDeal != normalizedHands)) {
             activePlayedLog = null
             sessionMoneyInCents = 0L
             if (log.created) {
@@ -516,7 +915,8 @@ class GameViewModel @JvmOverloads constructor(
             applyGameSelection(
                 state = state,
                 game = game,
-                keepRecordedCount = (activePlayedLog != null)
+                keepRecordedCount = (activePlayedLog != null),
+                handsPerDeal = normalizedHands
             )
         }
         gameSelectedBannerJob?.cancel()
@@ -537,29 +937,66 @@ class GameViewModel @JvmOverloads constructor(
     companion object {
         internal const val GAME_SELECTED_BANNER_DURATION_MS = 3500L
 
+        fun upperRevealOrder(hands: Int): List<Int> = when (hands) {
+            3 -> listOf(1, 0)
+            5 -> listOf(2, 3, 0, 1)
+            10 -> listOf(6, 7, 8, 3, 4, 5, 0, 1, 2)
+            else -> (0 until (hands - 1).coerceAtLeast(0)).reversed().toList()
+        }
+
         fun canChangeDenom(state: GameState): Boolean =
             !state.isAnimating && state.dealState != DealState.DEALT_CHOOSING_HOLDS
 
         fun resolveSettlementDenom(state: GameState): Double =
             state.dealtDenom ?: state.currentDenom
 
-        fun formatGameSelectedBanner(displayName: String): String =
-            "GAME SELECTED: $displayName — press DEAL"
+        fun formatGameSelectedBanner(displayName: String, handsPerDeal: Int = 1): String {
+            val modeTag = if (handsPerDeal > 1) " ($handsPerDeal-Hand)" else ""
+            return "GAME SELECTED: $displayName$modeTag — press DEAL"
+        }
 
         fun applyGameSelection(
             state: GameState,
             game: GameConfig,
-            keepRecordedCount: Boolean = false
+            keepRecordedCount: Boolean = false,
+            handsPerDeal: Int = state.handsPerDeal
         ): GameState {
+            val normalizedHands = if (handsPerDeal in GameState.SUPPORTED_HANDS_OPTIONS) handsPerDeal else 1
+            val modeChanged = (normalizedHands != state.handsPerDeal)
+            val gameChanged = (game.variant != state.currentGame?.variant)
+            val resetBoard = modeChanged || (normalizedHands > 1 && gameChanged)
             val payKeys = game.payTable.rows.map { it.key }.toSet()
-            val newRank = if (state.cards.size == 5) HandClassifier.classifyHand(state.cards, payKeys) else HandRank.NOTHING
-            val choices = if (state.cards.size == 5) StrategyEngine.evaluateHoldChoices(state.cards, game) else emptyList()
+            val newRank = if (!resetBoard && state.cards.size == 5) {
+                HandClassifier.classifyHand(state.cards, payKeys)
+            } else {
+                HandRank.NOTHING
+            }
+            val choices = if (!resetBoard && normalizedHands == 1 && state.cards.size == 5) {
+                StrategyEngine.evaluateHoldChoices(state.cards, game)
+            } else {
+                emptyList()
+            }
             return state.copy(
                 currentGame = game,
+                handsPerDeal = normalizedHands,
+                currentBet = if (modeChanged) 1 else state.currentBet,
+                cards = if (resetBoard) emptyList() else state.cards,
+                heldMask = if (resetBoard) listOf(false, false, false, false, false) else state.heldMask,
+                revealedMask = if (resetBoard) listOf(false, false, false, false, false) else state.revealedMask,
+                upperLines = if (resetBoard) emptyList() else state.upperLines,
+                dealtPayingRank = if (resetBoard) HandRank.NOTHING else state.dealtPayingRank,
+                dealtWinCredits = if (resetBoard) 0 else state.dealtWinCredits,
+                dealtBadgeDocked = if (resetBoard) false else state.dealtBadgeDocked,
+                mainLineWinRank = if (resetBoard) HandRank.NOTHING else state.mainLineWinRank,
+                mainLineWinCredits = if (resetBoard) 0 else state.mainLineWinCredits,
+                isMainLineSettled = if (resetBoard) false else state.isMainLineSettled,
+                hideMultiWinBadges = false,
+                winAmount = if (resetBoard) 0 else state.winAmount,
+                dealState = if (resetBoard) DealState.READY_TO_DEAL else state.dealState,
                 handRank = newRank,
                 holdChoices = choices,
                 recordedHandsCount = if (keepRecordedCount) state.recordedHandsCount else 0,
-                gameSelectedBanner = formatGameSelectedBanner(game.displayName),
+                gameSelectedBanner = formatGameSelectedBanner(game.displayName, normalizedHands),
                 activeOverlay = null
             )
         }
@@ -575,7 +1012,9 @@ class GameViewModel @JvmOverloads constructor(
     }
 
     fun onModeToggle(mode: GameMode) {
+        if (_uiState.value.isMultiHand && mode != GameMode.CASINO) return
         _uiState.update { state ->
+            if (state.isMultiHand) return@update state
             val autoMask = if (mode == GameMode.LEARN && state.holdChoices.isNotEmpty() && state.dealState == DealState.DEALT_CHOOSING_HOLDS) {
                 state.holdChoices.first().holdMask
             } else {
@@ -623,6 +1062,7 @@ class GameViewModel @JvmOverloads constructor(
 
     fun openOverlay(overlay: ActiveOverlay) {
         if (overlay == ActiveOverlay.DENOM && !canChangeDenom(_uiState.value)) return
+        if (overlay == ActiveOverlay.MORE_GAMES && !_uiState.value.canChangeGameOrMode) return
         clearGameSelectedBanner()
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
@@ -749,7 +1189,9 @@ class GameViewModel @JvmOverloads constructor(
         rank: HandRank,
         payoutCredits: Int,
         mode: GameMode,
-        wentBroke: Boolean
+        wentBroke: Boolean,
+        lineClassifications: List<String>? = null,
+        lineCreditsWon: List<Int>? = null
     ) {
         val dealtStr = dealt.joinToString(" ")
         val heldStr = held.mapIndexedNotNull { i, h -> if (h) dealt.getOrNull(i)?.toString() else null }.joinToString(" ")
@@ -776,7 +1218,9 @@ class GameViewModel @JvmOverloads constructor(
                 trainingLevel = mode.displayName.lowercase(),
                 allHoldChoices = choicesSnapshot,
                 finishedAt = now,
-                wentBroke = wentBroke
+                wentBroke = wentBroke,
+                lineClassifications = lineClassifications,
+                lineCreditsWon = lineCreditsWon
             )
             if (wentBroke) {
                 log.finish(PlayedGameLog.ENDED_BY_WENT_BROKE, now)
@@ -803,6 +1247,9 @@ class GameViewModel @JvmOverloads constructor(
 
     override fun onCleared() {
         super.onCleared()
+        multiRevealJob?.cancel()
+        dealtDockJob?.cancel()
+        gameSelectedBannerJob?.cancel()
         soundManager?.release()
     }
 }

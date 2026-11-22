@@ -54,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -108,7 +109,7 @@ fun OverlayDialogs(
     onThemeSelect: (AppTheme) -> Unit,
     onCardDeckSelect: (CardDeck) -> Unit,
     onDenomSelect: (Double) -> Unit,
-    onGameSelect: (GameConfig) -> Unit,
+    onGameSelect: (GameConfig, Int) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onAddCashAmount: (Double) -> Unit,
     onConfirmCashOut: () -> Unit,
@@ -162,10 +163,11 @@ fun OverlayDialogs(
                 ActiveOverlay.MORE_GAMES -> MoreGamesContent(
                     allGames = state.allGames,
                     currentGame = state.currentGame,
+                    currentHandsPerDeal = state.handsPerDeal,
                     palette = palette,
                     scale = s,
-                    onGameSelect = { selectedGame ->
-                        onGameSelect(selectedGame)
+                    onGameSelect = { selectedGame, hands ->
+                        onGameSelect(selectedGame, hands)
                         onClose()
                     },
                     onClose = onClose
@@ -194,6 +196,7 @@ fun OverlayDialogs(
                 ActiveOverlay.SEE_PAYS -> SeePaysContent(
                     game = state.currentGame,
                     currentBet = state.currentBet,
+                    handsPerDeal = state.handsPerDeal,
                     palette = palette,
                     scale = s,
                     onClose = onClose
@@ -270,8 +273,9 @@ private fun HelpContent(palette: ThemePalette, scale: Float, onClose: () -> Unit
                 HelpSection("The Hold List", "The Hold List (located in the Strategy Advisor panel on the right) evaluates all 32 possible hold combinations for your dealt hand and ranks the best mathematical plays for the active game:\n• Rank (#1, #2, #3): Shows the top choices ranked by expected payout. Choice #1 is marked ✓ TOP and is always the mathematically optimal play.\n• Card Chips: Shows the exact cards to keep for that choice (or DISCARD ALL).\n• Card Indicators: Small numbered dots (1, 2, 3) on the dealt cards indicate which ranked choice keeps each card.", palette, scale)
                 HelpSection("What is a Slot?", "Every video poker variant has a master strategy hierarchy of 40 to 60 ranked rules ordered from highest expected value (Slot 1, such as a Royal Flush) down to lowest (Discard All). The Slot number (or Spot) indicates where a particular play ranks on that master chart. When your dealt hand matches multiple possible holds, the rule with the lowest slot number is mathematically superior and takes priority.", palette, scale)
                 HelpSection("Complete List", "Tap the COMPLETE LIST button in the Hold Panel to view the entire master strategy chart for your selected game variant. It displays every single rule in priority order from top to bottom. The list automatically scrolls to and highlights the rules matching your current hand, with your top optimal hold highlighted in green.", palette, scale)
-                HelpSection("Keyboard Shortcuts", "• Space or 0: Deal / Draw\n• 1, 2, 3, 4, 5: Hold / Release card 1 to 5\n• B: Bet one\n• M: Bet max & deal\n• A: Insert / Add money\n• C: Cash out voucher\n• S: Sound on / off\n• Esc: Close any window", palette, scale)
+                HelpSection("Keyboard Shortcuts", "• Space or 0: Deal / Draw (also instant-completes multi-hand draw reveal)\n• 1, 2, 3, 4, 5: Hold / Release card 1 to 5\n• B: Bet one\n• M: Bet max & deal\n• A: Insert / Add money\n• C: Cash out voucher\n• S: Sound on / off\n• Esc: Close any window", palette, scale)
                 HelpSection("Pay Table", "Standard hands range from Royal Flush down to Jacks or Better (pair of Jacks, Queens, Kings, or Aces). Bonus games pay extra for specific 4 of a Kind combinations.", palette, scale)
+                HelpSection("Multi-Hand Play (3, 5, or 10 Hands)", "• Mode Selection: Choose SINGLE PLAY, TRIPLE PLAY, FIVE PLAY, or TEN PLAY from the top tabs in MORE GAMES.\n• Casino Mode Only: Learn and Practice modes are disabled during Multi-Hand play.\n• Shared Deal & Individual Draws: Held cards duplicate face-up into every upper hand, then each hand draws independently from its own 47-card stub deck.\n• Swipe or Tap Holds: Tap or swipe across the bottom main hand to toggle HOLD; tap DEAL/DRAW or cards during reveal to jump straight to final results.", palette, scale)
             }
 
             OptionsVerticalScrollbar(
@@ -300,18 +304,27 @@ private fun HelpSection(title: String, desc: String, palette: ThemePalette, scal
     }
 }
 
+private fun handsModeLabel(hands: Int): String = when (hands) {
+    3 -> "TRIPLE PLAY"
+    5 -> "FIVE PLAY"
+    10 -> "TEN PLAY"
+    else -> "SINGLE PLAY"
+}
+
 @Composable
 private fun MoreGamesContent(
     allGames: List<GameConfig>,
     currentGame: GameConfig?,
+    currentHandsPerDeal: Int,
     palette: ThemePalette,
     scale: Float,
-    onGameSelect: (GameConfig) -> Unit,
+    onGameSelect: (GameConfig, Int) -> Unit,
     onClose: () -> Unit
 ) {
     // Stage 1: Family Grid (e.g. 11 Families in 4 columns)
     // Stage 2: Pick Pay Table Grid (e.g. 2 columns showing 9/6, 10/7 with return %)
     var selectedFamily by remember { mutableStateOf<String?>(null) }
+    var selectedHandsPerDeal by remember(currentHandsPerDeal) { mutableStateOf(currentHandsPerDeal) }
 
     val familyOrder = listOf(
         "Jacks or Better",
@@ -355,7 +368,53 @@ private fun MoreGamesContent(
                 CloseButton(palette = palette, scale = scale, onClose = onClose)
             }
 
-            Spacer(modifier = Modifier.height((10f * scale).dp))
+            Spacer(modifier = Modifier.height((8f * scale).dp))
+
+            // Horizontal Mode Selector Tabs (SINGLE PLAY / TRIPLE PLAY / FIVE PLAY / TEN PLAY)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
+            ) {
+                val tabCorner = (7f * scale).dp
+                GameState.SUPPORTED_HANDS_OPTIONS.forEach { hands ->
+                    val isSelectedTab = (selectedHandsPerDeal == hands)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(tabCorner))
+                            .background(
+                                if (isSelectedTab) {
+                                    Brush.verticalGradient(listOf(palette.goldColor, palette.goldColor.copy(alpha = 0.78f)))
+                                } else {
+                                    Brush.verticalGradient(listOf(palette.panelColor, palette.panelColor.copy(alpha = 0.85f)))
+                                }
+                            )
+                            .border(
+                                width = (1.5f * scale).dp,
+                                color = if (isSelectedTab) palette.accentColor else palette.goldColor.copy(alpha = 0.45f),
+                                shape = RoundedCornerShape(tabCorner)
+                            )
+                            .clickable { selectedHandsPerDeal = hands }
+                            .padding(vertical = (7f * scale).dp, horizontal = (4f * scale).dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = handsModeLabel(hands),
+                            color = if (isSelectedTab) Color(0xFF14100A) else palette.textColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = TextStyle(
+                                fontSize = (11f * scale).sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (0.5f * scale).sp,
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height((8f * scale).dp))
 
             // 4-Column Grid of Authentic Family Tiles matching casino mockup
             LazyVerticalGrid(
@@ -366,7 +425,7 @@ private fun MoreGamesContent(
                 verticalArrangement = Arrangement.spacedBy((10f * scale).dp)
             ) {
                 items(familyGroups) { (family, games) ->
-                    val isCurFamily = (currentGame?.familyName == family)
+                    val isCurFamily = (currentGame?.familyName == family && selectedHandsPerDeal == currentHandsPerDeal)
                     val tableCount = games.size
                     val countLabel = if (tableCount == 1) "1 pay table" else "$tableCount pay tables"
                     val tileCorner = (8f * scale).dp
@@ -376,7 +435,7 @@ private fun MoreGamesContent(
                             .fillMaxWidth()
                             .clickable {
                                 if (tableCount == 1) {
-                                    onGameSelect(games.first())
+                                    onGameSelect(games.first(), selectedHandsPerDeal)
                                 } else {
                                     selectedFamily = family
                                 }
@@ -475,7 +534,7 @@ private fun MoreGamesContent(
                     Spacer(modifier = Modifier.width((12f * scale).dp))
 
                     Text(
-                        text = "${selectedFamily?.uppercase()} — PAY TABLES",
+                        text = "${selectedFamily?.uppercase()} • ${handsModeLabel(selectedHandsPerDeal)} — PAY TABLES",
                         color = palette.goldColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -502,7 +561,7 @@ private fun MoreGamesContent(
                 verticalArrangement = Arrangement.spacedBy((8f * scale).dp)
             ) {
                 items(gamesInFamily) { game ->
-                    val isCur = (game.variant == currentGame?.variant)
+                    val isCur = (game.variant == currentGame?.variant && selectedHandsPerDeal == currentHandsPerDeal)
                     val retText = String.format(java.util.Locale.US, "%.2f%%", game.returnPercentage)
                     val optCorner = (6f * scale).dp
 
@@ -528,7 +587,7 @@ private fun MoreGamesContent(
                                 color = if (isCur) Color(0xFF3DDC52) else palette.goldColor.copy(alpha = 0.5f),
                                 shape = RoundedCornerShape(optCorner)
                             )
-                            .clickable { onGameSelect(game) }
+                            .clickable { onGameSelect(game, selectedHandsPerDeal) }
                             .padding(horizontal = (14f * scale).dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -621,15 +680,18 @@ private fun OptionsContent(
                         fontSize = (10.5f * scale).sp,
                         fontWeight = FontWeight.Bold
                     )
+                    val activeMode = state.effectiveMode
                     Row(horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)) {
                         GameMode.entries.forEach { mode ->
-                            val isCur = (state.currentMode == mode)
+                            val isEnabled = !state.isMultiHand || mode == GameMode.CASINO
+                            val isCur = (activeMode == mode)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
+                                    .alpha(if (isEnabled) 1f else 0.42f)
                                     .clip(RoundedCornerShape(pillCorner))
                                     .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                                    .clickable { onModeToggle(mode) }
+                                    .clickable(enabled = isEnabled) { onModeToggle(mode) }
                                     .padding(vertical = (7f * scale).dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -642,6 +704,15 @@ private fun OptionsContent(
                             }
                         }
                     }
+                    Text(
+                        text = if (state.isMultiHand) {
+                            "Learn and Practice are disabled while Multi-Hand is active (Casino mode only)."
+                        } else {
+                            "All training modes are available in Single Play."
+                        },
+                        color = palette.textColor.copy(alpha = 0.78f),
+                        fontSize = (9.5f * scale).sp
+                    )
                 }
 
                 // Visual Themes (expandable multi-row grid)
@@ -1481,10 +1552,16 @@ private fun DenomContent(
 private fun SeePaysContent(
     game: GameConfig?,
     currentBet: Int,
+    handsPerDeal: Int,
     palette: ThemePalette,
     scale: Float,
     onClose: () -> Unit
 ) {
+    val betSummary = if (handsPerDeal > 1) {
+        " • BET $currentBet/HAND (${currentBet * handsPerDeal} TOTAL)"
+    } else {
+        ""
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1492,7 +1569,7 @@ private fun SeePaysContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${game?.displayName ?: "PAYOUT SCHEDULE"} (FULL TABLE)",
+                text = "${game?.displayName ?: "PAYOUT SCHEDULE"} (FULL TABLE)$betSummary",
                 color = palette.goldColor,
                 fontSize = (13f * scale).sp,
                 fontWeight = FontWeight.Black,

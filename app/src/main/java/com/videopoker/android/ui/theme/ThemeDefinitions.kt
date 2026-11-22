@@ -73,7 +73,13 @@ data class ThemePalette(
     val overlayBgColor: Color = panelColor,
     val footerVersionColor: Color = goldColor,
     val payTableActiveColBg: Color = payTableGridColor,
-    val payTableActiveColText: Color = goldColor
+    val payTableActiveColText: Color = goldColor,
+    val coinBgStart: Color = Color(0xFFFFF3C0),
+    val coinBgEnd: Color = Color(0xFFB98D1E),
+    val coinTextColor: Color = Color(0xFF1A1000),
+    val splitPayValueBgStart: Color = coinBgStart,
+    val splitPayValueBgEnd: Color = coinBgEnd,
+    val splitPayValueTextColor: Color = coinTextColor
 )
 
 object ThemeManager {
@@ -220,7 +226,7 @@ object ThemeManager {
         backgroundColorEnd = Color(0xFF080A09),
         feltColor = Color(0xFF0A2E22),
         feltColorEnd = Color(0xFF020D09),
-        railBorderColor = Color(0xFFB89A58),
+        railBorderColor = Color(0xFFC9A45A),
         panelColor = Color(0xFF0F1A16),
         panelBorderColor = Color(0xFFC9A45A),
         panelBorderSecondary = Color(0xFF7A5D20),
@@ -387,7 +393,10 @@ object ThemeManager {
         choice1Color = Color(0xFFE8C27A),
         choice2Color = Color(0xFFE0582A),
         choice3Color = Color(0xFF3A2E30),
-        overlayBgColor = Color(0xFF1B1415)
+        overlayBgColor = Color(0xFF1B1415),
+        splitPayValueBgStart = Color(0xFFD04A1C),
+        splitPayValueBgEnd = Color(0xFF8A2A0C),
+        splitPayValueTextColor = Color(0xFFFFF4E6)
     )
 
     val RubyPalette = ThemePalette(

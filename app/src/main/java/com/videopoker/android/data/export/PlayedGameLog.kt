@@ -48,7 +48,8 @@ class PlayedGameLog(
     startingCents: Long,
     private val startedAt: LocalDateTime = LocalDateTime.now(),
     private val startingDenomination: Double,
-    private val startingCredits: Int
+    private val startingCredits: Int,
+    private val handsPerDeal: Int = 1
 ) {
     val runDir: File = File(outputRoot, runFolderName(game.displayName, startedAt))
 
@@ -92,7 +93,9 @@ class PlayedGameLog(
         trainingLevel: String,
         allHoldChoices: List<HoldChoice>,
         finishedAt: LocalDateTime = LocalDateTime.now(),
-        wentBroke: Boolean = false
+        wentBroke: Boolean = false,
+        lineClassifications: List<String>? = null,
+        lineCreditsWon: List<Int>? = null
     ) {
         val mask = List(5) { idx -> heldMask.getOrElse(idx) { false } }
         ensureFolder()
@@ -105,9 +108,12 @@ class PlayedGameLog(
         hands += 1
         wagerCents += handWagerCents
         payoutCents += handPayoutCents
-        counts[classification] = (counts[classification] ?: 0) + 1
-        if (classification == "nothing") {
-            counts["non_paying_hands"] = (counts["non_paying_hands"] ?: 0) + 1
+        val lineClasses = lineClassifications ?: listOf(classification)
+        for (lineCls in lineClasses) {
+            counts[lineCls] = (counts[lineCls] ?: 0) + 1
+            if (lineCls == "nothing") {
+                counts["non_paying_hands"] = (counts["non_paying_hands"] ?: 0) + 1
+            }
         }
 
         peakCents = max(peakCents, balanceCents)
@@ -119,7 +125,7 @@ class PlayedGameLog(
         val holdSource = matchedChoice?.ruleId ?: PLAYER_CHOICE
         val heldCards = dealt.filterIndexed { i, _ -> mask[i] }
 
-        val simRow = listOf(
+        val simRow = mutableListOf(
             hands.toString(),
             formatCardList(dealt),
             holdSource,
@@ -136,6 +142,14 @@ class PlayedGameLog(
             formatMoney(balanceCents / 100.0),
             if (wentBroke) "bankroll_exhaustion" else ""
         )
+        if (handsPerDeal > 1) {
+            val effClasses = lineClassifications ?: listOf(classification)
+            val effCredits = lineCreditsWon ?: listOf(creditsWon)
+            simRow.add("")
+            simRow.add(handsPerDeal.toString())
+            simRow.add(effClasses.joinToString("|"))
+            simRow.add(effCredits.joinToString("|"))
+        }
         appendLine(File(File(runDir, "CSV"), "session_0001.csv"), rowToCsvLine(simRow))
 
         val isTopHeld = if (topChoice != null && topChoice.holdMask == mask) "1" else "0"
@@ -174,7 +188,8 @@ class PlayedGameLog(
         if (created) return
         val csvDir = File(runDir, "CSV")
         csvDir.mkdirs()
-        appendLine(File(csvDir, "session_0001.csv"), SIMULATION_CSV_HEADER)
+        val header = if (handsPerDeal > 1) SIMULATION_MULTI_HAND_CSV_HEADER else SIMULATION_CSV_HEADER
+        appendLine(File(csvDir, "session_0001.csv"), header)
         appendLine(File(runDir, "played_hands.csv"), rowToCsvLine(PLAYED_HANDS_HEADER))
         created = true
     }
@@ -260,11 +275,12 @@ class PlayedGameLog(
         }
         classCounts["non_paying_hands"] = counts["non_paying_hands"] ?: (counts["nothing"] ?: 0)
 
+        val totalPokerHands = hands * handsPerDeal
         val actualPcts = linkedMapOf<String, Double>()
         val expectedPcts = linkedMapOf<String, Double>()
         val deltaPcts = linkedMapOf<String, Double>()
         for ((k, cnt) in classCounts) {
-            val act = if (hands > 0) round4(cnt.toDouble() / hands * 100.0) else 0.0
+            val act = if (totalPokerHands > 0) round4(cnt.toDouble() / totalPokerHands * 100.0) else 0.0
             val exp = game.expectedFrequenciesPct[k] ?: 0.0
             actualPcts[k] = act
             expectedPcts[k] = exp
@@ -284,16 +300,31 @@ class PlayedGameLog(
             "stop_loss" to null,
             "stopping_conditions" to emptyMap<String, Any>()
         )
+        if (handsPerDeal > 1) {
+            metadata["hands_per_deal"] = handsPerDeal
+            metadata["wager_per_deal"] = round2(startingDenomination * startingCredits * handsPerDeal)
+            metadata["game_modifiers"] = mapOf(
+                "multi_hand" to mapOf(
+                    "enabled" to true,
+                    "hands_per_deal" to handsPerDeal
+                )
+            )
+        }
+        val volumeBlock = linkedMapOf<String, Any?>(
+            "total_sessions" to 1,
+            "total_hands" to hands,
+            "total_wagered" to wagered,
+            "total_payout" to payout,
+            "batch_rtp_pct" to batchRtp,
+            "expected_base_rtp_pct" to game.returnPercentage
+        )
+        if (handsPerDeal > 1) {
+            volumeBlock["hands_per_deal"] = handsPerDeal
+            volumeBlock["total_poker_hands"] = totalPokerHands
+        }
         val payload = linkedMapOf<String, Any?>(
             "metadata" to metadata,
-            "volume" to linkedMapOf(
-                "total_sessions" to 1,
-                "total_hands" to hands,
-                "total_wagered" to wagered,
-                "total_payout" to payout,
-                "batch_rtp_pct" to batchRtp,
-                "expected_base_rtp_pct" to game.returnPercentage
-            ),
+            "volume" to volumeBlock,
             "outcome_distribution" to linkedMapOf(
                 "profitable_sessions" to profitable,
                 "profitable_sessions_pct" to if (profitable == 1) 100.0 else 0.0,
@@ -353,6 +384,11 @@ class PlayedGameLog(
             return "$sign$$num"
         }
 
+        val unitLabel = if (handsPerDeal > 1) "deal" else "hand"
+        val totalCredits = startingCredits * handsPerDeal
+        val wagerPerDeal = startingDenomination * totalCredits
+        val totalPokerHands = hands * handsPerDeal
+
         val lines = mutableListOf(
             "=".repeat(80),
             "BATCH SIMULATION SUMMARY REPORT",
@@ -360,60 +396,79 @@ class PlayedGameLog(
             "Configuration: ${game.configName}",
             "Variant: ${game.variant}",
             "Run Timestamp: ${endedAt.format(TS_SPACE_FMT)}",
-            "Sessions Run: 1",
-            String.format(
-                Locale.US,
-                "Denomination: $%.2f (Wager: $%.2f per hand / %d credits)",
-                startingDenomination,
-                startingDenomination * startingCredits,
-                startingCredits
-            ),
-            String.format(Locale.US, "Starting Bank: $%.2f per session", startingCentsVal / 100.0),
-            "",
-            "-".repeat(80),
-            "1. SESSION OUTCOME DISTRIBUTION",
-            "-".repeat(80),
-            String.format(Locale.US, "Profitable Sessions: %6d (%6.2f%%)", profitable, if (profitable == 1) 100.0 else 0.0),
-            String.format(Locale.US, "Losing Sessions:     %6d (%6.2f%%)", losing, if (losing == 1) 100.0 else 0.0),
-            String.format(Locale.US, "Breakeven Sessions:  %6d (%6.2f%%)", breakeven, if (breakeven == 1) 100.0 else 0.0),
-            "",
-            "Termination Reasons:",
-            String.format(Locale.US, " - %-22s %5d (%6.2f%%)", stoppingReason, 1, 100.0),
-            "",
-            "-".repeat(80),
-            "2. ENSEMBLE FINANCIAL PERFORMANCE",
-            "-".repeat(80),
-            String.format(Locale.US, "Total Hands Simulated: %,10d", hands),
-            String.format(Locale.US, "Total Wagered:         $%,11.2f", wagered),
-            String.format(Locale.US, "Total Returned:        $%,11.2f", payout),
-            String.format(Locale.US, "Net Return:            %s$%,10.2f", netSign, abs(netDiff)),
-            String.format(Locale.US, "Observed Batch RTP:    %9.2f%%", batchRtp),
-            String.format(Locale.US, "Expected Base RTP:    %9.2f%% (Variance: %s%.2f%%)", game.returnPercentage, varSign, varDelta),
-            "",
-            "Per-Session Net Return Distribution:",
-            " - Mean:               ${fmtSignedCurrency(netReturn)}",
-            " - Median:             ${fmtSignedCurrency(netReturn)}",
-            String.format(Locale.US, " - Standard Deviation: $%,8.2f", 0.0),
-            " - Maximum Profit:     ${fmtSignedCurrency(netReturn, forcePlus = true)}",
-            " - Maximum Loss:       ${fmtSignedCurrency(netReturn)}",
-            "",
-            "Per-Session Duration (Hands Played):",
-            String.format(Locale.US, " - Mean:               %8.1f hands", hands.toDouble()),
-            String.format(Locale.US, " - Median:             %8.1f hands", hands.toDouble()),
-            String.format(Locale.US, " - Shortest Session:   %,8d hands", hands),
-            String.format(Locale.US, " - Longest Session:    %,8d hands", hands),
-            "",
-            "-".repeat(80),
-            "3. SHOWDOWN HAND FREQUENCY & HIT RATES (ALL SESSIONS COMBINED)",
-            "-".repeat(80),
-            String.format(Locale.US, "%-26s%10s%15s%15s%14s", "Hand Classification", "Count", "Actual Freq", "Expected Freq", "Diff"),
-            "-".repeat(80)
+            "Sessions Run: 1"
+        )
+        if (handsPerDeal > 1) {
+            lines.add("Game Modifier: Multi-Hand ($handsPerDeal hands per deal)")
+        }
+        lines.addAll(
+            listOf(
+                String.format(
+                    Locale.US,
+                    "Denomination: $%.2f (Wager: $%.2f per %s / %d credits)",
+                    startingDenomination,
+                    wagerPerDeal,
+                    unitLabel,
+                    totalCredits
+                ),
+                String.format(Locale.US, "Starting Bank: $%.2f per session", startingCentsVal / 100.0),
+                "",
+                "-".repeat(80),
+                "1. SESSION OUTCOME DISTRIBUTION",
+                "-".repeat(80),
+                String.format(Locale.US, "Profitable Sessions: %6d (%6.2f%%)", profitable, if (profitable == 1) 100.0 else 0.0),
+                String.format(Locale.US, "Losing Sessions:     %6d (%6.2f%%)", losing, if (losing == 1) 100.0 else 0.0),
+                String.format(Locale.US, "Breakeven Sessions:  %6d (%6.2f%%)", breakeven, if (breakeven == 1) 100.0 else 0.0),
+                "",
+                "Termination Reasons:",
+                String.format(Locale.US, " - %-22s %5d (%6.2f%%)", stoppingReason, 1, 100.0),
+                "",
+                "-".repeat(80),
+                "2. ENSEMBLE FINANCIAL PERFORMANCE",
+                "-".repeat(80),
+                if (handsPerDeal == 1) {
+                    String.format(Locale.US, "Total Hands Simulated: %,10d", hands)
+                } else {
+                    String.format(Locale.US, "Total Deals Simulated: %,10d", hands)
+                }
+            )
+        )
+        if (handsPerDeal > 1) {
+            lines.add(String.format(Locale.US, "Total Poker Hands:     %,10d (%d per deal)", totalPokerHands, handsPerDeal))
+        }
+        lines.addAll(
+            listOf(
+                String.format(Locale.US, "Total Wagered:         $%,11.2f", wagered),
+                String.format(Locale.US, "Total Returned:        $%,11.2f", payout),
+                String.format(Locale.US, "Net Return:            %s$%,10.2f", netSign, abs(netDiff)),
+                String.format(Locale.US, "Observed Batch RTP:    %9.2f%%", batchRtp),
+                String.format(Locale.US, "Expected Base RTP:    %9.2f%% (Variance: %s%.2f%%)", game.returnPercentage, varSign, varDelta),
+                "",
+                "Per-Session Net Return Distribution:",
+                " - Mean:               ${fmtSignedCurrency(netReturn)}",
+                " - Median:             ${fmtSignedCurrency(netReturn)}",
+                String.format(Locale.US, " - Standard Deviation: $%,8.2f", 0.0),
+                " - Maximum Profit:     ${fmtSignedCurrency(netReturn, forcePlus = true)}",
+                " - Maximum Loss:       ${fmtSignedCurrency(netReturn)}",
+                "",
+                "Per-Session Duration (Hands Played):",
+                String.format(Locale.US, " - Mean:               %8.1f hands", hands.toDouble()),
+                String.format(Locale.US, " - Median:             %8.1f hands", hands.toDouble()),
+                String.format(Locale.US, " - Shortest Session:   %,8d hands", hands),
+                String.format(Locale.US, " - Longest Session:    %,8d hands", hands),
+                "",
+                "-".repeat(80),
+                "3. SHOWDOWN HAND FREQUENCY & HIT RATES (ALL SESSIONS COMBINED)",
+                "-".repeat(80),
+                String.format(Locale.US, "%-26s%10s%15s%15s%14s", "Hand Classification", "Count", "Actual Freq", "Expected Freq", "Diff"),
+                "-".repeat(80)
+            )
         )
 
         val keysWithNonPaying = sortedPaytableKeys + listOf("non_paying_hands")
         for (k in keysWithNonPaying) {
             val cnt = counts[k] ?: if (k == "non_paying_hands") (counts["nothing"] ?: 0) else 0
-            val act = if (hands > 0) round4(cnt.toDouble() / hands * 100.0) else 0.0
+            val act = if (totalPokerHands > 0) round4(cnt.toDouble() / totalPokerHands * 100.0) else 0.0
             val exp = game.expectedFrequenciesPct[k] ?: 0.0
             val delta = round4(act - exp)
             val cntStr = String.format(Locale.US, "%,d", cnt)
@@ -450,6 +505,9 @@ class PlayedGameLog(
             "ended_by" to endedBy,
             "voucher" to voucherMap
         )
+        if (handsPerDeal > 1) {
+            info["hands_per_deal"] = handsPerDeal
+        }
         return gson.toJson(info) + "\n"
     }
 
@@ -484,6 +542,13 @@ class PlayedGameLog(
             "stopping_condition_met"
         )
         val SIMULATION_CSV_HEADER = SIMULATION_HEADERS.joinToString(",")
+        val SIMULATION_MULTI_HAND_HEADERS = SIMULATION_HEADERS + listOf(
+            "fsm_state",
+            "hands_per_deal",
+            "line_classifications",
+            "line_credits_won"
+        )
+        val SIMULATION_MULTI_HAND_CSV_HEADER = SIMULATION_MULTI_HAND_HEADERS.joinToString(",")
 
         val PLAYED_HANDS_HEADER = listOf(
             "hand_number",

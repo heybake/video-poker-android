@@ -21,9 +21,18 @@ enum class DealState {
     SHOWDOWN_NO_WIN
 }
 
+data class MultiHandLine(
+    val index: Int,
+    val cards: List<Card?> = listOf(null, null, null, null, null),
+    val rank: HandRank = HandRank.NOTHING,
+    val winCredits: Int = 0,
+    val isRevealed: Boolean = false
+)
+
 data class GameState(
     val currentGame: GameConfig? = null,
     val currentMode: GameMode = GameMode.LEARN,
+    val handsPerDeal: Int = 1,
     val currentBet: Int = 5,
     val currentDenom: Double = 0.25,
     val dealtDenom: Double? = null,
@@ -33,6 +42,14 @@ data class GameState(
     val heldMask: List<Boolean> = listOf(false, false, false, false, false),
     val holdChoices: List<HoldChoice> = emptyList(),
     val handRank: HandRank = HandRank.NOTHING,
+    val dealtPayingRank: HandRank = HandRank.NOTHING,
+    val dealtWinCredits: Int = 0,
+    val dealtBadgeDocked: Boolean = false,
+    val upperLines: List<MultiHandLine> = emptyList(),
+    val mainLineWinRank: HandRank = HandRank.NOTHING,
+    val mainLineWinCredits: Int = 0,
+    val isMainLineSettled: Boolean = false,
+    val hideMultiWinBadges: Boolean = false,
     val winAmount: Int = 0,
     val winAsCash: Boolean = false, // false = credits, true = dollars
     val betAsCash: Boolean = false,
@@ -45,6 +62,7 @@ data class GameState(
     val speedLevel: Int = 2, // 1..3, default 2 (matching desktop SPEED_MS = [250, 170, 100])
     val revealedMask: List<Boolean> = listOf(true, true, true, true, true),
     val isAnimating: Boolean = false,
+    val isRevealingMultiDraw: Boolean = false,
     val totalHandsPlayed: Int = 0,
     val handsAtCurrentDenom: Int = 0,
     val allGames: List<GameConfig> = emptyList(),
@@ -63,8 +81,24 @@ data class GameState(
     val gameSelectedBanner: String? = null,
     val showSplash: Boolean = true
 ) {
+    val isMultiHand: Boolean
+        get() = handsPerDeal > 1
+
+    val effectiveMode: GameMode
+        get() = if (handsPerDeal > 1) GameMode.CASINO else currentMode
+
+    val totalBetCredits: Int
+        get() = currentBet * handsPerDeal
+
+    val canChangeGameOrMode: Boolean
+        get() = !isAnimating &&
+            !isRevealingMultiDraw &&
+            dealState != DealState.DEALT_CHOOSING_HOLDS &&
+            !(isRecordingSession && recordedHandsCount > 0)
+
     companion object {
-        const val APP_VERSION = "1.0.31"
+        const val APP_VERSION = "1.1.0"
+        val SUPPORTED_HANDS_OPTIONS = listOf(1, 3, 5, 10)
     }
 }
 

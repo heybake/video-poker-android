@@ -161,9 +161,9 @@ fun BottomDeck(
             ) {
                 // BET (Click to toggle BET independently between dollars and credits)
                 val betDisplay = if (state.betAsCash) {
-                    String.format(Locale.US, "$%.2f", state.currentBet * state.currentDenom)
+                    String.format(Locale.US, "$%.2f", state.totalBetCredits * state.currentDenom)
                 } else {
-                    "${state.currentBet}"
+                    "${state.totalBetCredits}"
                 }
                 Row(
                     modifier = Modifier.clickable { onToggleBetCurrency() },
@@ -265,6 +265,7 @@ fun BottomDeck(
                 width = 88,
                 scale = scale,
                 palette = palette,
+                enabled = state.canChangeGameOrMode,
                 onClick = { onOpenOverlay(ActiveOverlay.MORE_GAMES) }
             )
 
@@ -363,7 +364,7 @@ fun BottomDeck(
                         )
                     )
                     .border(1.5.dp, palette.dealButtonBorderColor, RoundedCornerShape(dealRadius))
-                    .clickable(enabled = !state.isAnimating, onClick = onDealDraw),
+                    .clickable(enabled = !state.isAnimating || state.isRevealingMultiDraw, onClick = onDealDraw),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -390,7 +391,8 @@ fun BottomDeck(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val gameTitle = state.currentGame?.let {
-                "${it.displayName} • ${String.format("%.2f", it.returnPercentage)}%"
+                val modeTag = if (state.isMultiHand) " • ${state.handsPerDeal}-Hand" else ""
+                "${it.displayName}$modeTag • ${String.format("%.2f", it.returnPercentage)}%"
             } ?: "Select a Game"
 
             val denomText = if (state.currentDenom < 1.0) "${(state.currentDenom * 100).toInt()}¢" else "$${state.currentDenom.toInt()}"

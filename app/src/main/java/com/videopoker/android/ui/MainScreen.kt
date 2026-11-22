@@ -39,7 +39,9 @@ import com.videopoker.android.ui.components.OverlayDialogs
 import com.videopoker.android.ui.components.StartupSplashScreen
 import com.videopoker.android.ui.decks.BottomDeck
 import com.videopoker.android.ui.decks.MidDeck
+import com.videopoker.android.ui.decks.MultiHandArena
 import com.videopoker.android.ui.decks.TopDeck
+import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.state.GameViewModel
 import com.videopoker.android.ui.theme.AppTheme
@@ -79,23 +81,35 @@ fun MainScreen(viewModel: GameViewModel) {
                     .padding(horizontal = metrics.outerPadH, vertical = metrics.outerPadV),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Deck: Pay Table + Hold Panel scaled proportionally to window height
-                TopDeck(
-                    state = state,
-                    palette = palette,
-                    onOpenOverlay = viewModel::openOverlay,
-                    onTogglePracticePlot = viewModel::onTogglePracticePlot,
-                    modifier = Modifier.weight(metrics.topWeight)
-                )
+                if (state.isMultiHand) {
+                    MultiHandArena(
+                        state = state,
+                        palette = palette,
+                        onToggleHold = viewModel::onToggleHold,
+                        onSetHold = viewModel::onSetHold,
+                        onOpenSeePays = { viewModel.openOverlay(ActiveOverlay.SEE_PAYS) },
+                        onSkipReveal = viewModel::skipMultiReveal,
+                        modifier = Modifier.weight(metrics.topWeight + metrics.midWeight)
+                    )
+                } else {
+                    // Top Deck: Pay Table + Hold Panel scaled proportionally to window height
+                    TopDeck(
+                        state = state,
+                        palette = palette,
+                        onOpenOverlay = viewModel::openOverlay,
+                        onTogglePracticePlot = viewModel::onTogglePracticePlot,
+                        modifier = Modifier.weight(metrics.topWeight)
+                    )
 
-                // Mid Deck: Plaque + Dynamically Sized 5 Cards
-                MidDeck(
-                    state = state,
-                    palette = palette,
-                    onToggleHold = viewModel::onToggleHold,
-                    onSetHold = viewModel::onSetHold,
-                    modifier = Modifier.weight(metrics.midWeight)
-                )
+                    // Mid Deck: Plaque + Dynamically Sized 5 Cards
+                    MidDeck(
+                        state = state,
+                        palette = palette,
+                        onToggleHold = viewModel::onToggleHold,
+                        onSetHold = viewModel::onSetHold,
+                        modifier = Modifier.weight(metrics.midWeight)
+                    )
+                }
 
                 // Bottom Deck: HUD Status Row (anchored to deck width) + Scaled Action Buttons + Footer
                 BottomDeck(
