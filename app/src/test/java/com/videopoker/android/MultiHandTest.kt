@@ -7,6 +7,7 @@ import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.sound.SoundEffect
 import com.videopoker.android.sound.SoundManager
+import com.videopoker.android.ui.decks.shouldShowMainDrawBadge
 import com.videopoker.android.ui.state.DealState
 import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
@@ -157,5 +158,44 @@ class MultiHandTest {
         assertEquals(2, counts.get("two_pair").asInt)
         assertEquals(1, counts.get("three_of_a_kind").asInt)
         assertEquals(2, counts.get("non_paying_hands").asInt)
+    }
+
+    @Test
+    fun testMainHandWinBadgeAppearsFirstDuringMultiReveal() {
+        val preDrawDealtPaying = GameState(
+            handsPerDeal = 5,
+            dealState = DealState.DEALT_CHOOSING_HOLDS,
+            isRevealingMultiDraw = false,
+            isMainLineSettled = false,
+            dealtPayingRank = HandRank.THREE_OF_A_KIND,
+            dealtWinCredits = 15
+        )
+        assertFalse(shouldShowMainDrawBadge(preDrawDealtPaying))
+
+        val midMainCardFlip = preDrawDealtPaying.copy(
+            isRevealingMultiDraw = true,
+            isMainLineSettled = false,
+            dealtPayingRank = HandRank.NOTHING,
+            dealtWinCredits = 0
+        )
+        assertFalse(shouldShowMainDrawBadge(midMainCardFlip))
+
+        // Hand 1 finishes drawing while dealState is still DEALT_CHOOSING_HOLDS and upper hands 2..5
+        // have not yet revealed: Hand 1 win badge must already be visible FIRST!
+        val mainSettledDuringReveal = midMainCardFlip.copy(
+            isMainLineSettled = true,
+            mainLineWinRank = HandRank.THREE_OF_A_KIND,
+            mainLineWinCredits = 15
+        )
+        assertTrue(shouldShowMainDrawBadge(mainSettledDuringReveal))
+
+        val settledShowdown = mainSettledDuringReveal.copy(
+            isRevealingMultiDraw = false,
+            dealState = DealState.SHOWDOWN_WIN
+        )
+        assertTrue(shouldShowMainDrawBadge(settledShowdown))
+
+        val clearedByBetOne = settledShowdown.copy(hideMultiWinBadges = true)
+        assertFalse(shouldShowMainDrawBadge(clearedByBetOne))
     }
 }

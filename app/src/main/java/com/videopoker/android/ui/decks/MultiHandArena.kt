@@ -65,6 +65,13 @@ import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
 import kotlin.math.ceil
 
+internal fun shouldShowMainDrawBadge(state: GameState): Boolean =
+    state.isMainLineSettled &&
+        state.mainLineWinCredits > 0 &&
+        state.mainLineWinRank != HandRank.NOTHING &&
+        !state.hideMultiWinBadges &&
+        (state.isRevealingMultiDraw || state.dealState != DealState.DEALT_CHOOSING_HOLDS)
+
 @Composable
 fun MultiHandArena(
     state: GameState,
@@ -204,11 +211,7 @@ fun MultiHandArena(
                     state.dealtPayingRank != HandRank.NOTHING &&
                     !state.hideMultiWinBadges
 
-                val showMainDrawBadge = state.isMainLineSettled &&
-                    state.mainLineWinCredits > 0 &&
-                    state.mainLineWinRank != HandRank.NOTHING &&
-                    !state.hideMultiWinBadges &&
-                    (state.dealState != DealState.DEALT_CHOOSING_HOLDS)
+                val showMainDrawBadge = shouldShowMainDrawBadge(state)
 
                 val dockTargetY = ((mainCardH + railPadBotDp) / 2f + badgeH.value / 2f + 4f).dp
                 val badgeOffsetY by animateDpAsState(
