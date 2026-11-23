@@ -79,7 +79,9 @@ data class ThemePalette(
     val coinTextColor: Color = Color(0xFF1A1000),
     val splitPayValueBgStart: Color = coinBgStart,
     val splitPayValueBgEnd: Color = coinBgEnd,
-    val splitPayValueTextColor: Color = coinTextColor
+    val splitPayValueTextColor: Color = coinTextColor,
+    val overlayTextColor: Color = Color(0xFFF5F0E6),
+    val overlayTextDimColor: Color = Color(0xFFD6CEC0)
 )
 
 object ThemeManager {

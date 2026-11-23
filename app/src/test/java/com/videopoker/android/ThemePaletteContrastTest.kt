@@ -41,6 +41,16 @@ class ThemePaletteContrastTest {
                 "Footer version contrast for ${theme.displayName} is too low: $versionRatio:1",
                 versionRatio >= 4.5
             )
+            val overlayTextRatio = contrastRatio(palette.overlayTextColor, palette.overlayBgColor)
+            assertTrue(
+                "Modal overlay text contrast for ${theme.displayName} is too low: $overlayTextRatio:1",
+                overlayTextRatio >= 7.0
+            )
+            val overlayDimRatio = contrastRatio(palette.overlayTextDimColor, palette.overlayBgColor)
+            assertTrue(
+                "Modal overlay dim text contrast for ${theme.displayName} is too low: $overlayDimRatio:1",
+                overlayDimRatio >= 4.5
+            )
         }
     }
 }

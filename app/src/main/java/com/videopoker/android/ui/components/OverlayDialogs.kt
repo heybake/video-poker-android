@@ -480,7 +480,7 @@ private fun MoreGamesContent(
                         // Subtitle: "X pay tables"
                         Text(
                             text = countLabel,
-                            color = palette.payTableTextColor,
+                            color = palette.overlayTextColor,
                             style = TextStyle(
                                 fontSize = (10.5f * scale).sp,
                                 fontWeight = FontWeight.Bold,
@@ -710,7 +710,7 @@ private fun OptionsContent(
                         } else {
                             "All training modes are available in Single Play."
                         },
-                        color = palette.textColor.copy(alpha = 0.78f),
+                        color = palette.overlayTextDimColor,
                         fontSize = (9.5f * scale).sp
                     )
                 }
@@ -1679,7 +1679,7 @@ private fun AddMoneyContent(
                         cashBalance,
                         round(cashBalance / currentDenom).toInt()
                     ),
-                    color = palette.textColor,
+                    color = palette.overlayTextColor,
                     fontSize = (13f * effScale).sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1707,7 +1707,7 @@ private fun AddMoneyContent(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Current Balance",
-                    color = palette.textDimColor,
+                    color = palette.overlayTextDimColor,
                     fontSize = (11f * effScale).sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1718,7 +1718,7 @@ private fun AddMoneyContent(
                         cashBalance,
                         round(cashBalance / currentDenom).toInt()
                     ),
-                    color = palette.textColor,
+                    color = palette.overlayTextColor,
                     fontSize = (19f * effScale).sp,
                     fontWeight = FontWeight.Black
                 )
@@ -1726,7 +1726,7 @@ private fun AddMoneyContent(
 
             Text(
                 text = "Select a bill or enter an amount:",
-                color = palette.textColor,
+                color = palette.overlayTextColor,
                 fontSize = (12f * effScale).sp,
                 fontWeight = FontWeight.Medium
             )
@@ -1822,7 +1822,7 @@ private fun AddMoneyContent(
                     if (customInput.isEmpty()) {
                         Text(
                             text = "Amount",
-                            color = palette.textDimColor,
+                            color = palette.overlayTextDimColor,
                             fontSize = (13f * effScale).sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -2264,7 +2264,7 @@ private fun CompleteHoldListContent(
                 )
                 Text(
                     text = "${game?.displayName ?: "Video Poker"} • $totalRules Priority Rules (Top to Bottom)",
-                    color = palette.textDimColor,
+                    color = palette.overlayTextDimColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
@@ -2378,7 +2378,7 @@ private fun CompleteHoldListContent(
                         ) {
                             Text(
                                 text = info.label,
-                                color = if (isTop) Color.White else palette.payTableTextColor,
+                                color = if (isTop) Color.White else palette.overlayTextColor,
                                 fontSize = (11.5f * scale).sp,
                                 fontWeight = if (isTop || isMatched) FontWeight.Bold else FontWeight.Medium,
                                 maxLines = 1,
@@ -2387,7 +2387,7 @@ private fun CompleteHoldListContent(
                             if (info.keeps.isNotBlank()) {
                                 Text(
                                     text = info.keeps,
-                                    color = if (isTop) Color(0xFFD5EFDF) else palette.textDimColor,
+                                    color = if (isTop) Color(0xFFD5EFDF) else palette.overlayTextDimColor,
                                     fontSize = (9.5f * scale).sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -2457,7 +2457,7 @@ private fun CompleteHoldListContent(
         ) {
             Text(
                 text = "Rules evaluated in top-to-bottom priority. Highest matching rule is played.",
-                color = palette.textDimColor,
+                color = palette.overlayTextDimColor,
                 fontSize = (9.5f * scale).sp,
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 modifier = Modifier.weight(1f).padding(end = (8f * scale).dp)
