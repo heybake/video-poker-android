@@ -57,7 +57,10 @@ import androidx.compose.ui.unit.sp
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.data.models.PayTableRow
+import com.videopoker.android.ui.components.MultiHandHoldPanel
+import com.videopoker.android.ui.components.SessionBankrollPanel
 import com.videopoker.android.ui.state.DealState
+import com.videopoker.android.ui.state.GameMode
 import com.videopoker.android.ui.state.GameState
 import com.videopoker.android.ui.state.MultiHandLine
 import com.videopoker.android.ui.theme.CardDeck
@@ -79,6 +82,7 @@ fun MultiHandArena(
     onToggleHold: (Int) -> Unit,
     onSetHold: (Int, Boolean) -> Unit,
     onOpenSeePays: () -> Unit,
+    onOpenCompleteList: () -> Unit = {},
     onSkipReveal: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -111,7 +115,8 @@ fun MultiHandArena(
         val availW = maxWidth.value.coerceAtLeast(360f)
         val availH = maxHeight.value.coerceAtLeast(220f)
 
-        val payColMaxW = (availW * 0.18f).coerceIn(104f, 200f)
+        val sideGapDp = (6f * metrics.uiScale).coerceIn(4f, 10f)
+        val payColMaxW = (availW * 0.215f).coerceIn(170f, 285f)
         val centerMaxW = (availW - payColMaxW * 2f - 16f).coerceAtLeast(220f)
 
         val railPadHDp = (8f * metrics.uiScale).coerceIn(6f, 14f)
@@ -129,6 +134,9 @@ fun MultiHandArena(
         val mainRailW = mainCardW * 5f + mainGapDp * 4f + railPadHDp * 2f
         val mainRailTotalH = mainCardH + railPadTopDp + railPadBotDp + 4f
 
+        val cornerPanelH = (mainRailTotalH + dockSpaceDp + 14f * metrics.uiScale).coerceIn(124f, availH * 0.44f)
+        val splitPayAvailH = (availH - cornerPanelH - sideGapDp).coerceAtLeast(80f)
+
         val upperAvailH = (availH - mainRailTotalH - midGapDp - dockSpaceDp - 4f).coerceAtLeast(90f)
         val hands = state.handsPerDeal.coerceIn(3, 10)
 
@@ -145,21 +153,36 @@ fun MultiHandArena(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            // Left Split Pay Column (top-aligned, hug longest label width, no win flash)
-            Box(
+            // Left Side: Top Split Pay Column + Bottom Compact Session Bankroll Plot
+            Column(
                 modifier = Modifier
                     .width(payColMaxW.dp)
                     .fillMaxHeight(),
-                contentAlignment = Alignment.TopCenter
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SplitPayColumn(
                     rows = leftRows,
                     currentBet = state.currentBet,
                     isCompact = rows.size > 10,
-                    availHeightDp = availH,
+                    availHeightDp = splitPayAvailH,
                     uiScale = metrics.uiScale,
                     palette = palette,
                     onClick = onOpenSeePays
+                )
+
+                SessionBankrollPanel(
+                    points = state.bankrollHistory,
+                    targets = state.bankrollTargets,
+                    cashBalance = state.cashBalance,
+                    palette = palette,
+                    showCompleteListButton = false,
+                    showReviewToggleButton = false,
+                    showMistakesSummary = shouldShowBankrollMistakes(state.currentMode),
+                    compact = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(cornerPanelH.dp)
                 )
             }
 
@@ -294,13 +317,27 @@ fun MultiHandArena(
                             horizontalArrangement = Arrangement.spacedBy(spacing),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val showDots = (
+                                state.currentMode == GameMode.LEARN &&
+                                    state.dealState == DealState.DEALT_CHOOSING_HOLDS &&
+                                    !state.isAnimating &&
+                                    !state.isRevealingMultiDraw
+                                )
                             for (ci in 0 until 5) {
                                 val revealed = state.revealedMask.getOrElse(ci) { true }
                                 val card = if (revealed) state.cards.getOrNull(ci) else null
                                 val isHeld = state.heldMask.getOrElse(ci) { false } && revealed
+                                val choicesHoldingCard = if (showDots && revealed) {
+                                    state.holdChoices.take(3).mapNotNull { choice ->
+                                        if (choice.holdMask.getOrElse(ci) { false }) choice.row else null
+                                    }
+                                } else {
+                                    emptyList()
+                                }
                                 MultiMainCardSlot(
                                     card = card,
                                     isHeld = isHeld,
+                                    choicesHoldingCard = choicesHoldingCard,
                                     betCredits = if (ci == 4) state.currentBet else null,
                                     cardWidth = cardW,
                                     cardHeight = cardH,
@@ -335,22 +372,43 @@ fun MultiHandArena(
                 }
             }
 
-            // Right Split Pay Column
-            Box(
+            // Right Side: Top Split Pay Column + Bottom Compact Hold / Practice Review Panel (hidden in Casino)
+            Column(
                 modifier = Modifier
                     .width(payColMaxW.dp)
                     .fillMaxHeight(),
-                contentAlignment = Alignment.TopCenter
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SplitPayColumn(
                     rows = rightRows,
                     currentBet = state.currentBet,
                     isCompact = rows.size > 10,
-                    availHeightDp = availH,
+                    availHeightDp = splitPayAvailH,
                     uiScale = metrics.uiScale,
                     palette = palette,
                     onClick = onOpenSeePays
                 )
+
+                if (state.currentMode != GameMode.CASINO) {
+                    val isDealing = state.isAnimating &&
+                        state.dealState == DealState.DEALT_CHOOSING_HOLDS &&
+                        !state.isRevealingMultiDraw
+                    MultiHandHoldPanel(
+                        choices = state.holdChoices,
+                        playerHeldMask = state.heldMask,
+                        dealtCards = state.cards,
+                        mode = state.currentMode,
+                        dealState = state.dealState,
+                        isDealing = isDealing,
+                        isRevealingMultiDraw = state.isRevealingMultiDraw,
+                        palette = palette,
+                        onOpenCompleteList = onOpenCompleteList,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(cornerPanelH.dp)
+                    )
+                }
             }
         }
     }
@@ -706,6 +764,7 @@ private fun MiniCardSurface(
 private fun MultiMainCardSlot(
     card: Card?,
     isHeld: Boolean,
+    choicesHoldingCard: List<Int>,
     betCredits: Int?,
     cardWidth: Dp,
     cardHeight: Dp,
@@ -757,6 +816,33 @@ private fun MultiMainCardSlot(
                     .align(Alignment.BottomEnd)
                     .padding((3f * cardScale).dp)
             )
+        }
+
+        if (choicesHoldingCard.isNotEmpty()) {
+            val dotSize = (8.5f * cardScale).coerceIn(7f, 15f).dp
+            Row(
+                modifier = Modifier
+                    .align(if (betCredits != null) Alignment.BottomStart else Alignment.BottomEnd)
+                    .padding((3.2f * cardScale).dp),
+                horizontalArrangement = Arrangement.spacedBy((2.5f * cardScale).dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                choicesHoldingCard.forEach { choiceNum ->
+                    val dotColor = when (choiceNum) {
+                        1 -> palette.choice1Color
+                        2 -> palette.choice2Color
+                        else -> palette.choice3Color
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(dotSize)
+                            .shadow(2.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(dotColor)
+                            .border(1.dp, Color(0xFF222222), CircleShape)
+                    )
+                }
+            }
         }
 
         if (isHeld) {

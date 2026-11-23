@@ -78,14 +78,13 @@ data class GameState(
     val bankrollHistory: List<BankrollPoint> = emptyList(),
     val bankrollTargets: BankrollTargets = BankrollTargets(),
     val showPracticePlot: Boolean = false,
-    val gameSelectedBanner: String? = null,
     val showSplash: Boolean = true
 ) {
     val isMultiHand: Boolean
         get() = handsPerDeal > 1
 
     val effectiveMode: GameMode
-        get() = if (handsPerDeal > 1) GameMode.CASINO else currentMode
+        get() = currentMode
 
     val totalBetCredits: Int
         get() = currentBet * handsPerDeal
@@ -97,7 +96,7 @@ data class GameState(
             !(isRecordingSession && recordedHandsCount > 0)
 
     companion object {
-        const val APP_VERSION = "1.1.2"
+        const val APP_VERSION = "1.2.0"
         val SUPPORTED_HANDS_OPTIONS = listOf(1, 3, 5, 10)
     }
 }

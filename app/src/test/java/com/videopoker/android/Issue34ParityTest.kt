@@ -41,22 +41,16 @@ class Issue34ParityTest {
     }
 
     @Test
-    fun `selecting a game sets non-blocking GAME SELECTED banner and closes overlay`() {
+    fun `selecting a game updates active game and closes overlay directly`() {
         val initial = GameState(activeOverlay = ActiveOverlay.MORE_GAMES)
-        assertNull(initial.gameSelectedBanner)
 
         val updated = GameViewModel.applyGameSelection(initial, sampleGame("Jacks or Better 9/6"))
-        assertEquals(
-            "GAME SELECTED: Jacks or Better 9/6 — press DEAL",
-            updated.gameSelectedBanner
-        )
         assertNull(updated.activeOverlay)
         assertEquals("Jacks or Better 9/6", updated.currentGame?.displayName)
 
-        // Tapping Deal directly via ViewModel clears the banner cleanly and prompts Add Money when cash is 0
+        // Tapping Deal directly via ViewModel when no game is selected opens More Games
         val vm = GameViewModel()
         vm.onDealDraw()
-        assertNull(vm.uiState.value.gameSelectedBanner)
         assertEquals(ActiveOverlay.MORE_GAMES, vm.uiState.value.activeOverlay)
     }
 }

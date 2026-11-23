@@ -47,7 +47,6 @@ class GameViewModel @JvmOverloads constructor(
     private var activePlayedLog: PlayedGameLog? = null
     private var sessionMoneyInCents: Long = 0L
     private var pendingAllHoldChoices: List<HoldChoice> = emptyList()
-    private var gameSelectedBannerJob: Job? = null
     private var dealtDockJob: Job? = null
     private var multiRevealJob: Job? = null
     private var pendingMultiSettlement: PendingMultiSettlement? = null
@@ -56,6 +55,7 @@ class GameViewModel @JvmOverloads constructor(
         val game: GameConfig,
         val betPerHand: Int,
         val denom: Double,
+        val mode: GameMode,
         val dealtCards: List<Card>,
         val heldMask: List<Boolean>,
         val bestDrawnCards: List<Card>,
@@ -146,7 +146,6 @@ class GameViewModel @JvmOverloads constructor(
             return
         }
         if (state.isAnimating) return
-        clearGameSelectedBanner()
         if (state.currentGame == null) {
             openOverlay(ActiveOverlay.MORE_GAMES)
             return
@@ -398,10 +397,27 @@ class GameViewModel @JvmOverloads constructor(
                         }
                     }
 
+                    val choices = pendingAllHoldChoices.take(15)
+                    val curMode = _uiState.value.currentMode
+                    val autoMask = if (curMode == GameMode.LEARN && choices.isNotEmpty()) {
+                        choices.first().holdMask
+                    } else {
+                        listOf(false, false, false, false, false)
+                    }
                     _uiState.update { s ->
+                        val updatedUpper = if (autoMask.any { it }) {
+                            s.upperLines.map { line ->
+                                line.copy(cards = List(5) { ci -> if (autoMask[ci]) newDeal[ci] else null })
+                            }
+                        } else {
+                            s.upperLines
+                        }
                         s.copy(
                             isAnimating = false,
                             revealedMask = listOf(true, true, true, true, true),
+                            heldMask = autoMask,
+                            upperLines = updatedUpper,
+                            holdChoices = choices,
                             dealtPayingRank = if (dealtWin > 0) dealtRank else HandRank.NOTHING,
                             dealtWinCredits = dealtWin
                         )
@@ -460,6 +476,7 @@ class GameViewModel @JvmOverloads constructor(
                     game = game,
                     betPerHand = betPerHand,
                     denom = settlementDenom,
+                    mode = state.currentMode,
                     dealtCards = dealtCards,
                     heldMask = holdMask,
                     bestDrawnCards = bestDrawnCards,
@@ -612,7 +629,7 @@ class GameViewModel @JvmOverloads constructor(
                 finalCards = settlement.bestFinalCards,
                 rank = settlement.bestRank,
                 payoutCredits = settlement.totalWinCredits,
-                mode = GameMode.CASINO,
+                mode = settlement.mode,
                 wentBroke = wentBroke,
                 lineClassifications = settlement.allLines.map { it.rank.key },
                 lineCreditsWon = settlement.allLines.map { it.winCredits }
@@ -637,7 +654,7 @@ class GameViewModel @JvmOverloads constructor(
                 cashBalance = settledBalance,
                 totalHandsPlayed = s.totalHandsPlayed + 1,
                 handsAtCurrentDenom = s.handsAtCurrentDenom + 1,
-                practiceMadeTopChoice = null,
+                practiceMadeTopChoice = (topChoice != null && settlement.heldMask == topChoice.holdMask),
                 showPracticePlot = false,
                 bankrollHistory = SessionBankrollTracker.onHandSettled(
                     history = s.bankrollHistory,
@@ -919,24 +936,9 @@ class GameViewModel @JvmOverloads constructor(
                 handsPerDeal = normalizedHands
             )
         }
-        gameSelectedBannerJob?.cancel()
-        gameSelectedBannerJob = viewModelScope.launch {
-            delay(GAME_SELECTED_BANNER_DURATION_MS)
-            _uiState.update { it.copy(gameSelectedBanner = null) }
-        }
-    }
-
-    private fun clearGameSelectedBanner() {
-        gameSelectedBannerJob?.cancel()
-        gameSelectedBannerJob = null
-        if (_uiState.value.gameSelectedBanner != null) {
-            _uiState.update { it.copy(gameSelectedBanner = null) }
-        }
     }
 
     companion object {
-        internal const val GAME_SELECTED_BANNER_DURATION_MS = 3500L
-
         fun upperRevealOrder(hands: Int): List<Int> = when (hands) {
             3 -> listOf(1, 0)
             5 -> listOf(2, 3, 0, 1)
@@ -949,11 +951,6 @@ class GameViewModel @JvmOverloads constructor(
 
         fun resolveSettlementDenom(state: GameState): Double =
             state.dealtDenom ?: state.currentDenom
-
-        fun formatGameSelectedBanner(displayName: String, handsPerDeal: Int = 1): String {
-            val modeTag = if (handsPerDeal > 1) " ($handsPerDeal-Hand)" else ""
-            return "GAME SELECTED: $displayName$modeTag — press DEAL"
-        }
 
         fun applyGameSelection(
             state: GameState,
@@ -971,7 +968,7 @@ class GameViewModel @JvmOverloads constructor(
             } else {
                 HandRank.NOTHING
             }
-            val choices = if (!resetBoard && normalizedHands == 1 && state.cards.size == 5) {
+            val choices = if (!resetBoard && state.cards.size == 5) {
                 StrategyEngine.evaluateHoldChoices(state.cards, game)
             } else {
                 emptyList()
@@ -996,7 +993,6 @@ class GameViewModel @JvmOverloads constructor(
                 handRank = newRank,
                 holdChoices = choices,
                 recordedHandsCount = if (keepRecordedCount) state.recordedHandsCount else 0,
-                gameSelectedBanner = formatGameSelectedBanner(game.displayName, normalizedHands),
                 activeOverlay = null
             )
         }
@@ -1012,15 +1008,25 @@ class GameViewModel @JvmOverloads constructor(
     }
 
     fun onModeToggle(mode: GameMode) {
-        if (_uiState.value.isMultiHand && mode != GameMode.CASINO) return
         _uiState.update { state ->
-            if (state.isMultiHand) return@update state
             val autoMask = if (mode == GameMode.LEARN && state.holdChoices.isNotEmpty() && state.dealState == DealState.DEALT_CHOOSING_HOLDS) {
                 state.holdChoices.first().holdMask
             } else {
                 state.heldMask
             }
-            state.copy(currentMode = mode, heldMask = autoMask, showPracticePlot = false)
+            val updatedUpper = if (state.isMultiHand && state.cards.size == 5 && state.dealState == DealState.DEALT_CHOOSING_HOLDS) {
+                state.upperLines.map { line ->
+                    line.copy(cards = List(5) { ci -> if (autoMask[ci]) state.cards[ci] else null })
+                }
+            } else {
+                state.upperLines
+            }
+            state.copy(
+                currentMode = mode,
+                heldMask = autoMask,
+                upperLines = updatedUpper,
+                showPracticePlot = false
+            )
         }
     }
 
@@ -1063,7 +1069,6 @@ class GameViewModel @JvmOverloads constructor(
     fun openOverlay(overlay: ActiveOverlay) {
         if (overlay == ActiveOverlay.DENOM && !canChangeDenom(_uiState.value)) return
         if (overlay == ActiveOverlay.MORE_GAMES && !_uiState.value.canChangeGameOrMode) return
-        clearGameSelectedBanner()
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
         }
@@ -1249,7 +1254,6 @@ class GameViewModel @JvmOverloads constructor(
         super.onCleared()
         multiRevealJob?.cancel()
         dealtDockJob?.cancel()
-        gameSelectedBannerJob?.cancel()
         soundManager?.release()
     }
 }

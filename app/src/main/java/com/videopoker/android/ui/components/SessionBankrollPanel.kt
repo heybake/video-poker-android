@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.ui.state.BankrollPoint
@@ -66,12 +67,24 @@ fun SessionBankrollPanel(
     showCompleteListButton: Boolean = false,
     showReviewToggleButton: Boolean = false,
     showMistakesSummary: Boolean = true,
+    compact: Boolean = false,
     onShowReview: () -> Unit = {},
     onOpenCompleteList: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scale = LocalResponsiveMetrics.current.uiScale
-    val panelRadius = (8f * scale).dp
+    val panelRadius = ((if (compact) 6.5f else 8f) * scale).dp
+    val padH = ((if (compact) 5f else 6f) * scale).dp
+    val padV = ((if (compact) 2.5f else 3f) * scale).dp
+    val titleSp = ((if (compact) 8.8f else 11.0f) * scale).sp
+    val cashSp = ((if (compact) 8.8f else 10.5f) * scale).sp
+    val legendSp = ((if (compact) 7.1f else 8.5f) * scale).sp
+    val legendLineW = ((if (compact) 7.5f else 10f) * scale).dp
+    val legendDotD = ((if (compact) 5f else 6f) * scale).dp
+    val legendGap = ((if (compact) 3.5f else 6f) * scale).dp
+    val axisSp = ((if (compact) 7.2f else 8.5f) * scale).sp
+    val emptyTitleSp = ((if (compact) 8.6f else 10.5f) * scale).sp
+    val emptySubSp = ((if (compact) 7.6f else 9.5f) * scale).sp
     val isLightPanel = palette.panelColor.luminance() > 0.45f
 
     val balanceColor = if (isLightPanel) Color(0xFF0369A1) else Color(0xFF38BDF8)
@@ -103,7 +116,7 @@ fun SessionBankrollPanel(
             .clip(RoundedCornerShape(panelRadius))
             .background(palette.panelColor)
             .border(1.5.dp, palette.panelBorderColor, RoundedCornerShape(panelRadius))
-            .padding(horizontal = (6f * scale).dp, vertical = (3f * scale).dp)
+            .padding(horizontal = padH, vertical = padV)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -123,9 +136,9 @@ fun SessionBankrollPanel(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
-                        fontSize = (11.0f * scale).sp,
+                        fontSize = titleSp,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = (0.6f * scale).sp,
+                        letterSpacing = ((if (compact) 0.35f else 0.6f) * scale).sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
                 )
@@ -216,7 +229,7 @@ fun SessionBankrollPanel(
                             maxLines = 1,
                             softWrap = false,
                             style = TextStyle(
-                                fontSize = (10.5f * scale).sp,
+                                fontSize = cashSp,
                                 fontWeight = FontWeight.Black,
                                 platformStyle = PlatformTextStyle(includeFontPadding = false)
                             )
@@ -229,21 +242,21 @@ fun SessionBankrollPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = (3f * scale).dp),
+                    .padding(bottom = (2f * scale).dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                    horizontalArrangement = Arrangement.spacedBy(legendGap)
                 ) {
-                    ChartLegendItem(label = "Bal", color = balanceColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
-                    ChartLegendItem(label = "In", color = buyInColor, isDashed = false, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                    ChartLegendItem(label = "Bal", color = balanceColor, isDashed = false, isDot = false, scale = scale, fontSize = legendSp, lineWidth = legendLineW, dotSize = legendDotD, textColor = palette.payTableTextColor)
+                    ChartLegendItem(label = "In", color = buyInColor, isDashed = false, isDot = false, scale = scale, fontSize = legendSp, lineWidth = legendLineW, dotSize = legendDotD, textColor = palette.payTableTextColor)
                     if (targets.winGoalEnabled) {
-                        ChartLegendItem(label = "Goal", color = winGoalColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                        ChartLegendItem(label = "Goal", color = winGoalColor, isDashed = true, isDot = false, scale = scale, fontSize = legendSp, lineWidth = legendLineW, dotSize = legendDotD, textColor = palette.payTableTextColor)
                     }
                     if (targets.stopLossEnabled) {
-                        ChartLegendItem(label = "Stop", color = stopLossColor, isDashed = true, isDot = false, scale = scale, textColor = palette.payTableTextColor)
+                        ChartLegendItem(label = "Stop", color = stopLossColor, isDashed = true, isDot = false, scale = scale, fontSize = legendSp, lineWidth = legendLineW, dotSize = legendDotD, textColor = palette.payTableTextColor)
                     }
                 }
 
@@ -254,6 +267,9 @@ fun SessionBankrollPanel(
                         isDashed = false,
                         isDot = true,
                         scale = scale,
+                        fontSize = legendSp,
+                        lineWidth = legendLineW,
+                        dotSize = legendDotD,
                         textColor = palette.payTableTextColor
                     )
                 }
@@ -269,7 +285,7 @@ fun SessionBankrollPanel(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .padding(horizontal = (8f * scale).dp),
+                        .padding(horizontal = (if (compact) 4f else 8f).let { (it * scale).dp }),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -277,7 +293,7 @@ fun SessionBankrollPanel(
                         text = "Insert cash via INSERT CASH to track your session bankroll from Hand 0.",
                         color = palette.payTableTextColor,
                         style = TextStyle(
-                            fontSize = (10.5f * scale).sp,
+                            fontSize = emptyTitleSp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
@@ -288,7 +304,7 @@ fun SessionBankrollPanel(
                         color = palette.textDimColor,
                         modifier = Modifier.padding(top = (3f * scale).dp),
                         style = TextStyle(
-                            fontSize = (9.5f * scale).sp,
+                            fontSize = emptySubSp,
                             fontWeight = FontWeight.SemiBold,
                             textAlign = TextAlign.Center,
                             platformStyle = PlatformTextStyle(includeFontPadding = false)
@@ -298,7 +314,7 @@ fun SessionBankrollPanel(
             } else {
                 val axisLabelStyle = TextStyle(
                     color = palette.textDimColor,
-                    fontSize = (8.5f * scale).sp,
+                    fontSize = axisSp,
                     fontWeight = FontWeight.SemiBold,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
@@ -516,7 +532,7 @@ fun SessionBankrollPanel(
                         val haloR = (4.4f * scale).dp.toPx()
                         val dotR = (3.1f * scale).dp.toPx()
                         points.forEach { pt ->
-                            if (pt.isSuboptimalHold) {
+                            if (showMistakesSummary && pt.isSuboptimalHold) {
                                 val px = mapX(pt.handNumber.toFloat())
                                 val py = mapY(pt.balanceBeforeInsert ?: pt.balanceDollars)
                                 drawCircle(color = palette.panelColor, radius = haloR, center = Offset(px, py))
@@ -537,30 +553,33 @@ private fun ChartLegendItem(
     isDashed: Boolean,
     isDot: Boolean,
     scale: Float,
+    fontSize: androidx.compose.ui.unit.TextUnit = (8.5f * scale).sp,
+    lineWidth: Dp = (10f * scale).dp,
+    dotSize: Dp = (6f * scale).dp,
     textColor: Color
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy((2.5f * scale).dp)
+        horizontalArrangement = Arrangement.spacedBy((2f * scale).dp)
     ) {
         if (isDot) {
             Box(
                 modifier = Modifier
-                    .size((6f * scale).dp)
+                    .size(dotSize)
                     .clip(CircleShape)
                     .background(color)
             )
         } else {
             Canvas(
                 modifier = Modifier
-                    .width((10f * scale).dp)
+                    .width(lineWidth)
                     .height((4f * scale).dp)
             ) {
                 drawLine(
                     color = color,
                     start = Offset(0f, size.height / 2f),
                     end = Offset(size.width, size.height / 2f),
-                    strokeWidth = (1.8f * scale).dp.toPx(),
+                    strokeWidth = (1.6f * scale).dp.toPx(),
                     pathEffect = if (isDashed) {
                         PathEffect.dashPathEffect(floatArrayOf(3f * scale, 2f * scale), 0f)
                     } else null
@@ -570,8 +589,10 @@ private fun ChartLegendItem(
         Text(
             text = label,
             color = textColor,
+            maxLines = 1,
+            softWrap = false,
             style = TextStyle(
-                fontSize = (8.5f * scale).sp,
+                fontSize = fontSize,
                 fontWeight = FontWeight.SemiBold,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             )

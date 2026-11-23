@@ -31,7 +31,7 @@ class MultiHandTest {
     }
 
     @Test
-    fun testMultiHandModeSelectionAndCasinoLock() {
+    fun testMultiHandSupportsLearnPracticeAndCasino() {
         val db = loadDb107()
         val initial = GameState(
             currentGame = db,
@@ -44,34 +44,57 @@ class MultiHandTest {
         assertEquals(GameMode.LEARN, initial.effectiveMode)
         assertEquals(5, initial.totalBetCredits)
 
-        // Switching to Triple Play (3 hands) resets bet to 1, keeps underlying currentMode = LEARN,
-        // and enforces effectiveMode = CASINO while active.
+        // Switching to Triple Play (3 hands) resets bet to 1 and preserves user's chosen LEARN mode.
         val triple = GameViewModel.applyGameSelection(initial, db, handsPerDeal = 3)
         assertTrue(triple.isMultiHand)
         assertEquals(3, triple.handsPerDeal)
         assertEquals(1, triple.currentBet)
         assertEquals(3, triple.totalBetCredits)
-        assertEquals(GameMode.CASINO, triple.effectiveMode)
+        assertEquals(GameMode.LEARN, triple.effectiveMode)
         assertEquals(GameMode.LEARN, triple.currentMode)
         assertEquals(DealState.READY_TO_DEAL, triple.dealState)
 
-        val ten = GameViewModel.applyGameSelection(triple.copy(currentBet = 5), db, handsPerDeal = 10)
-        assertEquals(10, ten.handsPerDeal)
-        assertEquals(1, ten.currentBet)
-        assertEquals(10, ten.totalBetCredits)
-        assertEquals(GameMode.CASINO, ten.effectiveMode)
+        val tenPractice = GameViewModel.applyGameSelection(
+            triple.copy(currentBet = 5, currentMode = GameMode.PRACTICE),
+            db,
+            handsPerDeal = 10
+        )
+        assertEquals(10, tenPractice.handsPerDeal)
+        assertEquals(1, tenPractice.currentBet)
+        assertEquals(10, tenPractice.totalBetCredits)
+        assertEquals(GameMode.PRACTICE, tenPractice.effectiveMode)
 
-        // Returning to Single Play restores user's chosen training mode.
-        val single = GameViewModel.applyGameSelection(ten.copy(currentMode = GameMode.PRACTICE), db, handsPerDeal = 1)
-        assertFalse(single.isMultiHand)
-        assertEquals(GameMode.PRACTICE, single.effectiveMode)
-        assertEquals(1, single.currentBet)
-        assertEquals(1, single.totalBetCredits)
+        val fiveCasino = GameViewModel.applyGameSelection(
+            tenPractice.copy(currentMode = GameMode.CASINO),
+            db,
+            handsPerDeal = 5
+        )
+        assertEquals(5, fiveCasino.handsPerDeal)
+        assertEquals(GameMode.CASINO, fiveCasino.effectiveMode)
 
-        assertEquals("GAME SELECTED: ${db.displayName} (5-Hand) — press DEAL",
-            GameViewModel.formatGameSelectedBanner(db.displayName, 5))
-        assertEquals("GAME SELECTED: ${db.displayName} — press DEAL",
-            GameViewModel.formatGameSelectedBanner(db.displayName, 1))
+        // Tapping mode toggle in ViewModel switches Multi-Hand between Learn, Practice, and Casino
+        // and mirrors Learn auto-holds to upper hands when a dealt hand is active.
+        val dealt = listOf(Card('A', 's'), Card('A', 'h'), Card('K', 'd'), Card('7', 'c'), Card('2', 's'))
+        val choices = StrategyEngine.evaluateHoldChoices(dealt, db)
+        val vm = GameViewModel(
+            fiveCasino.copy(
+                cards = dealt,
+                revealedMask = listOf(true, true, true, true, true),
+                holdChoices = choices,
+                dealState = DealState.DEALT_CHOOSING_HOLDS,
+                upperLines = List(4) { idx -> com.videopoker.android.ui.state.MultiHandLine(index = idx) }
+            )
+        )
+        vm.onModeToggle(GameMode.LEARN)
+        val afterLearn = vm.uiState.value
+        assertEquals(GameMode.LEARN, afterLearn.effectiveMode)
+        assertEquals(choices.first().holdMask, afterLearn.heldMask)
+        assertEquals(dealt[0], afterLearn.upperLines.first().cards[0])
+        assertEquals(dealt[1], afterLearn.upperLines.first().cards[1])
+        assertEquals(null, afterLearn.upperLines.first().cards[2])
+
+        vm.onModeToggle(GameMode.PRACTICE)
+        assertEquals(GameMode.PRACTICE, vm.uiState.value.effectiveMode)
     }
 
     @Test

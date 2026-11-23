@@ -67,17 +67,16 @@ fun BottomDeck(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 1. Upper HUD Status Bar anchored to card/control column width so counters stay visually tied to cards
-        Row(
+        // 1. Upper HUD Status Bar anchored to card/control column width so WIN left, BET centered, CASH right
+        Box(
             modifier = Modifier
                 .width(metrics.hudContainerWidth)
                 .height(metrics.s(20f))
-                .padding(horizontal = metrics.s(6f)),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = metrics.s(6f))
         ) {
             // Left HUD Cluster: WIN and Sound anchored together
             Row(
+                modifier = Modifier.align(Alignment.CenterStart),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(metrics.s(10f))
             ) {
@@ -154,70 +153,68 @@ fun BottomDeck(
                 }
             }
 
-            // Right HUD Cluster: BET and Credits anchored together
+            // Center HUD: BET centered beneath the playing card frame across Single-Play & Multi-Hand
+            val betDisplay = if (state.betAsCash) {
+                String.format(Locale.US, "$%.2f", state.totalBetCredits * state.currentDenom)
+            } else {
+                "${state.totalBetCredits}"
+            }
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(metrics.s(12f))
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .clickable { onToggleBetCurrency() },
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // BET (Click to toggle BET independently between dollars and credits)
-                val betDisplay = if (state.betAsCash) {
-                    String.format(Locale.US, "$%.2f", state.totalBetCredits * state.currentDenom)
-                } else {
-                    "${state.totalBetCredits}"
-                }
-                Row(
-                    modifier = Modifier.clickable { onToggleBetCurrency() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "BET ",
-                        color = palette.statusLabelColor,
-                        style = TextStyle(
-                            fontSize = (12f * scale).sp,
-                            fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
-                        )
+                Text(
+                    text = "BET ",
+                    color = palette.statusLabelColor,
+                    style = TextStyle(
+                        fontSize = (12f * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
-                    Text(
-                        text = betDisplay,
-                        color = palette.statusValueColor,
-                        style = TextStyle(
-                            fontSize = (13.5f * scale).sp,
-                            fontWeight = FontWeight.Black,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
-                        )
+                )
+                Text(
+                    text = betDisplay,
+                    color = palette.statusValueColor,
+                    style = TextStyle(
+                        fontSize = (13.5f * scale).sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
-                }
+                )
+            }
 
-                // CASH / CREDIT (Click to toggle CREDIT independently between dollars and credits)
-                val cashDisplay = if (state.creditAsCash) {
-                    String.format(Locale.US, "$%.2f", state.cashBalance)
-                } else {
-                    "${(state.cashBalance / state.currentDenom).toInt()}"
-                }
-                Row(
-                    modifier = Modifier.clickable { onToggleCreditCurrency() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (state.creditAsCash) "CASH " else "CREDIT ",
-                        color = palette.statusLabelColor,
-                        style = TextStyle(
-                            fontSize = (12f * scale).sp,
-                            fontWeight = FontWeight.Bold,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
-                        )
+            // Right HUD Cluster: CASH / CREDIT right-aligned
+            val cashDisplay = if (state.creditAsCash) {
+                String.format(Locale.US, "$%.2f", state.cashBalance)
+            } else {
+                "${(state.cashBalance / state.currentDenom).toInt()}"
+            }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable { onToggleCreditCurrency() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (state.creditAsCash) "CASH " else "CREDIT ",
+                    color = palette.statusLabelColor,
+                    style = TextStyle(
+                        fontSize = (12f * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
-                    Text(
-                        text = cashDisplay,
-                        color = palette.statusValueColor,
-                        style = TextStyle(
-                            fontSize = (13.5f * scale).sp,
-                            fontWeight = FontWeight.Black,
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
-                        )
+                )
+                Text(
+                    text = cashDisplay,
+                    color = palette.statusValueColor,
+                    style = TextStyle(
+                        fontSize = (13.5f * scale).sp,
+                        fontWeight = FontWeight.Black,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
                     )
-                }
+                )
             }
         }
 

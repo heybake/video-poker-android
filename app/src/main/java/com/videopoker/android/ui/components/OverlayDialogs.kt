@@ -275,7 +275,7 @@ private fun HelpContent(palette: ThemePalette, scale: Float, onClose: () -> Unit
                 HelpSection("Complete List", "Tap the COMPLETE LIST button in the Hold Panel to view the entire master strategy chart for your selected game variant. It displays every single rule in priority order from top to bottom. The list automatically scrolls to and highlights the rules matching your current hand, with your top optimal hold highlighted in green.", palette, scale)
                 HelpSection("Keyboard Shortcuts", "• Space or 0: Deal / Draw (also instant-completes multi-hand draw reveal)\n• 1, 2, 3, 4, 5: Hold / Release card 1 to 5\n• B: Bet one\n• M: Bet max & deal\n• A: Insert / Add money\n• C: Cash out voucher\n• S: Sound on / off\n• Esc: Close any window", palette, scale)
                 HelpSection("Pay Table", "Standard hands range from Royal Flush down to Jacks or Better (pair of Jacks, Queens, Kings, or Aces). Bonus games pay extra for specific 4 of a Kind combinations.", palette, scale)
-                HelpSection("Multi-Hand Play (3, 5, or 10 Hands)", "• Mode Selection: Choose SINGLE PLAY, TRIPLE PLAY, FIVE PLAY, or TEN PLAY from the top tabs in MORE GAMES.\n• Casino Mode Only: Learn and Practice modes are disabled during Multi-Hand play.\n• Shared Deal & Individual Draws: Held cards duplicate face-up into every upper hand, then each hand draws independently from its own 47-card stub deck.\n• Swipe or Tap Holds: Tap or swipe across the bottom main hand to toggle HOLD; tap DEAL/DRAW or cards during reveal to jump straight to final results.", palette, scale)
+                HelpSection("Multi-Hand Play (3, 5, or 10 Hands)", "• Mode Selection: Choose SINGLE PLAY, TRIPLE PLAY, FIVE PLAY, or TEN PLAY from the top tabs in MORE GAMES.\n• Learn, Practice & Casino: Learn auto-holds and plots mistakes, Practice lets you pick holds and reveals your Practice Review immediately on DRAW, and Casino hides strategy hints while tracking your Session Bankroll.\n• Shared Deal & Individual Draws: Held cards duplicate face-up into every upper hand, then each hand draws independently from its own 47-card stub deck.\n• Swipe or Tap Holds: Tap or swipe across the bottom main hand to toggle HOLD; tap DEAL/DRAW or cards during reveal to jump straight to final results.", palette, scale)
             }
 
             OptionsVerticalScrollbar(
@@ -680,15 +680,15 @@ private fun OptionsContent(
                         fontSize = (10.5f * scale).sp,
                         fontWeight = FontWeight.Bold
                     )
-                    val activeMode = state.effectiveMode
+                    val activeMode = state.currentMode
                     Row(horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)) {
                         GameMode.entries.forEach { mode ->
-                            val isEnabled = !state.isMultiHand || mode == GameMode.CASINO
+                            val isEnabled = true
                             val isCur = (activeMode == mode)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .alpha(if (isEnabled) 1f else 0.42f)
+                                    .alpha(1f)
                                     .clip(RoundedCornerShape(pillCorner))
                                     .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
                                     .clickable(enabled = isEnabled) { onModeToggle(mode) }
@@ -706,7 +706,7 @@ private fun OptionsContent(
                     }
                     Text(
                         text = if (state.isMultiHand) {
-                            "Learn and Practice are disabled while Multi-Hand is active (Casino mode only)."
+                            "All training modes (Learn, Practice, Casino) are active in Multi-Hand play."
                         } else {
                             "All training modes are available in Single Play."
                         },
