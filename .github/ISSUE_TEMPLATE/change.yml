@@ -1,0 +1,99 @@
+name: Change or feature
+description: A change, improvement or new feature
+title: "<Component>: <feature>"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search past issues first (gh issue list --state all --search "<words>") and cite related numbers below.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is wrong or what should change, in a few sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Repo, version, screen or device.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: Today's behavior
+      description: How it works now.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should happen after the change.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: Impact and who is affected.
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observation and Unverified
+      description: What was actually seen or run, and what is a guess.
+    validations:
+      required: false
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions
+      description: Date and who decided.
+    validations:
+      required: false
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed design
+      description: Proposed fix or design.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Numbered, checkable.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test requirements
+      description: Tests and checks that prove it.
+    validations:
+      required: true
+  - type: textarea
+    id: related
+    attributes:
+      label: Related issues
+      description: Issue numbers found by search.
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of scope
+      description: What this issue will not do.
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and rollback
+      description: What could go wrong and how to undo it.
+    validations:
+      required: false
