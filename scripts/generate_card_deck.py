@@ -2,14 +2,15 @@
 
 Implements the standardized 450x630 layout documented in docs/CARD_DECK_SPEC.md.
 Default configuration regenerates the Modern Crest deck (app/src/main/assets/cards/)
-using Bahnschrift (Weight=500, Width=78) and the extracted court/crest masters in
-scripts/modern_crest_parts/, leaving back.png untouched.
+using Tw Cen MT Condensed Extra Bold (TCCEB.TTF), a subtle 1.25 px slate hairline
+border, and the suit-differentiated court/crest masters in scripts/modern_crest_parts/.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
@@ -22,41 +23,41 @@ class DeckStyleSpec:
     height: int = 630
     scale: int = 4
     corner_radius: int = 32
-    border_px: int = 3
-    border_color: Tuple[int, int, int, int] = (0, 0, 0, 255)
+    border_px: float = 1.25
+    border_color: Tuple[int, int, int, int] = (203, 213, 225, 255)
     black_color: Tuple[int, int, int, int] = (0, 0, 0, 255)
-    red_color: Tuple[int, int, int, int] = (212, 0, 0, 255)
+    red_color: Tuple[int, int, int, int] = (216, 25, 25, 255)
     white_color: Tuple[int, int, int, int] = (255, 255, 255, 255)
 
-    # Corner rank typography
-    font_path: str = r"C:\Windows\Fonts\bahnschrift.ttf"
-    font_axes: Optional[Tuple[int, int]] = (500, 78)  # (Weight, Width)
-    rank_font_size: int = 165
-    rank_target_h: int = 110
-    rank_ten_max_w: int = 92
-    rank_ten_gap: int = 5
-    rank_center_x: int = 72
+    # Corner rank typography (bold geometric condensed sans for instant glance readability)
+    font_path: str = r"C:\Windows\Fonts\TCCEB.TTF"
+    font_axes: Optional[Tuple[int, int]] = None
+    rank_font_size: int = 185
+    rank_target_h: int = 118
+    rank_ten_max_w: int = 108
+    rank_ten_gap: int = 6
+    rank_center_x: int = 76
     rank_top_y: int = 24
-    rank_min_x: int = 24
+    rank_min_x: int = 22
 
     # Corner index pip
-    index_pip_h: int = 112
-    index_pip_w: int = 104
-    index_pip_diamond_w: int = 96
-    index_pip_gap: int = 16
+    index_pip_h: int = 118
+    index_pip_w: int = 108
+    index_pip_diamond_w: int = 100
+    index_pip_gap: int = 14
 
     # Upper-right illustration bay (J, Q, K, A)
-    art_bay_x: int = 140
+    art_bay_x: int = 138
     art_bay_y: int = 18
-    art_bay_w: int = 292
-    art_bay_h: int = 306
+    art_bay_w: int = 294
+    art_bay_h: int = 310
 
     # Lower primary pip
-    primary_pip_h: int = 246
-    primary_pip_w: int = 238
-    primary_pip_diamond_w: int = 224
-    primary_pip_cx: int = 206
-    primary_pip_cy: int = 462
+    primary_pip_h: int = 252
+    primary_pip_w: int = 244
+    primary_pip_diamond_w: int = 226
+    primary_pip_cx: int = 210
+    primary_pip_cy: int = 466
 
 
 def cubic_bezier(
@@ -64,7 +65,7 @@ def cubic_bezier(
     p1: Tuple[float, float],
     p2: Tuple[float, float],
     p3: Tuple[float, float],
-    steps: int = 36,
+    steps: int = 40,
 ):
     pts = []
     for i in range(steps + 1):
@@ -132,11 +133,11 @@ def render_rank_glyph(rank: str, color: Tuple[int, int, int, int], font: ImageFo
     s = spec.scale
     target_h = spec.rank_target_h
     if rank.upper() == "T":
-        c1 = Image.new("RGBA", (220 * s, 280 * s), (0, 0, 0, 0))
+        c1 = Image.new("RGBA", (240 * s, 300 * s), (0, 0, 0, 0))
         ImageDraw.Draw(c1).text((30, 30), "1", font=font, fill=color)
         g1 = c1.crop(c1.getbbox())
 
-        c0 = Image.new("RGBA", (260 * s, 280 * s), (0, 0, 0, 0))
+        c0 = Image.new("RGBA", (280 * s, 300 * s), (0, 0, 0, 0))
         ImageDraw.Draw(c0).text((30, 30), "0", font=font, fill=color)
         g0 = c0.crop(c0.getbbox())
 
@@ -149,7 +150,7 @@ def render_rank_glyph(rank: str, color: Tuple[int, int, int, int], font: ImageFo
         w_out = min(spec.rank_ten_max_w, int(round(combined.width * ratio)))
         return combined.resize((w_out, target_h), Image.Resampling.LANCZOS)
 
-    c = Image.new("RGBA", (320 * s, 280 * s), (0, 0, 0, 0))
+    c = Image.new("RGBA", (340 * s, 300 * s), (0, 0, 0, 0))
     ImageDraw.Draw(c).text((30, 30), rank.upper(), font=font, fill=color)
     g = c.crop(c.getbbox())
     ratio = target_h / g.height
@@ -157,38 +158,41 @@ def render_rank_glyph(rank: str, color: Tuple[int, int, int, int], font: ImageFo
 
 
 def draw_card_frame(spec: DeckStyleSpec) -> Image.Image:
-    sw, sh = spec.width * 2, spec.height * 2
+    ss = 4
+    sw, sh = spec.width * ss, spec.height * ss
     card = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
     d = ImageDraw.Draw(card)
     if spec.border_px > 0:
         d.rounded_rectangle(
             (0, 0, sw - 1, sh - 1),
-            radius=spec.corner_radius * 2,
+            radius=spec.corner_radius * ss,
             fill=spec.white_color,
             outline=spec.border_color,
-            width=spec.border_px * 2,
+            width=max(1, int(round(spec.border_px * ss))),
         )
     else:
         d.rounded_rectangle(
             (0, 0, sw - 1, sh - 1),
-            radius=spec.corner_radius * 2,
+            radius=spec.corner_radius * ss,
             fill=spec.white_color,
         )
     return card.resize((spec.width, spec.height), Image.Resampling.LANCZOS)
 
 
+def fit_sprite(sprite: Image.Image, max_w: int, max_h: int) -> Image.Image:
+    scale = min(max_w / sprite.width, max_h / sprite.height)
+    nw = max(1, int(round(sprite.width * scale)))
+    nh = max(1, int(round(sprite.height * scale)))
+    return sprite.resize((nw, nh), Image.Resampling.LANCZOS)
+
+
 def load_artwork_sprites(parts_dir: str) -> Dict[str, Image.Image]:
-    mapping = {
-        "a": "A_crest.png",
-        "j": "J_drone.png",
-        "q": "Q_tablet.png",
-        "k": "K_selfie.png",
-    }
+    names = ["A_black", "A_red", "J_black", "J_red", "Q_black", "Q_red", "K_black", "K_red"]
     sprites: Dict[str, Image.Image] = {}
-    for rank_key, filename in mapping.items():
-        path = os.path.join(parts_dir, filename)
+    for name in names:
+        path = os.path.join(parts_dir, f"{name}.png")
         if os.path.isfile(path):
-            sprites[rank_key] = Image.open(path).convert("RGBA")
+            sprites[name] = Image.open(path).convert("RGBA")
     return sprites
 
 
@@ -212,15 +216,28 @@ def generate_deck(spec: DeckStyleSpec, parts_dir: str, out_dir: str) -> int:
 
     count = 0
     for suit in suits:
-        col = spec.red_color if suit in ("h", "d") else spec.black_color
+        is_red = suit in ("h", "d")
+        col = spec.red_color if is_red else spec.black_color
         for rank in ranks:
             card = frame_template.copy()
 
-            art = sprites.get(rank)
-            if art is not None:
-                ax = spec.art_bay_x + (spec.art_bay_w - art.width) // 2
-                ay = spec.art_bay_y + (spec.art_bay_h - art.height) // 2
-                card.paste(art, (ax, ay), art)
+            if rank in ("a", "j", "q", "k"):
+                key = f"{rank.upper()}_{'red' if is_red else 'black'}"
+                art = sprites.get(key)
+                if art is not None:
+                    if rank == "a":
+                        fitted = fit_sprite(art, 286, 255)
+                        ax = spec.art_bay_x + (spec.art_bay_w - fitted.width) // 2
+                        ay = spec.art_bay_y + (spec.art_bay_h - fitted.height) // 2 - 8
+                    elif rank == "j":
+                        fitted = fit_sprite(art, 290, 282)
+                        ax = spec.art_bay_x + (spec.art_bay_w - fitted.width) // 2
+                        ay = spec.art_bay_y + spec.art_bay_h - fitted.height
+                    else:
+                        fitted = fit_sprite(art, 286, 308)
+                        ax = spec.art_bay_x + (spec.art_bay_w - fitted.width) // 2
+                        ay = spec.art_bay_y + spec.art_bay_h - fitted.height
+                    card.paste(fitted, (ax, ay), fitted)
 
             rg = render_rank_glyph(rank, col, font, spec)
             rx = max(spec.rank_min_x, spec.rank_center_x - rg.width // 2)
@@ -237,8 +254,14 @@ def generate_deck(spec: DeckStyleSpec, parts_dir: str, out_dir: str) -> int:
             py = spec.primary_pip_cy - pp.height // 2
             card.paste(pp, (px, py), pp)
 
-            card.save(os.path.join(out_dir, f"{rank}{suit}.png"), optimize=True)
+            out_name = f"{rank.upper() if rank != 't' else 'T'}{suit}.png"
+            card.save(os.path.join(out_dir, out_name), optimize=True)
             count += 1
+
+    back_src = os.path.join(parts_dir, "back_polished.png")
+    if os.path.isfile(back_src):
+        shutil.copy2(back_src, os.path.join(out_dir, "back.png"))
+        count += 1
 
     return count
 
@@ -248,17 +271,16 @@ def main():
     parser = argparse.ArgumentParser(description="Generate standardized 450x630 playing card deck faces.")
     parser.add_argument("--parts-dir", default=os.path.join(repo_root, "scripts", "modern_crest_parts"))
     parser.add_argument("--out-dir", default=os.path.join(repo_root, "app", "src", "main", "assets", "cards"))
-    parser.add_argument("--weight", type=int, default=500, help="Bahnschrift Weight axis (default: 500)")
-    parser.add_argument("--width-axis", type=int, default=78, help="Bahnschrift Width axis (default: 78)")
-    parser.add_argument("--borderless", action="store_true", help="Omit outer black border stroke")
+    parser.add_argument("--font-path", default=r"C:\Windows\Fonts\TCCEB.TTF")
+    parser.add_argument("--borderless", action="store_true", help="Omit outer hairline border stroke")
     args = parser.parse_args()
 
     spec = DeckStyleSpec(
-        font_axes=(args.weight, args.width_axis),
-        border_px=0 if args.borderless else 3,
+        font_path=args.font_path,
+        border_px=0.0 if args.borderless else 1.25,
     )
     generated = generate_deck(spec, args.parts_dir, args.out_dir)
-    print(f"Generated {generated} cards in {args.out_dir} ({spec.width}x{spec.height}, Weight={args.weight})")
+    print(f"Generated {generated} assets in {args.out_dir} ({spec.width}x{spec.height})")
 
 
 if __name__ == "__main__":

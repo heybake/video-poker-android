@@ -82,4 +82,50 @@ class CardDeckTest {
             portraitDiffCount(kc, kh) > 20_000
         )
     }
+
+    @Test
+    fun modernCrestCardsAndBackHaveStandardSizeAndSuitDifferentiation() {
+        val assetsRoot = listOf(
+            File("src/main/assets"),
+            File("app/src/main/assets")
+        ).firstOrNull { it.isDirectory }
+            ?: error("Could not locate Android assets directory")
+
+        val modernDir = File(assetsRoot, CardDeck.MODERN.assetFolder)
+        val back = ImageIO.read(File(modernDir, "back.png"))
+        assertEquals(450, back.width)
+        assertEquals(630, back.height)
+
+        fun artBayDiffCount(a: java.awt.image.BufferedImage, b: java.awt.image.BufferedImage): Int {
+            var changed = 0
+            for (y in 20 until 326) {
+                for (x in 140 until 430) {
+                    val pa = a.getRGB(x, y)
+                    val pb = b.getRGB(x, y)
+                    val dr = abs(((pa ushr 16) and 0xFF) - ((pb ushr 16) and 0xFF))
+                    val dg = abs(((pa ushr 8) and 0xFF) - ((pb ushr 8) and 0xFF))
+                    val db = abs((pa and 0xFF) - (pb and 0xFF))
+                    if (maxOf(dr, dg, db) > 5) changed++
+                }
+            }
+            return changed
+        }
+
+        for (rank in listOf("A", "K", "Q", "J")) {
+            val club = ImageIO.read(File(modernDir, "${rank}c.png"))
+            val spade = ImageIO.read(File(modernDir, "${rank}s.png"))
+            val heart = ImageIO.read(File(modernDir, "${rank}h.png"))
+            val diamond = ImageIO.read(File(modernDir, "${rank}d.png"))
+            for (img in listOf(club, spade, heart, diamond)) {
+                assertEquals(450, img.width)
+                assertEquals(630, img.height)
+            }
+            assertEquals(0, artBayDiffCount(club, spade))
+            assertEquals(0, artBayDiffCount(heart, diamond))
+            assertTrue(
+                "Expected red and black Modern Crest $rank artwork to differ cleanly",
+                artBayDiffCount(club, heart) > 5_000
+            )
+        }
+    }
 }
