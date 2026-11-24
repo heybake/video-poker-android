@@ -22,7 +22,7 @@ class EngineTest {
         assertEquals(14, aceSpades.rankValue)
         assertEquals(1, aceSpades.lowRankValue)
         assertTrue(aceSpades.isHigh)
-        assertEquals("as.png", aceSpades.assetFileName)
+        assertEquals("As.png", aceSpades.assetFileName)
 
         val twoDiamonds = Card.fromString("2d")
         assertEquals('2', twoDiamonds.rank)
@@ -137,6 +137,6 @@ class EngineTest {
         assertTrue(topChoice.isTopChoice)
         assertEquals(listOf(true, true, true, true, false), topChoice.holdMask)
         assertEquals(listOf(0, 1, 2, 3), topChoice.keptIndexes)
-        assertTrue(topChoice.description.contains("2 Pair"))
+        assertTrue(topChoice.description.contains("Two pair"))
     }
 }
