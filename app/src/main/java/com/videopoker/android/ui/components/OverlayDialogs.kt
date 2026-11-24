@@ -1,6 +1,9 @@
 package com.videopoker.android.ui.components
 
 import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
@@ -86,9 +89,12 @@ import kotlin.math.roundToInt
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.round
+import com.videopoker.android.data.export.SavedSoundPreset
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HoldCatalogue
 import com.videopoker.android.data.models.HoldChoice
+import com.videopoker.android.sound.SoundEffect
+import com.videopoker.android.sound.SoundPack
 import com.videopoker.android.ui.state.ActiveOverlay
 import com.videopoker.android.ui.state.BankrollTargets
 import com.videopoker.android.ui.state.GameMode
@@ -116,7 +122,16 @@ fun OverlayDialogs(
     onSetBankrollTargets: (Boolean, Int, Boolean, Int) -> Unit = { _, _, _, _ -> },
     onToggleRecordingSession: () -> Unit,
     onSaveSessionToDownloads: (String) -> Unit = {},
-    onShareSession: (String) -> Unit = {}
+    onShareSession: (String) -> Unit = {},
+    onSingleSoundPackSelect: (SoundPack) -> Unit = {},
+    onPerSoundPackSelect: (SoundEffect, SoundPack) -> Unit = { _, _ -> },
+    onPreviewSound: (SoundPack, SoundEffect) -> Unit = { _, _ -> },
+    onPlaySampleHand: () -> Unit = {},
+    onSaveSoundPreset: (String) -> Unit = {},
+    onLoadSavedSoundPreset: (SavedSoundPreset) -> Unit = {},
+    onExportSoundPresetToDownloads: (String) -> Unit = {},
+    onShareSoundPreset: (String) -> Unit = {},
+    onImportSoundPresetUri: (Uri) -> Unit = {}
 ) {
     val activeOverlay = state.activeOverlay ?: return
 
@@ -184,6 +199,15 @@ fun OverlayDialogs(
                     onToggleRecordingSession = onToggleRecordingSession,
                     onSaveSessionToDownloads = onSaveSessionToDownloads,
                     onShareSession = onShareSession,
+                    onSingleSoundPackSelect = onSingleSoundPackSelect,
+                    onPerSoundPackSelect = onPerSoundPackSelect,
+                    onPreviewSound = onPreviewSound,
+                    onPlaySampleHand = onPlaySampleHand,
+                    onSaveSoundPreset = onSaveSoundPreset,
+                    onLoadSavedSoundPreset = onLoadSavedSoundPreset,
+                    onExportSoundPresetToDownloads = onExportSoundPresetToDownloads,
+                    onShareSoundPreset = onShareSoundPreset,
+                    onImportSoundPresetUri = onImportSoundPresetUri,
                     onClose = onClose
                 )
                 ActiveOverlay.DENOM -> DenomContent(
@@ -623,6 +647,13 @@ private fun MoreGamesContent(
     }
 }
 
+private enum class OptionsSection(val title: String) {
+    PLAY_MODE("PLAY MODE"),
+    THEMES_AND_CARDS("THEMES & CARDS"),
+    BANKROLL_GOALS("BANKROLL GOALS"),
+    SOUNDS("SOUNDS")
+}
+
 @Composable
 private fun OptionsContent(
     state: GameState,
@@ -636,10 +667,37 @@ private fun OptionsContent(
     onToggleRecordingSession: () -> Unit,
     onSaveSessionToDownloads: (String) -> Unit,
     onShareSession: (String) -> Unit,
+    onSingleSoundPackSelect: (SoundPack) -> Unit,
+    onPerSoundPackSelect: (SoundEffect, SoundPack) -> Unit,
+    onPreviewSound: (SoundPack, SoundEffect) -> Unit,
+    onPlaySampleHand: () -> Unit,
+    onSaveSoundPreset: (String) -> Unit,
+    onLoadSavedSoundPreset: (SavedSoundPreset) -> Unit,
+    onExportSoundPresetToDownloads: (String) -> Unit,
+    onShareSoundPreset: (String) -> Unit,
+    onImportSoundPresetUri: (Uri) -> Unit,
     onClose: () -> Unit
 ) {
+    var selectedSection by remember { mutableStateOf(OptionsSection.SOUNDS) }
+    var soundSubViewIsMix by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
     val pillCorner = (6f * scale).dp
+
+    fun sectionSubtitle(section: OptionsSection): String = when (section) {
+        OptionsSection.PLAY_MODE -> {
+            val rec = if (state.isRecordingSession) "ON" else "OFF"
+            "${state.currentMode.displayName} • Rec $rec"
+        }
+        OptionsSection.THEMES_AND_CARDS ->
+            "${state.currentTheme.displayName} • ${if (state.currentCardDeck == CardDeck.MODERN) "Modern" else "Vintage"}"
+        OptionsSection.BANKROLL_GOALS -> {
+            val w = if (state.bankrollTargets.winGoalEnabled) "+${state.bankrollTargets.winGoalPercent}%" else "Off"
+            val l = if (state.bankrollTargets.stopLossEnabled) "-${state.bankrollTargets.stopLossPercent}%" else "Off"
+            "$w / $l"
+        }
+        OptionsSection.SOUNDS -> state.soundConfig.summaryText()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -656,480 +714,119 @@ private fun OptionsContent(
             CloseButton(palette = palette, scale = scale, onClose = onClose)
         }
 
-        Spacer(modifier = Modifier.height((8f * scale).dp))
+        Spacer(modifier = Modifier.height((6f * scale).dp))
 
         Row(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
+            horizontalArrangement = Arrangement.spacedBy((10f * scale).dp)
         ) {
+            // Left Sidebar Navigation (4 Sections)
+            Column(
+                modifier = Modifier
+                    .width((152f * scale).dp)
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState())
+                    .padding(end = (8f * scale).dp),
+                verticalArrangement = Arrangement.spacedBy((5f * scale).dp)
+            ) {
+                OptionsSection.entries.forEach { section ->
+                    val isSelected = (selectedSection == section)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(pillCorner))
+                            .background(if (isSelected) palette.goldColor else Color(0x1EFFFFFF))
+                            .border(
+                                width = 1.dp,
+                                color = if (isSelected) Color.White else Color(0x44FFFFFF),
+                                shape = RoundedCornerShape(pillCorner)
+                            )
+                            .clickable {
+                                selectedSection = section
+                                coroutineScope.launch { scrollState.scrollTo(0) }
+                            }
+                            .padding(horizontal = (9f * scale).dp, vertical = (7f * scale).dp),
+                        verticalArrangement = Arrangement.spacedBy((1.5f * scale).dp)
+                    ) {
+                        Text(
+                            text = section.title,
+                            color = if (isSelected) Color(0xFF14100A) else palette.overlayTextColor,
+                            fontSize = (10f * scale).sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = sectionSubtitle(section),
+                            color = if (isSelected) Color(0xFF332917) else palette.overlayTextDimColor,
+                            fontSize = (8.5f * scale).sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+
+            // Vertical divider between sidebar and content
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x33FFFFFF))
+            )
+
+            // Right Content Area
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .verticalScroll(scrollState)
-                    .padding(bottom = (16f * scale).dp),
+                    .padding(bottom = (10f * scale).dp),
                 verticalArrangement = Arrangement.spacedBy((10f * scale).dp)
             ) {
-                // Mode Selector Pills
-                Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
-                    Text(
-                        text = "TRAINING MODE",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    val activeMode = state.currentMode
-                    Row(horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)) {
-                        GameMode.entries.forEach { mode ->
-                            val isEnabled = true
-                            val isCur = (activeMode == mode)
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .alpha(1f)
-                                    .clip(RoundedCornerShape(pillCorner))
-                                    .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                                    .clickable(enabled = isEnabled) { onModeToggle(mode) }
-                                    .padding(vertical = (7f * scale).dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = mode.displayName,
-                                    color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
-                                    fontSize = (11f * scale).sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        text = if (state.isMultiHand) {
-                            "All training modes (Learn, Practice, Casino) are active in Multi-Hand play."
-                        } else {
-                            "All training modes are available in Single Play."
-                        },
-                        color = palette.overlayTextDimColor,
-                        fontSize = (9.5f * scale).sp
-                    )
-                }
-
-                // Visual Themes (expandable multi-row grid)
-                Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
-                    Text(
-                        text = "THEMES",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy((6f * scale).dp)
-                    ) {
-                        AppTheme.entries.chunked(4).forEach { rowThemes ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
-                            ) {
-                                rowThemes.forEach { theme ->
-                                    val isCur = (state.currentTheme == theme)
-                                    val p = ThemeManager.getPalette(theme)
-                                    Row(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(pillCorner))
-                                            .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                                            .border(1.dp, if (isCur) Color.White else Color(0x44FFFFFF), RoundedCornerShape(pillCorner))
-                                            .clickable { onThemeSelect(theme) }
-                                            .padding(horizontal = (6f * scale).dp, vertical = (7f * scale).dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size((11f * scale).dp)
-                                                .clip(CircleShape)
-                                                .background(p.swatchColor)
-                                                .border(1.dp, Color.White, CircleShape)
-                                        )
-                                        Spacer(modifier = Modifier.width((4f * scale).dp))
-                                        Text(
-                                            text = theme.displayName,
-                                            color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
-                                            fontSize = (9.5f * scale).sp,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                                repeat(4 - rowThemes.size) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Selectable Card Deck (Modern Crest vs Vintage Crest)
-                Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
-                    val context = LocalContext.current
-                    Text(
-                        text = "CARD DECK",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
-                    ) {
-                        CardDeck.entries.forEach { cardDeck ->
-                            val isCur = (state.currentCardDeck == cardDeck)
-                            val backBmp = remember(cardDeck) {
-                                try {
-                                    context.assets.open("${cardDeck.assetFolder}/back.png").use {
-                                        BitmapFactory.decodeStream(it)?.asImageBitmap()
-                                    }
-                                } catch (_: Exception) {
-                                    null
-                                }
-                            }
-                            val aceBmp = remember(cardDeck) {
-                                try {
-                                    context.assets.open("${cardDeck.assetFolder}/As.png").use {
-                                        BitmapFactory.decodeStream(it)?.asImageBitmap()
-                                    }
-                                } catch (_: Exception) {
-                                    null
-                                }
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(pillCorner))
-                                    .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (isCur) Color.White else Color(0x44FFFFFF),
-                                        shape = RoundedCornerShape(pillCorner)
-                                    )
-                                    .clickable { onCardDeckSelect(cardDeck) }
-                                    .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
-                            ) {
-                                Row(horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)) {
-                                    if (backBmp != null) {
-                                        Image(
-                                            bitmap = backBmp,
-                                            contentDescription = "${cardDeck.displayName} back",
-                                            modifier = Modifier
-                                                .size(width = (22f * scale).dp, height = (31f * scale).dp)
-                                                .clip(RoundedCornerShape((3f * scale).dp))
-                                                .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
-                                        )
-                                    }
-                                    if (aceBmp != null) {
-                                        Image(
-                                            bitmap = aceBmp,
-                                            contentDescription = "${cardDeck.displayName} Ace of Spades",
-                                            modifier = Modifier
-                                                .size(width = (22f * scale).dp, height = (31f * scale).dp)
-                                                .clip(RoundedCornerShape((3f * scale).dp))
-                                                .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
-                                        )
-                                    }
-                                }
-                                Column(verticalArrangement = Arrangement.spacedBy((1f * scale).dp)) {
-                                    Text(
-                                        text = cardDeck.displayName,
-                                        color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
-                                        fontSize = (10.5f * scale).sp,
-                                        fontWeight = FontWeight.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = cardDeck.subtitle,
-                                        color = if (isCur) Color(0xFF332917) else Color(0xCCDFD8CC),
-                                        fontSize = (8.5f * scale).sp,
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Bankroll Targets (Win Goal % & Stop-Loss %)
-                Column(verticalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
-                    val targetPresets = listOf(5, 10, 25, 50, 75, 100)
-                    Text(
-                        text = "BANKROLL TARGETS",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    BankrollTargetConfigRow(
-                        title = "WIN GOAL (+% ABOVE BUY-IN)",
-                        enabled = state.bankrollTargets.winGoalEnabled,
-                        currentPercent = state.bankrollTargets.winGoalPercent,
-                        presets = targetPresets,
-                        minPercent = BankrollTargets.MIN_WIN_GOAL_PERCENT,
-                        maxPercent = BankrollTargets.MAX_WIN_GOAL_PERCENT,
-                        accentColor = Color(0xFF4ADE80),
-                        signPrefix = "+",
+                when (selectedSection) {
+                    OptionsSection.PLAY_MODE -> OptionsPlayModePane(
+                        state = state,
                         palette = palette,
                         scale = scale,
-                        onToggleEnabled = { enabled ->
-                            onSetBankrollTargets(
-                                enabled,
-                                state.bankrollTargets.winGoalPercent,
-                                state.bankrollTargets.stopLossEnabled,
-                                state.bankrollTargets.stopLossPercent
-                            )
-                        },
-                        onSelectPercent = { pct ->
-                            onSetBankrollTargets(
-                                true,
-                                pct,
-                                state.bankrollTargets.stopLossEnabled,
-                                state.bankrollTargets.stopLossPercent
-                            )
-                        }
+                        onModeToggle = onModeToggle,
+                        onToggleRecordingSession = onToggleRecordingSession,
+                        onSaveSessionToDownloads = onSaveSessionToDownloads,
+                        onShareSession = onShareSession
                     )
-                    BankrollTargetConfigRow(
-                        title = "STOP-LOSS (-% BELOW BUY-IN)",
-                        enabled = state.bankrollTargets.stopLossEnabled,
-                        currentPercent = state.bankrollTargets.stopLossPercent,
-                        presets = targetPresets,
-                        minPercent = BankrollTargets.MIN_STOP_LOSS_PERCENT,
-                        maxPercent = BankrollTargets.MAX_STOP_LOSS_PERCENT,
-                        accentColor = Color(0xFFF87171),
-                        signPrefix = "-",
+                    OptionsSection.THEMES_AND_CARDS -> OptionsLookPane(
+                        state = state,
                         palette = palette,
                         scale = scale,
-                        onToggleEnabled = { enabled ->
-                            onSetBankrollTargets(
-                                state.bankrollTargets.winGoalEnabled,
-                                state.bankrollTargets.winGoalPercent,
-                                enabled,
-                                state.bankrollTargets.stopLossPercent
-                            )
-                        },
-                        onSelectPercent = { pct ->
-                            onSetBankrollTargets(
-                                state.bankrollTargets.winGoalEnabled,
-                                state.bankrollTargets.winGoalPercent,
-                                true,
-                                pct
-                            )
-                        }
+                        onThemeSelect = onThemeSelect,
+                        onCardDeckSelect = onCardDeckSelect
                     )
-                }
-
-                // Master Volume Slider
-                Column(verticalArrangement = Arrangement.spacedBy((2f * scale).dp)) {
-                    Text(
-                        text = "SOUND VOLUME (${(state.soundVolume * 100).toInt()}%)",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
+                    OptionsSection.BANKROLL_GOALS -> OptionsTargetsPane(
+                        state = state,
+                        palette = palette,
+                        scale = scale,
+                        onSetBankrollTargets = onSetBankrollTargets
                     )
-                    Slider(
-                        value = state.soundVolume,
-                        onValueChange = onVolumeChange,
-                        modifier = Modifier.height((28f * scale).dp),
-                        colors = SliderDefaults.colors(
-                            thumbColor = palette.goldColor,
-                            activeTrackColor = palette.goldColor,
-                            inactiveTrackColor = Color(0x44FFFFFF)
-                        )
+                    OptionsSection.SOUNDS -> OptionsSoundsPane(
+                        state = state,
+                        palette = palette,
+                        scale = scale,
+                        isMixView = soundSubViewIsMix,
+                        onSelectView = { soundSubViewIsMix = it },
+                        onVolumeChange = onVolumeChange,
+                        onSingleSoundPackSelect = onSingleSoundPackSelect,
+                        onPerSoundPackSelect = onPerSoundPackSelect,
+                        onPreviewSound = onPreviewSound,
+                        onPlaySampleHand = onPlaySampleHand,
+                        onSaveSoundPreset = onSaveSoundPreset,
+                        onLoadSavedSoundPreset = onLoadSavedSoundPreset,
+                        onExportSoundPresetToDownloads = onExportSoundPresetToDownloads,
+                        onShareSoundPreset = onShareSoundPreset,
+                        onImportSoundPresetUri = onImportSoundPresetUri
                     )
-                }
-
-                // Session Recording Toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(pillCorner))
-                        .background(if (state.isRecordingSession) Color(0x33D6293B) else Color(0x22FFFFFF))
-                        .border(
-                            width = 1.dp,
-                            color = if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF),
-                            shape = RoundedCornerShape(pillCorner)
-                        )
-                        .clickable { onToggleRecordingSession() }
-                        .padding(horizontal = (12f * scale).dp, vertical = (10f * scale).dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size((10f * scale).dp)
-                                .clip(CircleShape)
-                                .background(if (state.isRecordingSession) Color(0xFFE53935) else Color(0xFF888888))
-                        )
-                        Spacer(modifier = Modifier.width((8f * scale).dp))
-                        Column(verticalArrangement = Arrangement.spacedBy((2f * scale).dp)) {
-                            Text(
-                                text = "RECORD PLAY SESSION",
-                                color = Color(0xFFF5F0E6),
-                                fontSize = (11f * scale).sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = when {
-                                    state.isRecordingSession && state.recordedHandsCount > 0 ->
-                                        "Recording Workbench session (${state.recordedHandsCount} hands)"
-                                    state.isRecordingSession ->
-                                        "Ready — next finished hand starts a Workbench folder"
-                                    else ->
-                                        "Tap to record Workbench-compatible session logs"
-                                },
-                                color = Color(0xFFB0A495),
-                                fontSize = (9.5f * scale).sp
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape((4f * scale).dp))
-                            .background(if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF))
-                            .padding(horizontal = (10f * scale).dp, vertical = (3f * scale).dp)
-                    ) {
-                        Text(
-                            text = if (state.isRecordingSession) "ON" else "OFF",
-                            color = Color.White,
-                            fontSize = (10.5f * scale).sp,
-                            fontWeight = FontWeight.Black
-                        )
-                    }
-                }
-
-                // Saved Workbench Sessions & Export
-                Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
-                    Text(
-                        text = "SAVED SESSIONS FOR WORKBENCH (${state.recordedSessions.size})",
-                        color = palette.goldColor,
-                        fontSize = (10.5f * scale).sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Save a .zip to Downloads/VideoPokerSessions or Share to PC, then unzip into Workbench output.",
-                        color = Color(0xFFB0A495),
-                        fontSize = (9f * scale).sp
-                    )
-                    val exportMsg = state.sessionExportStatus
-                    if (exportMsg != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape((5f * scale).dp))
-                                .background(Color(0x332E8540))
-                                .border(1.dp, Color(0xFF56C470), RoundedCornerShape((5f * scale).dp))
-                                .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp)
-                        ) {
-                            Text(
-                                text = exportMsg,
-                                color = Color(0xFFB8E6C4),
-                                fontSize = (9.5f * scale).sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                    if (state.recordedSessions.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(pillCorner))
-                                .background(Color(0x18FFFFFF))
-                                .padding(horizontal = (10f * scale).dp, vertical = (8f * scale).dp)
-                        ) {
-                            Text(
-                                text = "No recorded sessions yet. Turn RECORD PLAY SESSION ON and play a hand.",
-                                color = Color(0xFF999084),
-                                fontSize = (9.5f * scale).sp
-                            )
-                        }
-                    } else {
-                        state.recordedSessions.forEach { session ->
-                            val netStr = if (session.netProfitLoss >= 0) {
-                                String.format(Locale.US, "+$%.2f", session.netProfitLoss)
-                            } else {
-                                String.format(Locale.US, "-$%.2f", abs(session.netProfitLoss))
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(pillCorner))
-                                    .background(Color(0x1EFFFFFF))
-                                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(pillCorner))
-                                    .padding(horizontal = (10f * scale).dp, vertical = (7f * scale).dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy((2f * scale).dp)
-                                ) {
-                                    Text(
-                                        text = session.payTableName,
-                                        color = Color(0xFFF5F0E6),
-                                        fontSize = (10.5f * scale).sp,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = "${session.handsPlayed} hands  •  $netStr  •  ${session.startedAtDisplay}",
-                                        color = Color(0xFFB0A495),
-                                        fontSize = (9f * scale).sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width((8f * scale).dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape((5f * scale).dp))
-                                            .background(Color(0xFF1E6E35))
-                                            .border(1.dp, Color(0xFF56C470), RoundedCornerShape((5f * scale).dp))
-                                            .clickable { onSaveSessionToDownloads(session.folderPath) }
-                                            .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "DOWNLOAD",
-                                            color = Color.White,
-                                            fontSize = (9f * scale).sp,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape((5f * scale).dp))
-                                            .background(palette.goldColor)
-                                            .clickable { onShareSession(session.folderPath) }
-                                            .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "SHARE",
-                                            color = Color(0xFF14100A),
-                                            fontSize = (9f * scale).sp,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
@@ -1140,6 +837,975 @@ private fun OptionsContent(
                 modifier = Modifier
                     .width((12f * scale).dp)
                     .fillMaxHeight()
+            )
+        }
+
+        Spacer(modifier = Modifier.height((5f * scale).dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0x28FFFFFF))
+        )
+        Spacer(modifier = Modifier.height((4f * scale).dp))
+        Text(
+            text = "Sounds: ${state.soundConfig.summaryText()} • Volume ${(state.soundVolume * 100).toInt()}%",
+            color = palette.overlayTextDimColor,
+            fontSize = (9.5f * scale).sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun OptionsPlayModePane(
+    state: GameState,
+    palette: ThemePalette,
+    scale: Float,
+    onModeToggle: (GameMode) -> Unit,
+    onToggleRecordingSession: () -> Unit,
+    onSaveSessionToDownloads: (String) -> Unit,
+    onShareSession: (String) -> Unit
+) {
+    val pillCorner = (6f * scale).dp
+
+    Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
+        Text(
+            text = "TRAINING MODE",
+            color = palette.goldColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)) {
+            GameMode.entries.forEach { mode ->
+                val isCur = (state.currentMode == mode)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(pillCorner))
+                        .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                        .clickable { onModeToggle(mode) }
+                        .padding(vertical = (7f * scale).dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = mode.displayName,
+                        color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                        fontSize = (11f * scale).sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+        }
+        Text(
+            text = if (state.isMultiHand) {
+                "All training modes (Learn, Practice, Casino) are active in Multi-Hand play."
+            } else {
+                "All training modes are available in Single Play."
+            },
+            color = palette.overlayTextDimColor,
+            fontSize = (9.5f * scale).sp
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(pillCorner))
+            .background(if (state.isRecordingSession) Color(0x33D6293B) else Color(0x22FFFFFF))
+            .border(
+                width = 1.dp,
+                color = if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF),
+                shape = RoundedCornerShape(pillCorner)
+            )
+            .clickable { onToggleRecordingSession() }
+            .padding(horizontal = (12f * scale).dp, vertical = (9f * scale).dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size((10f * scale).dp)
+                    .clip(CircleShape)
+                    .background(if (state.isRecordingSession) Color(0xFFE53935) else Color(0xFF888888))
+            )
+            Spacer(modifier = Modifier.width((8f * scale).dp))
+            Column(verticalArrangement = Arrangement.spacedBy((2f * scale).dp)) {
+                Text(
+                    text = "RECORD PLAY SESSION",
+                    color = Color(0xFFF5F0E6),
+                    fontSize = (11f * scale).sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = when {
+                        state.isRecordingSession && state.recordedHandsCount > 0 ->
+                            "Recording Workbench session (${state.recordedHandsCount} hands)"
+                        state.isRecordingSession ->
+                            "Ready — next finished hand starts a Workbench folder"
+                        else ->
+                            "Tap to record Workbench-compatible session logs"
+                    },
+                    color = Color(0xFFB0A495),
+                    fontSize = (9.5f * scale).sp
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape((4f * scale).dp))
+                .background(if (state.isRecordingSession) Color(0xFFD6293B) else Color(0x44FFFFFF))
+                .padding(horizontal = (10f * scale).dp, vertical = (3f * scale).dp)
+        ) {
+            Text(
+                text = if (state.isRecordingSession) "ON" else "OFF",
+                color = Color.White,
+                fontSize = (10.5f * scale).sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
+        Text(
+            text = "SAVED SESSIONS FOR WORKBENCH (${state.recordedSessions.size})",
+            color = palette.goldColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Save a .zip to Downloads/VideoPokerSessions or Share to PC, then unzip into Workbench output.",
+            color = Color(0xFFB0A495),
+            fontSize = (9f * scale).sp
+        )
+        val exportMsg = state.sessionExportStatus
+        if (exportMsg != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape((5f * scale).dp))
+                    .background(Color(0x332E8540))
+                    .border(1.dp, Color(0xFF56C470), RoundedCornerShape((5f * scale).dp))
+                    .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp)
+            ) {
+                Text(
+                    text = exportMsg,
+                    color = Color(0xFFB8E6C4),
+                    fontSize = (9.5f * scale).sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+        if (state.recordedSessions.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(pillCorner))
+                    .background(Color(0x18FFFFFF))
+                    .padding(horizontal = (10f * scale).dp, vertical = (8f * scale).dp)
+            ) {
+                Text(
+                    text = "No recorded sessions yet. Turn RECORD PLAY SESSION ON and play a hand.",
+                    color = Color(0xFF999084),
+                    fontSize = (9.5f * scale).sp
+                )
+            }
+        } else {
+            state.recordedSessions.forEach { session ->
+                val netStr = if (session.netProfitLoss >= 0) {
+                    String.format(Locale.US, "+$%.2f", session.netProfitLoss)
+                } else {
+                    String.format(Locale.US, "-$%.2f", abs(session.netProfitLoss))
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(pillCorner))
+                        .background(Color(0x1EFFFFFF))
+                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(pillCorner))
+                        .padding(horizontal = (10f * scale).dp, vertical = (7f * scale).dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy((2f * scale).dp)
+                    ) {
+                        Text(
+                            text = session.payTableName,
+                            color = Color(0xFFF5F0E6),
+                            fontSize = (10.5f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${session.handsPlayed} hands  •  $netStr  •  ${session.startedAtDisplay}",
+                            color = Color(0xFFB0A495),
+                            fontSize = (9f * scale).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.width((8f * scale).dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape((5f * scale).dp))
+                                .background(Color(0xFF1E6E35))
+                                .border(1.dp, Color(0xFF56C470), RoundedCornerShape((5f * scale).dp))
+                                .clickable { onSaveSessionToDownloads(session.folderPath) }
+                                .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "DOWNLOAD",
+                                color = Color.White,
+                                fontSize = (9f * scale).sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape((5f * scale).dp))
+                                .background(palette.goldColor)
+                                .clickable { onShareSession(session.folderPath) }
+                                .padding(horizontal = (8f * scale).dp, vertical = (5f * scale).dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SHARE",
+                                color = Color(0xFF14100A),
+                                fontSize = (9f * scale).sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OptionsLookPane(
+    state: GameState,
+    palette: ThemePalette,
+    scale: Float,
+    onThemeSelect: (AppTheme) -> Unit,
+    onCardDeckSelect: (CardDeck) -> Unit
+) {
+    val pillCorner = (6f * scale).dp
+    val context = LocalContext.current
+
+    Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
+        Text(
+            text = "THEMES",
+            color = palette.goldColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy((6f * scale).dp)
+        ) {
+            AppTheme.entries.chunked(4).forEach { rowThemes ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                ) {
+                    rowThemes.forEach { theme ->
+                        val isCur = (state.currentTheme == theme)
+                        val p = ThemeManager.getPalette(theme)
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(pillCorner))
+                                .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                                .border(1.dp, if (isCur) Color.White else Color(0x44FFFFFF), RoundedCornerShape(pillCorner))
+                                .clickable { onThemeSelect(theme) }
+                                .padding(horizontal = (6f * scale).dp, vertical = (7f * scale).dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size((11f * scale).dp)
+                                    .clip(CircleShape)
+                                    .background(p.swatchColor)
+                                    .border(1.dp, Color.White, CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width((4f * scale).dp))
+                            Text(
+                                text = theme.displayName,
+                                color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                                fontSize = (9.5f * scale).sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    repeat(4 - rowThemes.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
+        Text(
+            text = "CARD DECK",
+            color = palette.goldColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
+        ) {
+            CardDeck.entries.forEach { cardDeck ->
+                val isCur = (state.currentCardDeck == cardDeck)
+                val backBmp = remember(cardDeck) {
+                    try {
+                        context.assets.open("${cardDeck.assetFolder}/back.png").use {
+                            BitmapFactory.decodeStream(it)?.asImageBitmap()
+                        }
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                val aceBmp = remember(cardDeck) {
+                    try {
+                        context.assets.open("${cardDeck.assetFolder}/As.png").use {
+                            BitmapFactory.decodeStream(it)?.asImageBitmap()
+                        }
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(pillCorner))
+                        .background(if (isCur) palette.goldColor else Color(0x22FFFFFF))
+                        .border(
+                            width = 1.dp,
+                            color = if (isCur) Color.White else Color(0x44FFFFFF),
+                            shape = RoundedCornerShape(pillCorner)
+                        )
+                        .clickable { onCardDeckSelect(cardDeck) }
+                        .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)) {
+                        if (backBmp != null) {
+                            Image(
+                                bitmap = backBmp,
+                                contentDescription = "${cardDeck.displayName} back",
+                                modifier = Modifier
+                                    .size(width = (22f * scale).dp, height = (31f * scale).dp)
+                                    .clip(RoundedCornerShape((3f * scale).dp))
+                                    .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
+                            )
+                        }
+                        if (aceBmp != null) {
+                            Image(
+                                bitmap = aceBmp,
+                                contentDescription = "${cardDeck.displayName} Ace of Spades",
+                                modifier = Modifier
+                                    .size(width = (22f * scale).dp, height = (31f * scale).dp)
+                                    .clip(RoundedCornerShape((3f * scale).dp))
+                                    .border(0.75.dp, Color(0xFF222222), RoundedCornerShape((3f * scale).dp))
+                            )
+                        }
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy((1f * scale).dp)) {
+                        Text(
+                            text = cardDeck.displayName,
+                            color = if (isCur) Color(0xFF14100A) else Color(0xFFF5F0E6),
+                            fontSize = (10.5f * scale).sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = cardDeck.subtitle,
+                            color = if (isCur) Color(0xFF332917) else Color(0xCCDFD8CC),
+                            fontSize = (8.5f * scale).sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OptionsTargetsPane(
+    state: GameState,
+    palette: ThemePalette,
+    scale: Float,
+    onSetBankrollTargets: (Boolean, Int, Boolean, Int) -> Unit
+) {
+    val targetPresets = listOf(5, 10, 25, 50, 75, 100)
+    Column(verticalArrangement = Arrangement.spacedBy((6f * scale).dp)) {
+        Text(
+            text = "BANKROLL TARGETS",
+            color = palette.goldColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+        BankrollTargetConfigRow(
+            title = "WIN GOAL (+% ABOVE BUY-IN)",
+            enabled = state.bankrollTargets.winGoalEnabled,
+            currentPercent = state.bankrollTargets.winGoalPercent,
+            presets = targetPresets,
+            minPercent = BankrollTargets.MIN_WIN_GOAL_PERCENT,
+            maxPercent = BankrollTargets.MAX_WIN_GOAL_PERCENT,
+            accentColor = Color(0xFF4ADE80),
+            signPrefix = "+",
+            palette = palette,
+            scale = scale,
+            onToggleEnabled = { enabled ->
+                onSetBankrollTargets(
+                    enabled,
+                    state.bankrollTargets.winGoalPercent,
+                    state.bankrollTargets.stopLossEnabled,
+                    state.bankrollTargets.stopLossPercent
+                )
+            },
+            onSelectPercent = { pct ->
+                onSetBankrollTargets(
+                    true,
+                    pct,
+                    state.bankrollTargets.stopLossEnabled,
+                    state.bankrollTargets.stopLossPercent
+                )
+            }
+        )
+        BankrollTargetConfigRow(
+            title = "STOP-LOSS (-% BELOW BUY-IN)",
+            enabled = state.bankrollTargets.stopLossEnabled,
+            currentPercent = state.bankrollTargets.stopLossPercent,
+            presets = targetPresets,
+            minPercent = BankrollTargets.MIN_STOP_LOSS_PERCENT,
+            maxPercent = BankrollTargets.MAX_STOP_LOSS_PERCENT,
+            accentColor = Color(0xFFF87171),
+            signPrefix = "-",
+            palette = palette,
+            scale = scale,
+            onToggleEnabled = { enabled ->
+                onSetBankrollTargets(
+                    state.bankrollTargets.winGoalEnabled,
+                    state.bankrollTargets.winGoalPercent,
+                    enabled,
+                    state.bankrollTargets.stopLossPercent
+                )
+            },
+            onSelectPercent = { pct ->
+                onSetBankrollTargets(
+                    state.bankrollTargets.winGoalEnabled,
+                    state.bankrollTargets.winGoalPercent,
+                    true,
+                    pct
+                )
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OptionsSoundsPane(
+    state: GameState,
+    palette: ThemePalette,
+    scale: Float,
+    isMixView: Boolean,
+    onSelectView: (Boolean) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onSingleSoundPackSelect: (SoundPack) -> Unit,
+    onPerSoundPackSelect: (SoundEffect, SoundPack) -> Unit,
+    onPreviewSound: (SoundPack, SoundEffect) -> Unit,
+    onPlaySampleHand: () -> Unit,
+    onSaveSoundPreset: (String) -> Unit,
+    onLoadSavedSoundPreset: (SavedSoundPreset) -> Unit,
+    onExportSoundPresetToDownloads: (String) -> Unit,
+    onShareSoundPreset: (String) -> Unit,
+    onImportSoundPresetUri: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val pillCorner = (6f * scale).dp
+    var presetNameText by remember { mutableStateOf("") }
+
+    val openPresetLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            onImportSoundPresetUri(uri)
+        }
+    }
+
+    val uniPack = state.soundConfig.uniformPack()
+    val dominantPack = state.soundConfig.dominantPack()
+
+    // Volume Bar
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(pillCorner))
+            .background(Color(0x18FFFFFF))
+            .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(pillCorner))
+            .padding(horizontal = (10f * scale).dp, vertical = (4f * scale).dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
+    ) {
+        Text(
+            text = "VOLUME",
+            color = palette.goldColor,
+            fontSize = (10f * scale).sp,
+            fontWeight = FontWeight.Black
+        )
+        Slider(
+            value = state.soundVolume,
+            onValueChange = onVolumeChange,
+            modifier = Modifier
+                .weight(1f)
+                .height((26f * scale).dp),
+            colors = SliderDefaults.colors(
+                thumbColor = palette.goldColor,
+                activeTrackColor = palette.goldColor,
+                inactiveTrackColor = Color(0x44FFFFFF)
+            )
+        )
+        Text(
+            text = "${(state.soundVolume * 100).toInt()}%",
+            color = palette.overlayTextColor,
+            fontSize = (10.5f * scale).sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+
+    // One instrument / Pick each sound subtabs
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+    ) {
+        listOf(false to "One instrument for all", true to "Pick each sound").forEach { (mixTab, label) ->
+            val selected = (isMixView == mixTab)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(pillCorner))
+                    .background(if (selected) palette.goldColor.copy(alpha = 0.22f) else Color(0x18FFFFFF))
+                    .border(
+                        width = 1.dp,
+                        color = if (selected) palette.goldColor else Color(0x33FFFFFF),
+                        shape = RoundedCornerShape(pillCorner)
+                    )
+                    .clickable { onSelectView(mixTab) }
+                    .padding(vertical = (6f * scale).dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (selected) palette.goldColor else palette.overlayTextColor,
+                    fontSize = (10.5f * scale).sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+
+    if (!isMixView) {
+        Text(
+            text = if (uniPack != null) {
+                "Pick one instrument to set all 13 game sounds at once."
+            } else {
+                "Currently using a custom mix. Tap any instrument below to set all 13 sounds to it."
+            },
+            color = palette.overlayTextDimColor,
+            fontSize = (9.5f * scale).sp
+        )
+        Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
+            SoundPack.entries.chunked(4).forEach { rowPacks ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
+                ) {
+                    rowPacks.forEach { pack ->
+                        val isCur = (uniPack == pack)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(pillCorner))
+                                .background(if (isCur) palette.goldColor else Color(0x1EFFFFFF))
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isCur) Color.White else Color(0x38FFFFFF),
+                                    shape = RoundedCornerShape(pillCorner)
+                                )
+                                .clickable { onSingleSoundPackSelect(pack) }
+                                .padding(horizontal = (7f * scale).dp, vertical = (7f * scale).dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Text(
+                                text = pack.displayName,
+                                color = if (isCur) Color(0xFF14100A) else palette.overlayTextColor,
+                                fontSize = (10f * scale).sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    repeat(4 - rowPacks.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    } else {
+        Text(
+            text = "Tap ◀ ▶ to step through instruments. Tap an instrument name to hear it again.",
+            color = palette.overlayTextDimColor,
+            fontSize = (9.5f * scale).sp
+        )
+        Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
+            SoundEffect.entries.chunked(2).forEach { rowEffects ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
+                ) {
+                    rowEffects.forEach { effect ->
+                        val activePack = state.soundConfig.packFor(effect)
+                        val isChanged = (uniPack == null && activePack != dominantPack)
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(pillCorner))
+                                .background(if (isChanged) Color(0x1A7BD88F) else Color(0x18FFFFFF))
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isChanged) Color(0x887BD88F) else Color(0x33FFFFFF),
+                                    shape = RoundedCornerShape(pillCorner)
+                                )
+                                .padding(horizontal = (7f * scale).dp, vertical = (4.5f * scale).dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy((1f * scale).dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy((4f * scale).dp)
+                                ) {
+                                    Text(
+                                        text = effect.displayName,
+                                        color = palette.overlayTextColor,
+                                        fontSize = (10f * scale).sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (isChanged) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size((6f * scale).dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF7BD88F))
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = effect.group.displayName.uppercase(),
+                                    color = palette.overlayTextDimColor,
+                                    fontSize = (8f * scale).sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1
+                                )
+                            }
+
+                            // Stepper: [◀] [Instrument] [▶]
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size((24f * scale).dp)
+                                        .clip(RoundedCornerShape((4f * scale).dp))
+                                        .background(Color(0x28FFFFFF))
+                                        .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape((4f * scale).dp))
+                                        .clickable { onPerSoundPackSelect(effect, activePack.previous()) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "◀",
+                                        color = palette.overlayTextColor,
+                                        fontSize = (9.5f * scale).sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .width((86f * scale).dp)
+                                        .height((24f * scale).dp)
+                                        .clip(RoundedCornerShape((4f * scale).dp))
+                                        .background(Color(0x44000000))
+                                        .border(
+                                            1.dp,
+                                            if (isChanged) palette.goldColor.copy(alpha = 0.6f) else Color(0x33FFFFFF),
+                                            RoundedCornerShape((4f * scale).dp)
+                                        )
+                                        .clickable { onPreviewSound(activePack, effect) }
+                                        .padding(horizontal = (4f * scale).dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = activePack.displayName,
+                                        color = if (isChanged) palette.goldColor else palette.overlayTextColor,
+                                        fontSize = (9.5f * scale).sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size((24f * scale).dp)
+                                        .clip(RoundedCornerShape((4f * scale).dp))
+                                        .background(Color(0x28FFFFFF))
+                                        .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape((4f * scale).dp))
+                                        .clickable { onPerSoundPackSelect(effect, activePack.next()) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "▶",
+                                        color = palette.overlayTextColor,
+                                        fontSize = (9.5f * scale).sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (rowEffects.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+
+    // Sample hand + JSON Preset Save / Export / Share / Import
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy((6f * scale).dp),
+        verticalArrangement = Arrangement.spacedBy((5f * scale).dp),
+        itemVerticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .alpha(if (state.isPlayingSampleHand) 0.55f else 1f)
+                .clip(RoundedCornerShape(pillCorner))
+                .background(palette.goldColor)
+                .clickable(enabled = !state.isPlayingSampleHand) { onPlaySampleHand() }
+                .padding(horizontal = (10f * scale).dp, vertical = (6f * scale).dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "▶ Play a sample hand",
+                color = Color(0xFF14100A),
+                fontSize = (10f * scale).sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .width((118f * scale).dp)
+                .clip(RoundedCornerShape((5f * scale).dp))
+                .background(Color(0x2A000000))
+                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape((5f * scale).dp))
+                .padding(horizontal = (7f * scale).dp, vertical = (5.5f * scale).dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (presetNameText.isEmpty()) {
+                Text(
+                    text = "Preset name...",
+                    color = Color(0x88F5F0E6),
+                    fontSize = (9.5f * scale).sp,
+                    maxLines = 1
+                )
+            }
+            BasicTextField(
+                value = presetNameText,
+                onValueChange = { if (it.length <= 40) presetNameText = it },
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = palette.overlayTextColor,
+                    fontSize = (9.5f * scale).sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                cursorBrush = SolidColor(palette.goldColor),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        val name = presetNameText.trim().ifBlank { state.soundConfig.summaryText() }
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                        onSaveSoundPreset(name)
+                        presetNameText = ""
+                    }
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(pillCorner))
+                .background(Color(0x26FFFFFF))
+                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(pillCorner))
+                .clickable {
+                    val name = presetNameText.trim().ifBlank { state.soundConfig.summaryText() }
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                    onSaveSoundPreset(name)
+                    presetNameText = ""
+                }
+                .padding(horizontal = (9f * scale).dp, vertical = (6f * scale).dp)
+        ) {
+            Text(
+                text = "SAVE",
+                color = palette.overlayTextColor,
+                fontSize = (9.5f * scale).sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(pillCorner))
+                .background(Color(0x22FFFFFF))
+                .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(pillCorner))
+                .clickable {
+                    val name = presetNameText.trim().ifBlank { state.soundConfig.summaryText() }
+                    onExportSoundPresetToDownloads(name)
+                }
+                .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp)
+        ) {
+            Text(
+                text = "DOWNLOAD .JSON",
+                color = palette.overlayTextColor,
+                fontSize = (9f * scale).sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(pillCorner))
+                .background(Color(0x22FFFFFF))
+                .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(pillCorner))
+                .clickable {
+                    val name = presetNameText.trim().ifBlank { state.soundConfig.summaryText() }
+                    onShareSoundPreset(name)
+                }
+                .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp)
+        ) {
+            Text(
+                text = "SHARE .JSON",
+                color = palette.overlayTextColor,
+                fontSize = (9f * scale).sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(pillCorner))
+                .background(Color(0x22FFFFFF))
+                .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(pillCorner))
+                .clickable { openPresetLauncher.launch(arrayOf("application/json", "*/*")) }
+                .padding(horizontal = (8f * scale).dp, vertical = (6f * scale).dp)
+        ) {
+            Text(
+                text = "LOAD .JSON",
+                color = palette.overlayTextColor,
+                fontSize = (9f * scale).sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+
+    if (state.savedSoundPresets.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
+            Text(
+                text = "SAVED SOUND PRESETS",
+                color = palette.goldColor,
+                fontSize = (9.5f * scale).sp,
+                fontWeight = FontWeight.Bold
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy((5f * scale).dp),
+                verticalArrangement = Arrangement.spacedBy((4f * scale).dp)
+            ) {
+                state.savedSoundPresets.forEach { preset ->
+                    val isActive = (state.soundConfig.presetName == preset.name)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(pillCorner))
+                            .background(if (isActive) palette.goldColor else Color(0x1EFFFFFF))
+                            .border(
+                                width = 1.dp,
+                                color = if (isActive) Color.White else Color(0x38FFFFFF),
+                                shape = RoundedCornerShape(pillCorner)
+                            )
+                            .clickable { onLoadSavedSoundPreset(preset) }
+                            .padding(horizontal = (8f * scale).dp, vertical = (4.5f * scale).dp)
+                    ) {
+                        Text(
+                            text = preset.name,
+                            color = if (isActive) Color(0xFF14100A) else palette.overlayTextColor,
+                            fontSize = (9.5f * scale).sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    val statusMsg = state.soundPresetStatus
+    if (!statusMsg.isNullOrBlank()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape((5f * scale).dp))
+                .background(Color(0x2E2E8540))
+                .border(1.dp, Color(0xFF56C470), RoundedCornerShape((5f * scale).dp))
+                .padding(horizontal = (8f * scale).dp, vertical = (4.5f * scale).dp)
+        ) {
+            Text(
+                text = statusMsg,
+                color = Color(0xFFB8E6C4),
+                fontSize = (9.5f * scale).sp,
+                fontWeight = FontWeight.SemiBold
             )
         }
     }

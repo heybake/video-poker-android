@@ -1,10 +1,12 @@
 package com.videopoker.android.ui.state
 
 import com.videopoker.android.data.export.RecordedSessionInfo
+import com.videopoker.android.data.export.SavedSoundPreset
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.data.models.HoldChoice
+import com.videopoker.android.sound.SoundConfig
 import com.videopoker.android.ui.theme.AppTheme
 import com.videopoker.android.ui.theme.CardDeck
 
@@ -59,6 +61,10 @@ data class GameState(
     val currentCardDeck: CardDeck = CardDeck.MODERN,
     val soundVolume: Float = 0.8f,
     val isVolumePopupOpen: Boolean = false,
+    val soundConfig: SoundConfig = SoundConfig(),
+    val savedSoundPresets: List<SavedSoundPreset> = emptyList(),
+    val soundPresetStatus: String? = null,
+    val isPlayingSampleHand: Boolean = false,
     val speedLevel: Int = 2, // 1..3, default 2 (matching desktop SPEED_MS = [250, 170, 100])
     val revealedMask: List<Boolean> = listOf(true, true, true, true, true),
     val isAnimating: Boolean = false,
@@ -96,7 +102,7 @@ data class GameState(
             !(isRecordingSession && recordedHandsCount > 0)
 
     companion object {
-        const val APP_VERSION = "1.2.0"
+        const val APP_VERSION = "1.3.0"
         val SUPPORTED_HANDS_OPTIONS = listOf(1, 3, 5, 10)
     }
 }

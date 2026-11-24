@@ -7,31 +7,21 @@ import android.media.MediaMetadataRetriever
 import android.media.SoundPool
 import android.util.Log
 import com.videopoker.android.data.models.HandRank
-
-enum class SoundEffect(val assetName: String) {
-    DEAL("new_deal.mp3"),
-    DRAW("new_draw.mp3"),
-    HOLD("new_hold.mp3"),
-    RELEASE("new_release.mp3"),
-    BET("new_bet.mp3"),
-    WIN_SMALL("new_win_small.mp3"),
-    WIN_MEDIUM("new_win_medium.mp3"),
-    WIN_BIG("new_win_big.mp3"),
-    WIN_ROYAL("new_win_royal.mp3"),
-    NO_WIN("new_no_win.mp3"),
-    COUNT_TICK("new_count_tick.mp3"),
-    CASH_OUT("new_cash_out.mp3"),
-    MADE_HAND("new_made_hand.mp3")
-}
+import kotlin.math.sqrt
 
 class SoundManager(private val context: Context) {
 
+    private data class SoundKey(val pack: SoundPack, val effect: SoundEffect)
+
     private val soundPool: SoundPool
-    private val soundMap = mutableMapOf<SoundEffect, Int>()
-    private val durationMsMap = mutableMapOf<SoundEffect, Long>()
+    private val soundMap = mutableMapOf<SoundKey, Int>()
+    private val readyIds = mutableSetOf<Int>()
+    private val pendingPlay = mutableMapOf<Int, Boolean>()
+    private val durationMsMap = mutableMapOf<SoundKey, Long>()
     private val activeStreams = mutableListOf<Int>()
+    private var previewStreamId: Int? = null
+    private var currentConfig: SoundConfig = SoundConfig()
     private var volume: Float = 1.0f
-    private var isLoaded = false
 
     init {
         // Boost device media stream volume so playback is never choked
@@ -55,28 +45,52 @@ class SoundManager(private val context: Context) {
             .setAudioAttributes(audioAttributes)
             .build()
 
-        preloadSounds()
+        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (status != 0) {
+                synchronized(this) { pendingPlay.remove(sampleId) }
+                return@setOnLoadCompleteListener
+            }
+            val isPreview = synchronized(this) {
+                readyIds.add(sampleId)
+                pendingPlay.remove(sampleId)
+            }
+            if (isPreview != null) {
+                playLoadedSample(sampleId, isPreview)
+            }
+        }
+
+        preloadActiveSounds()
     }
 
-    private fun preloadSounds() {
+    fun applyConfig(config: SoundConfig) {
+        if (currentConfig == config && soundMap.isNotEmpty()) return
+        currentConfig = config
+        preloadActiveSounds()
+    }
+
+    private fun activeKeys(): Set<SoundKey> =
+        SoundEffect.entries.mapTo(linkedSetOf()) { effect ->
+            SoundKey(currentConfig.packFor(effect), effect)
+        }
+
+    private fun preloadActiveSounds() {
+        val needed = activeKeys()
+        val staleKeys = synchronized(this) {
+            soundMap.keys.filter { it !in needed }
+        }
+        for (stale in staleKeys) {
+            unloadKey(stale)
+        }
+        val missing = synchronized(this) {
+            needed.filter { it !in soundMap }
+        }
+        if (missing.isEmpty()) return
+
         try {
             val retriever = MediaMetadataRetriever()
             try {
-                for (effect in SoundEffect.values()) {
-                    context.assets.openFd("sounds/${effect.assetName}").use { afd ->
-                        soundMap[effect] = soundPool.load(afd, 1)
-                        try {
-                            retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                            val dur = retriever.extractMetadata(
-                                MediaMetadataRetriever.METADATA_KEY_DURATION
-                            )?.toLongOrNull()
-                            if (dur != null && dur > 0L) {
-                                durationMsMap[effect] = dur
-                            }
-                        } catch (_: Exception) {
-                            // Fall back to default duration estimates when metadata cannot be read
-                        }
-                    }
+                for (key in missing) {
+                    loadKey(key, retriever)
                 }
             } finally {
                 try {
@@ -84,9 +98,66 @@ class SoundManager(private val context: Context) {
                 } catch (_: Exception) {
                 }
             }
-            isLoaded = true
         } catch (e: Exception) {
             Log.e("SoundManager", "Failed to preload sound effects: ${e.message}")
+        }
+    }
+
+    private fun loadKey(key: SoundKey, retriever: MediaMetadataRetriever? = null): Int? {
+        return try {
+            val path = SoundConfig.assetPathFor(key.pack, key.effect)
+            context.assets.openFd(path).use { afd ->
+                val soundId = soundPool.load(afd, 1)
+                synchronized(this) {
+                    soundMap[key] = soundId
+                }
+                if (retriever != null) {
+                    try {
+                        retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                        val dur = retriever.extractMetadata(
+                            MediaMetadataRetriever.METADATA_KEY_DURATION
+                        )?.toLongOrNull()
+                        if (dur != null && dur > 0L) {
+                            durationMsMap[key] = dur
+                        }
+                    } catch (_: Exception) {
+                        // Fall back to default duration estimates when metadata cannot be read
+                    }
+                }
+                soundId
+            }
+        } catch (e: Exception) {
+            Log.e("SoundManager", "Failed to load ${key.pack.id}/${key.effect.assetName}: ${e.message}")
+            null
+        }
+    }
+
+    private fun unloadKey(key: SoundKey) {
+        val soundId = synchronized(this) {
+            val id = soundMap.remove(key)
+            if (id != null) {
+                readyIds.remove(id)
+                pendingPlay.remove(id)
+            }
+            id
+        }
+        durationMsMap.remove(key)
+        if (soundId != null) {
+            try {
+                soundPool.unload(soundId)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun trimPreviewCacheIfNeeded(keep: SoundKey) {
+        val needed = activeKeys()
+        val extras = synchronized(this) {
+            if (soundMap.size <= 32) emptyList()
+            else soundMap.keys.filter { it !in needed && it != keep }
+        }
+        for (extra in extras.take((soundMap.size - 26).coerceAtLeast(0))) {
+            unloadKey(extra)
         }
     }
 
@@ -95,7 +166,14 @@ class SoundManager(private val context: Context) {
     }
 
     fun play(effect: SoundEffect) {
-        playInternal(effect)
+        playKey(SoundKey(currentConfig.packFor(effect), effect), isPreview = false)
+    }
+
+    fun playPreview(pack: SoundPack, effect: SoundEffect) {
+        stopPreview()
+        val key = SoundKey(pack, effect)
+        trimPreviewCacheIfNeeded(key)
+        playKey(key, isPreview = true)
     }
 
     /**
@@ -103,29 +181,75 @@ class SoundManager(private val context: Context) {
      * can wait until the entire clip finishes before advancing.
      */
     fun playWithDuration(effect: SoundEffect): Long {
-        playInternal(effect)
-        return durationMsMap[effect] ?: defaultDurationMs(effect)
+        val key = SoundKey(currentConfig.packFor(effect), effect)
+        playKey(key, isPreview = false)
+        return durationMsMap[key] ?: defaultDurationMs(effect)
     }
 
-    private fun playInternal(effect: SoundEffect) {
-        if (volume <= 0.01f) return
-        val soundId = soundMap[effect] ?: return
+    private fun playKey(key: SoundKey, isPreview: Boolean) {
+        if (!isPreview && volume <= 0.01f) return
+        val existingId = synchronized(this) { soundMap[key] }
+        if (existingId != null) {
+            val ready = synchronized(this) {
+                if (existingId in readyIds) true
+                else {
+                    pendingPlay[existingId] = isPreview
+                    false
+                }
+            }
+            if (ready) {
+                playLoadedSample(existingId, isPreview)
+            }
+            return
+        }
+        val loadedId = loadKey(key) ?: return
+        val ready = synchronized(this) {
+            if (loadedId in readyIds) true
+            else {
+                pendingPlay[loadedId] = isPreview
+                false
+            }
+        }
+        if (ready) {
+            playLoadedSample(loadedId, isPreview)
+        }
+    }
+
+    private fun playLoadedSample(soundId: Int, isPreview: Boolean) {
+        val targetVol = if (isPreview && volume <= 0.01f) 0.6f else volume
+        if (!isPreview && targetVol <= 0.01f) return
         try {
             // Perceptual audio curve: square root taper ensures 50% slider is clearly and comfortably audible (~71% signal level)
-            val perceivedVol = Math.sqrt(volume.toDouble().coerceIn(0.0, 1.0)).toFloat()
+            val perceivedVol = sqrt(targetVol.toDouble().coerceIn(0.0, 1.0)).toFloat()
             val streamId = soundPool.play(soundId, perceivedVol, perceivedVol, 1, 0, 1.0f)
             if (streamId != 0) {
+                if (isPreview) {
+                    previewStreamId = streamId
+                }
                 synchronized(activeStreams) {
                     if (activeStreams.size > 24) activeStreams.removeAt(0)
                     activeStreams.add(streamId)
                 }
             }
         } catch (e: Exception) {
-            Log.e("SoundManager", "Error playing sound: ${effect.assetName}", e)
+            Log.e("SoundManager", "Error playing soundId=$soundId", e)
+        }
+    }
+
+    fun stopPreview() {
+        val streamId = previewStreamId ?: return
+        previewStreamId = null
+        try {
+            soundPool.stop(streamId)
+        } catch (_: Exception) {
         }
     }
 
     fun stopAll() {
+        stopPreview()
+        synchronized(this) {
+            pendingPlay.clear()
+        }
         val toStop = synchronized(activeStreams) {
             activeStreams.toList().also { activeStreams.clear() }
         }
@@ -177,6 +301,7 @@ class SoundManager(private val context: Context) {
     }
 
     fun release() {
+        stopAll()
         soundPool.release()
     }
 }

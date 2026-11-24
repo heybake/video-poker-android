@@ -132,7 +132,16 @@ fun MainScreen(viewModel: GameViewModel) {
                 onSetBankrollTargets = viewModel::onSetBankrollTargets,
                 onToggleRecordingSession = viewModel::onToggleRecordingSession,
                 onSaveSessionToDownloads = { path -> viewModel.onSaveSessionToDownloads(context, path) },
-                onShareSession = { path -> viewModel.onShareSession(context, path) }
+                onShareSession = { path -> viewModel.onShareSession(context, path) },
+                onSingleSoundPackSelect = viewModel::onSingleSoundPackSelect,
+                onPerSoundPackSelect = viewModel::onPerSoundPackSelect,
+                onPreviewSound = viewModel::onPreviewSound,
+                onPlaySampleHand = viewModel::onPlaySampleHand,
+                onSaveSoundPreset = viewModel::onSaveSoundPreset,
+                onLoadSavedSoundPreset = viewModel::onLoadSavedSoundPreset,
+                onExportSoundPresetToDownloads = { name -> viewModel.onExportSoundPresetToDownloads(context, name) },
+                onShareSoundPreset = { name -> viewModel.onShareSoundPreset(context, name) },
+                onImportSoundPresetUri = { uri -> viewModel.onImportSoundPresetUri(context, uri) }
             )
 
             AnimatedVisibility(

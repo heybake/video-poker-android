@@ -1,6 +1,7 @@
 package com.videopoker.android.ui.state
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonParser
@@ -8,14 +9,18 @@ import com.videopoker.android.data.engine.Deck
 import com.videopoker.android.data.engine.HandClassifier
 import com.videopoker.android.data.engine.StrategyEngine
 import com.videopoker.android.data.export.PlayedGameLog
+import com.videopoker.android.data.export.SavedSoundPreset
 import com.videopoker.android.data.export.SessionExporter
 import com.videopoker.android.data.export.SessionVoucher
+import com.videopoker.android.data.export.SoundPresetStorage
 import com.videopoker.android.data.models.Card
 import com.videopoker.android.data.models.GameConfig
 import com.videopoker.android.data.models.HandRank
 import com.videopoker.android.data.models.HoldChoice
+import com.videopoker.android.sound.SoundConfig
 import com.videopoker.android.sound.SoundEffect
 import com.videopoker.android.sound.SoundManager
+import com.videopoker.android.sound.SoundPack
 import com.videopoker.android.ui.components.TitoVoucherFormatter
 import com.videopoker.android.ui.theme.AppTheme
 import com.videopoker.android.ui.theme.CardDeck
@@ -44,11 +49,13 @@ class GameViewModel @JvmOverloads constructor(
     private var soundManager: SoundManager? = null
     private var prefs: android.content.SharedPreferences? = null
     private var sessionsRoot: File? = null
+    private var presetsRoot: File? = null
     private var activePlayedLog: PlayedGameLog? = null
     private var sessionMoneyInCents: Long = 0L
     private var pendingAllHoldChoices: List<HoldChoice> = emptyList()
     private var dealtDockJob: Job? = null
     private var multiRevealJob: Job? = null
+    private var sampleHandJob: Job? = null
     private var pendingMultiSettlement: PendingMultiSettlement? = null
 
     private data class PendingMultiSettlement(
@@ -75,6 +82,8 @@ class GameViewModel @JvmOverloads constructor(
         val appPrefs = prefs ?: context.applicationContext
             .getSharedPreferences("vp_prefs", Context.MODE_PRIVATE)
             .also { prefs = it }
+        val savedSoundConfig = SoundConfig.fromJson(appPrefs.getString("sound_config", null))
+        soundManager?.applyConfig(savedSoundConfig)
         val savedDeck = CardDeck.fromId(appPrefs.getString("card_deck", null))
         val savedTicketNum = appPrefs.getInt("next_voucher_ticket", 3914).coerceAtLeast(3914)
         val savedTargets = BankrollTargets(
@@ -87,10 +96,12 @@ class GameViewModel @JvmOverloads constructor(
         )
         val root = File(context.applicationContext.filesDir, "recorded_sessions").apply { mkdirs() }
         sessionsRoot = root
+        val presetsDir = File(context.applicationContext.filesDir, "sound_presets").apply { mkdirs() }
+        presetsRoot = presetsDir
 
         viewModelScope.launch {
             try {
-                val (loadedList, saved) = withContext(Dispatchers.IO) {
+                val (loadedList, saved, presets) = withContext(Dispatchers.IO) {
                     val assetManager = context.applicationContext.assets
                     val files = assetManager.list("games") ?: emptyArray()
                     val games = mutableListOf<GameConfig>()
@@ -109,13 +120,16 @@ class GameViewModel @JvmOverloads constructor(
                     // Sort games: Double Bonus 10/7 first, then alphabetical
                     games.sortBy { if (it.variant.contains("double_bonus_10_7")) "000" else it.displayName }
                     val recorded = PlayedGameLog.listRecordedSessions(root)
-                    games to recorded
+                    val loadedPresets = SoundPresetStorage.listLocalPresets(presetsDir)
+                    Triple(games, recorded, loadedPresets)
                 }
 
                 _uiState.update { current ->
                     current.copy(
                         allGames = loadedList,
                         currentCardDeck = savedDeck,
+                        soundConfig = savedSoundConfig,
+                        savedSoundPresets = presets,
                         nextVoucherTicketNumber = savedTicketNum,
                         bankrollTargets = savedTargets,
                         currentGame = null,
@@ -1071,12 +1085,168 @@ class GameViewModel @JvmOverloads constructor(
         if (overlay == ActiveOverlay.MORE_GAMES && !_uiState.value.canChangeGameOrMode) return
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
+            refreshSavedSoundPresets()
         }
-        _uiState.update { it.copy(activeOverlay = overlay, isVolumePopupOpen = false, sessionExportStatus = null) }
+        _uiState.update {
+            it.copy(
+                activeOverlay = overlay,
+                isVolumePopupOpen = false,
+                sessionExportStatus = null,
+                soundPresetStatus = null
+            )
+        }
     }
 
     fun closeOverlay() {
+        stopSampleHand()
+        soundManager?.stopPreview()
         _uiState.update { it.copy(activeOverlay = null) }
+    }
+
+    fun onSingleSoundPackSelect(pack: SoundPack) {
+        val updated = _uiState.value.soundConfig.withAll(pack)
+        applySoundConfigUpdate(updated, status = null)
+        soundManager?.playPreview(pack, SoundEffect.WIN_MEDIUM)
+    }
+
+    fun onPerSoundPackSelect(effect: SoundEffect, pack: SoundPack) {
+        val updated = _uiState.value.soundConfig.withEffect(effect, pack)
+        applySoundConfigUpdate(updated, status = null)
+        soundManager?.playPreview(pack, effect)
+    }
+
+    fun onPreviewSound(pack: SoundPack, effect: SoundEffect) {
+        soundManager?.playPreview(pack, effect)
+    }
+
+    fun onPlaySampleHand() {
+        stopSampleHand()
+        val cfg = _uiState.value.soundConfig
+        soundManager?.applyConfig(cfg)
+        _uiState.update { it.copy(isPlayingSampleHand = true) }
+        sampleHandJob = viewModelScope.launch {
+            var elapsed = 0L
+            for ((effect, targetMs) in SoundConfig.SAMPLE_HAND_SEQUENCE) {
+                val wait = (targetMs - elapsed).coerceAtLeast(0L)
+                if (wait > 0L) delay(wait)
+                elapsed = targetMs
+                if (_uiState.value.soundVolume > 0.01f) {
+                    soundManager?.play(effect)
+                } else {
+                    soundManager?.playPreview(cfg.packFor(effect), effect)
+                }
+            }
+            val tail = (SoundConfig.SAMPLE_HAND_DURATION_MS - elapsed).coerceAtLeast(0L)
+            if (tail > 0L) delay(tail)
+            _uiState.update { it.copy(isPlayingSampleHand = false) }
+        }
+    }
+
+    private fun stopSampleHand() {
+        sampleHandJob?.cancel()
+        sampleHandJob = null
+        if (_uiState.value.isPlayingSampleHand) {
+            _uiState.update { it.copy(isPlayingSampleHand = false) }
+        }
+    }
+
+    fun onSaveSoundPreset(name: String) {
+        val dir = presetsRoot ?: return
+        val currentCfg = _uiState.value.soundConfig
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) {
+                SoundPresetStorage.saveLocalPreset(dir, name, currentCfg)
+                    .map { saved -> saved to SoundPresetStorage.listLocalPresets(dir) }
+            }
+            res.fold(
+                onSuccess = { (saved, list) ->
+                    prefs?.edit()?.putString("sound_config", saved.config.toJson())?.apply()
+                    _uiState.update {
+                        it.copy(
+                            soundConfig = saved.config,
+                            savedSoundPresets = list,
+                            soundPresetStatus = "Saved ${saved.filename}"
+                        )
+                    }
+                },
+                onFailure = { err ->
+                    _uiState.update {
+                        it.copy(soundPresetStatus = err.message ?: "Could not save preset.")
+                    }
+                }
+            )
+        }
+    }
+
+    fun onLoadSavedSoundPreset(preset: SavedSoundPreset) {
+        applySoundConfigUpdate(preset.config, status = "Loaded preset: ${preset.name}")
+        soundManager?.playPreview(preset.config.packFor(SoundEffect.WIN_MEDIUM), SoundEffect.WIN_MEDIUM)
+    }
+
+    fun onExportSoundPresetToDownloads(context: Context, name: String) {
+        val effectiveName = name.trim().ifBlank { _uiState.value.soundConfig.summaryText() }
+        val cfg = _uiState.value.soundConfig
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) {
+                SoundPresetStorage.exportToDownloads(context.applicationContext, effectiveName, cfg)
+            }
+            val msg = res.fold(
+                onSuccess = { it },
+                onFailure = { "Export failed: ${it.message ?: "unknown error"}" }
+            )
+            _uiState.update { it.copy(soundPresetStatus = msg) }
+        }
+    }
+
+    fun onShareSoundPreset(context: Context, name: String) {
+        val effectiveName = name.trim().ifBlank { _uiState.value.soundConfig.summaryText() }
+        val res = SoundPresetStorage.sharePresetJson(context, effectiveName, _uiState.value.soundConfig)
+        res.onFailure { err ->
+            _uiState.update { it.copy(soundPresetStatus = "Share failed: ${err.message ?: "unknown error"}") }
+        }
+    }
+
+    fun onImportSoundPresetUri(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) {
+                SoundPresetStorage.importFromUri(context.applicationContext, uri)
+            }
+            res.fold(
+                onSuccess = { imported ->
+                    applySoundConfigUpdate(imported.config, status = "Loaded file: ${imported.name}")
+                    soundManager?.playPreview(
+                        imported.config.packFor(SoundEffect.WIN_MEDIUM),
+                        SoundEffect.WIN_MEDIUM
+                    )
+                },
+                onFailure = { err ->
+                    _uiState.update {
+                        it.copy(soundPresetStatus = err.message ?: "Could not load .json preset.")
+                    }
+                }
+            )
+        }
+    }
+
+    private fun applySoundConfigUpdate(updated: SoundConfig, status: String?) {
+        prefs?.edit()?.putString("sound_config", updated.toJson())?.apply()
+        soundManager?.applyConfig(updated)
+        _uiState.update {
+            it.copy(
+                soundConfig = updated,
+                soundPresetStatus = status
+            )
+        }
+    }
+
+    private fun refreshSavedSoundPresets() {
+        val dir = presetsRoot ?: return
+        viewModelScope.launch {
+            val list = withContext(Dispatchers.IO) {
+                SoundPresetStorage.listLocalPresets(dir)
+            }
+            _uiState.update { it.copy(savedSoundPresets = list) }
+        }
     }
 
     fun onSaveSessionToDownloads(context: Context, folderPath: String) {
@@ -1254,6 +1424,7 @@ class GameViewModel @JvmOverloads constructor(
         super.onCleared()
         multiRevealJob?.cancel()
         dealtDockJob?.cancel()
+        sampleHandJob?.cancel()
         soundManager?.release()
     }
 }
