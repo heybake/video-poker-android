@@ -69,9 +69,11 @@ class SoundManager(private val context: Context) {
     }
 
     private fun activeKeys(): Set<SoundKey> =
-        SoundEffect.entries.mapTo(linkedSetOf()) { effect ->
-            SoundKey(currentConfig.packFor(effect), effect)
-        }
+        SoundEffect.entries
+            .asSequence()
+            .map { effect -> SoundKey(currentConfig.packFor(effect), effect) }
+            .filter { it.pack != SoundPack.NONE }
+            .toCollection(linkedSetOf())
 
     private fun preloadActiveSounds() {
         val needed = activeKeys()
@@ -104,6 +106,7 @@ class SoundManager(private val context: Context) {
     }
 
     private fun loadKey(key: SoundKey, retriever: MediaMetadataRetriever? = null): Int? {
+        if (key.pack == SoundPack.NONE) return null
         return try {
             val path = SoundConfig.assetPathFor(key.pack, key.effect)
             context.assets.openFd(path).use { afd ->
@@ -200,7 +203,10 @@ class SoundManager(private val context: Context) {
     }
 
     private fun playKey(key: SoundKey, isPreview: Boolean) {
-        if (volume <= 0.01f) return
+        if (key.pack == SoundPack.NONE || volume <= 0.01f) {
+            if (isPreview) stopPreview()
+            return
+        }
         val existingId = synchronized(this) { soundMap[key] }
         if (existingId != null) {
             val ready = synchronized(this) {

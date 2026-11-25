@@ -23,11 +23,13 @@ class SoundPackTest {
     fun fromIdAndSteppingWrapCleanly() {
         assertEquals(SoundPack.CLASSIC, SoundPack.fromId(null))
         assertEquals(SoundPack.CLASSIC, SoundPack.fromId("unknown_pack"))
+        assertEquals(SoundPack.NONE, SoundPack.fromId("none"))
         assertEquals(SoundPack.ACES, SoundPack.fromId("aces"))
 
         assertEquals(SoundPack.MEMORY, SoundPack.CLASSIC.previous())
         assertEquals(SoundPack.CLASSIC, SoundPack.MEMORY.next())
-        assertEquals(SoundPack.KNOCK, SoundPack.CLASSIC.next())
+        assertEquals(SoundPack.NONE, SoundPack.CLASSIC.next())
+        assertEquals(SoundPack.KNOCK, SoundPack.NONE.next())
     }
 
     @Test
@@ -44,10 +46,11 @@ class SoundPackTest {
         val legacyFiles = soundsRoot.listFiles { f -> f.isFile && f.name.startsWith("new_") }.orEmpty()
         assertTrue("Legacy new_*.mp3 files still present: ${legacyFiles.map { it.name }}", legacyFiles.isEmpty())
 
-        assertEquals(17, SoundPack.entries.size)
+        assertEquals(18, SoundPack.entries.size)
         assertEquals(16, SoundEffect.entries.size)
 
         for (pack in SoundPack.entries) {
+            if (pack == SoundPack.NONE) continue
             val packDir = File(soundsRoot, pack.id)
             assertTrue("Missing pack folder: ${packDir.path}", packDir.isDirectory)
             for (effect in SoundEffect.entries) {
@@ -120,5 +123,14 @@ class SoundPackTest {
 
         vm.onSingleSoundPackSelect(SoundPack.CLASSIC)
         assertEquals(SoundPack.CLASSIC, vm.uiState.value.soundConfig.uniformPack())
+
+        vm.onSingleSoundPackSelect(SoundPack.NONE)
+        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.uniformPack())
+        assertEquals("None", vm.uiState.value.soundConfig.summaryText())
+
+        vm.onPerSoundPackSelect(SoundEffect.OPTION_BUTTON, SoundPack.NONE)
+        vm.onPerSoundPackSelect(SoundEffect.DEAL, SoundPack.ACES)
+        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.OPTION_BUTTON))
+        assertEquals(SoundPack.ACES, vm.uiState.value.soundConfig.packFor(SoundEffect.DEAL))
     }
 }

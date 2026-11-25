@@ -44,6 +44,7 @@ enum class SoundEffect(
 
 enum class SoundPack(val id: String, val displayName: String) {
     CLASSIC("classic", "Classic"),
+    NONE("none", "None"),
     KNOCK("knock", "Knock"),
     BROOK("brook", "Brook"),
     VOWS("vows", "Vows"),

@@ -1439,31 +1439,38 @@ private fun OptionsSoundsPane(
             fontSize = (9.5f * scale).sp
         )
         Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
-            val isClassicCur = (uniPack == SoundPack.CLASSIC)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(pillCorner))
-                    .background(if (isClassicCur) palette.goldColor else Color(0x1EFFFFFF))
-                    .border(
-                        width = 1.dp,
-                        color = if (isClassicCur) Color.White else Color(0x38FFFFFF),
-                        shape = RoundedCornerShape(pillCorner)
-                    )
-                    .clickable { onSingleSoundPackSelect(SoundPack.CLASSIC) }
-                    .padding(horizontal = (7f * scale).dp, vertical = (7f * scale).dp),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
             ) {
-                Text(
-                    text = SoundPack.CLASSIC.displayName,
-                    color = if (isClassicCur) Color(0xFF14100A) else palette.overlayTextColor,
-                    fontSize = (10f * scale).sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                listOf(SoundPack.CLASSIC, SoundPack.NONE).forEach { pack ->
+                    val isCur = (uniPack == pack)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(pillCorner))
+                            .background(if (isCur) palette.goldColor else Color(0x1EFFFFFF))
+                            .border(
+                                width = 1.dp,
+                                color = if (isCur) Color.White else Color(0x38FFFFFF),
+                                shape = RoundedCornerShape(pillCorner)
+                            )
+                            .clickable { onSingleSoundPackSelect(pack) }
+                            .padding(horizontal = (7f * scale).dp, vertical = (7f * scale).dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = pack.displayName,
+                            color = if (isCur) Color(0xFF14100A) else palette.overlayTextColor,
+                            fontSize = (10f * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
-            SoundPack.entries.filter { it != SoundPack.CLASSIC }.chunked(4).forEach { rowPacks ->
+            SoundPack.entries.filter { it != SoundPack.CLASSIC && it != SoundPack.NONE }.chunked(4).forEach { rowPacks ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
