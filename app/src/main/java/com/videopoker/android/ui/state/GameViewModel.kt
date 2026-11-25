@@ -258,6 +258,9 @@ class GameViewModel @JvmOverloads constructor(
                             handRank = currentRank
                         )
                     }
+                    if (currentRank != HandRank.NOTHING) {
+                        soundManager?.play(SoundEffect.MADE_HAND)
+                    }
                 }
             }
             DealState.DEALT_CHOOSING_HOLDS -> {
@@ -854,6 +857,7 @@ class GameViewModel @JvmOverloads constructor(
         val currentVol = _uiState.value.soundVolume
         val newVol = if (currentVol > 0.01f) 0f else 0.8f
         onVolumeChange(newVol)
+        if (newVol > 0.01f) soundManager?.play(SoundEffect.OPTION_BUTTON)
     }
 
     fun onAddCash() {
@@ -866,7 +870,7 @@ class GameViewModel @JvmOverloads constructor(
 
     private fun recordCashAddition(amount: Double) {
         if (amount <= 0.0 || !amount.isFinite()) return
-        soundManager?.play(SoundEffect.COUNT_TICK)
+        soundManager?.play(SoundEffect.ADD_MONEY)
         if (activePlayedLog != null) {
             sessionMoneyInCents += (amount * 100.0).roundToLong()
         }
@@ -908,6 +912,7 @@ class GameViewModel @JvmOverloads constructor(
             ?.putInt("stop_loss_percent", clamped.stopLossPercent)
             ?.apply()
         _uiState.update { it.copy(bankrollTargets = clamped) }
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
     }
 
     fun onOpenAddMoney() {
@@ -916,7 +921,7 @@ class GameViewModel @JvmOverloads constructor(
 
     fun onDenomSelect(denom: Double) {
         if (!canChangeDenom(_uiState.value)) return
-        soundManager?.play(SoundEffect.COUNT_TICK)
+        soundManager?.play(SoundEffect.COIN_SIZE)
         _uiState.update {
             it.copy(
                 currentDenom = denom,
@@ -1013,15 +1018,18 @@ class GameViewModel @JvmOverloads constructor(
     }
 
     fun onThemeSelect(theme: AppTheme) {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(currentTheme = theme) }
     }
 
     fun onCardDeckSelect(cardDeck: CardDeck) {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         prefs?.edit()?.putString("card_deck", cardDeck.id)?.apply()
         _uiState.update { it.copy(currentCardDeck = cardDeck) }
     }
 
     fun onModeToggle(mode: GameMode) {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { state ->
             val autoMask = if (mode == GameMode.LEARN && state.holdChoices.isNotEmpty() && state.dealState == DealState.DEALT_CHOOSING_HOLDS) {
                 state.holdChoices.first().holdMask
@@ -1045,10 +1053,12 @@ class GameViewModel @JvmOverloads constructor(
     }
 
     fun onTogglePracticePlot() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(showPracticePlot = !it.showPracticePlot) }
     }
 
     fun onCycleSpeed() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update {
             val nextSpeed = if (it.speedLevel >= 3) 1 else it.speedLevel + 1
             it.copy(speedLevel = nextSpeed)
@@ -1056,22 +1066,27 @@ class GameViewModel @JvmOverloads constructor(
     }
 
     fun onToggleCurrencyDisplay() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(displayCurrency = !it.displayCurrency) }
     }
 
     fun onToggleWinCurrency() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(winAsCash = !it.winAsCash) }
     }
 
     fun onToggleBetCurrency() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(betAsCash = !it.betAsCash) }
     }
 
     fun onToggleCreditCurrency() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(creditAsCash = !it.creditAsCash) }
     }
 
     fun onToggleVolumePopup() {
+        soundManager?.play(SoundEffect.OPTION_BUTTON)
         _uiState.update { it.copy(isVolumePopupOpen = !it.isVolumePopupOpen) }
     }
 
@@ -1083,6 +1098,9 @@ class GameViewModel @JvmOverloads constructor(
     fun openOverlay(overlay: ActiveOverlay) {
         if (overlay == ActiveOverlay.DENOM && !canChangeDenom(_uiState.value)) return
         if (overlay == ActiveOverlay.MORE_GAMES && !_uiState.value.canChangeGameOrMode) return
+        if (overlay != ActiveOverlay.CASH_OUT) {
+            soundManager?.play(SoundEffect.OPTION_BUTTON)
+        }
         if (overlay == ActiveOverlay.OPTIONS) {
             refreshRecordedSessions()
             refreshSavedSoundPresets()

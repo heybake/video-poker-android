@@ -161,8 +161,21 @@ class SoundManager(private val context: Context) {
         }
     }
 
+    private fun perceivedVolume(vol: Float): Float {
+        val clamped = vol.coerceIn(0f, 1f)
+        return if (clamped <= 0.01f) 0f else clamped * clamped
+    }
+
     fun setVolume(vol: Float) {
         this.volume = vol.coerceIn(0f, 1f)
+        val perceived = perceivedVolume(this.volume)
+        val streams = synchronized(activeStreams) { activeStreams.toList() }
+        for (streamId in streams) {
+            try {
+                soundPool.setVolume(streamId, perceived, perceived)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun play(effect: SoundEffect) {
@@ -187,7 +200,7 @@ class SoundManager(private val context: Context) {
     }
 
     private fun playKey(key: SoundKey, isPreview: Boolean) {
-        if (!isPreview && volume <= 0.01f) return
+        if (volume <= 0.01f) return
         val existingId = synchronized(this) { soundMap[key] }
         if (existingId != null) {
             val ready = synchronized(this) {
@@ -216,11 +229,10 @@ class SoundManager(private val context: Context) {
     }
 
     private fun playLoadedSample(soundId: Int, isPreview: Boolean) {
-        val targetVol = if (isPreview && volume <= 0.01f) 0.6f else volume
-        if (!isPreview && targetVol <= 0.01f) return
+        if (volume <= 0.01f) return
         try {
-            // Perceptual audio curve: square root taper ensures 50% slider is clearly and comfortably audible (~71% signal level)
-            val perceivedVol = sqrt(targetVol.toDouble().coerceIn(0.0, 1.0)).toFloat()
+            // Quadratic perceptual curve provides smooth audible attenuation across the full slider range
+            val perceivedVol = perceivedVolume(volume)
             val streamId = soundPool.play(soundId, perceivedVol, perceivedVol, 1, 0, 1.0f)
             if (streamId != 0) {
                 if (isPreview) {
@@ -278,16 +290,18 @@ class SoundManager(private val context: Context) {
     }
 
     private fun defaultDurationMs(effect: SoundEffect): Long = when (effect) {
-        SoundEffect.WIN_SMALL -> 650L
-        SoundEffect.WIN_MEDIUM -> 1050L
-        SoundEffect.WIN_BIG -> 1500L
-        SoundEffect.WIN_ROYAL -> 3100L
-        SoundEffect.DRAW -> 150L
-        SoundEffect.DEAL -> 200L
-        SoundEffect.MADE_HAND -> 500L
-        SoundEffect.COUNT_TICK -> 150L
-        SoundEffect.NO_WIN -> 400L
-        else -> 200L
+        SoundEffect.WIN_SMALL -> 1200L
+        SoundEffect.WIN_MEDIUM -> 2000L
+        SoundEffect.WIN_BIG -> 2900L
+        SoundEffect.WIN_ROYAL -> 4700L
+        SoundEffect.DRAW -> 500L
+        SoundEffect.DEAL -> 950L
+        SoundEffect.MADE_HAND -> 850L
+        SoundEffect.COUNT_TICK -> 120L
+        SoundEffect.NO_WIN -> 900L
+        SoundEffect.CASH_OUT -> 3250L
+        SoundEffect.ADD_MONEY -> 480L
+        else -> 220L
     }
 
     fun playWinByPayout(coinsWon: Int) {

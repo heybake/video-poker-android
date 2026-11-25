@@ -1400,7 +1400,7 @@ private fun OptionsSoundsPane(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy((6f * scale).dp)
     ) {
-        listOf(false to "One instrument for all", true to "Pick each sound").forEach { (mixTab, label) ->
+        listOf(false to "One theme for all", true to "Pick each sound").forEach { (mixTab, label) ->
             val selected = (isMixView == mixTab)
             Box(
                 modifier = Modifier
@@ -1431,15 +1431,39 @@ private fun OptionsSoundsPane(
     if (!isMixView) {
         Text(
             text = if (uniPack != null) {
-                "Pick one instrument to set all 13 game sounds at once."
+                "Pick one theme to set all 16 game sounds at once."
             } else {
-                "Currently using a custom mix. Tap any instrument below to set all 13 sounds to it."
+                "Currently using a custom mix. Tap any theme below to set all 16 sounds to it."
             },
             color = palette.overlayTextDimColor,
             fontSize = (9.5f * scale).sp
         )
         Column(verticalArrangement = Arrangement.spacedBy((5f * scale).dp)) {
-            SoundPack.entries.chunked(4).forEach { rowPacks ->
+            val isClassicCur = (uniPack == SoundPack.CLASSIC)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(pillCorner))
+                    .background(if (isClassicCur) palette.goldColor else Color(0x1EFFFFFF))
+                    .border(
+                        width = 1.dp,
+                        color = if (isClassicCur) Color.White else Color(0x38FFFFFF),
+                        shape = RoundedCornerShape(pillCorner)
+                    )
+                    .clickable { onSingleSoundPackSelect(SoundPack.CLASSIC) }
+                    .padding(horizontal = (7f * scale).dp, vertical = (7f * scale).dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = SoundPack.CLASSIC.displayName,
+                    color = if (isClassicCur) Color(0xFF14100A) else palette.overlayTextColor,
+                    fontSize = (10f * scale).sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            SoundPack.entries.filter { it != SoundPack.CLASSIC }.chunked(4).forEach { rowPacks ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy((5f * scale).dp)
@@ -1478,7 +1502,7 @@ private fun OptionsSoundsPane(
         }
     } else {
         Text(
-            text = "Tap ◀ ▶ to step through instruments. Tap an instrument name to hear it again.",
+            text = "Tap ◀ ▶ to step through themes. Tap a theme name to hear it again.",
             color = palette.overlayTextDimColor,
             fontSize = (9.5f * scale).sp
         )
@@ -1562,7 +1586,7 @@ private fun OptionsSoundsPane(
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .width((86f * scale).dp)
+                                        .width((72f * scale).dp)
                                         .height((24f * scale).dp)
                                         .clip(RoundedCornerShape((4f * scale).dp))
                                         .background(Color(0x44000000))

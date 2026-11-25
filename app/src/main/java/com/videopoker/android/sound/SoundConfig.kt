@@ -19,9 +19,10 @@ enum class SoundEffect(
     val description: String,
     val group: SoundGroup
 ) {
-    BET("bet", "bet.mp3", "Bet", "Bet one, bet max, change coin", SoundGroup.BUTTONS),
+    BET("bet", "bet.mp3", "Bet", "Bet one or bet max", SoundGroup.BUTTONS),
     HOLD("hold", "hold.mp3", "Hold", "A card is held", SoundGroup.BUTTONS),
     RELEASE("release", "release.mp3", "Release", "A held card is let go", SoundGroup.BUTTONS),
+    OPTION_BUTTON("option_button", "option_button.mp3", "Option button", "Options, Help, See Pays, Speed & menus", SoundGroup.BUTTONS),
     DEAL("deal", "deal.mp3", "Deal", "The five cards come out", SoundGroup.DEALING),
     DRAW("draw", "draw.mp3", "Draw", "Replacement cards come out", SoundGroup.DEALING),
     MADE_HAND("made_hand", "made_hand.mp3", "Made hand", "The deal already pays", SoundGroup.HANDS),
@@ -31,6 +32,8 @@ enum class SoundEffect(
     WIN_ROYAL("win_royal", "win_royal.mp3", "Royal flush", "The jackpot hand", SoundGroup.WINS),
     COUNT_TICK("count_tick", "count_tick.mp3", "Count-up tick", "The credit meter counting up", SoundGroup.OTHER),
     NO_WIN("no_win", "no_win.mp3", "No win", "A losing hand", SoundGroup.OTHER),
+    ADD_MONEY("add_money", "add_money.mp3", "Add money", "Inserting cash into the machine", SoundGroup.OTHER),
+    COIN_SIZE("coin_size", "coin_size.mp3", "Coin size", "Changing coin denomination", SoundGroup.OTHER),
     CASH_OUT("cash_out", "cash_out.mp3", "Cash out", "Cash out voucher", SoundGroup.OTHER);
 
     companion object {
@@ -40,22 +43,23 @@ enum class SoundEffect(
 }
 
 enum class SoundPack(val id: String, val displayName: String) {
-    CLASSIC("classic", "Classic casino"),
-    DRUMS("drums", "Drum kit"),
-    PIANO("piano", "Piano"),
-    CHURCH_ORGAN("church_organ", "Church organ"),
-    NYLON_GUITAR("nylon_guitar", "Nylon guitar"),
-    BASS("bass", "Bass"),
-    HARP("harp", "Harp"),
-    STRINGS("strings", "Strings"),
-    CHOIR("choir", "Choir"),
-    ORCHESTRA_HIT("orchestra_hit", "Orchestra hit"),
-    TRUMPET("trumpet", "Trumpet"),
-    CLARINET("clarinet", "Clarinet"),
-    FLUTE("flute", "Flute"),
-    WHISTLE("whistle", "Whistle"),
-    BANJO("banjo", "Banjo"),
-    HELICOPTER("helicopter", "Helicopter");
+    CLASSIC("classic", "Classic"),
+    KNOCK("knock", "Knock"),
+    BROOK("brook", "Brook"),
+    VOWS("vows", "Vows"),
+    NIGHTFALL("nightfall", "Nightfall"),
+    ELATION("elation", "Elation"),
+    VAUDEVILLE("vaudeville", "Vaudeville"),
+    FAITH("faith", "Faith"),
+    JERSEY("jersey", "Jersey"),
+    FENWAY("fenway", "Fenway"),
+    OMEN("omen", "Omen"),
+    AUTUMN("autumn", "Autumn"),
+    SYNTH("synth", "Synth"),
+    TEXAS("texas", "Texas"),
+    BARSTOOL("barstool", "Barstool"),
+    ACES("aces", "Aces"),
+    MEMORY("memory", "Memory");
 
     fun next(): SoundPack = entries[(ordinal + 1) % entries.size]
 
@@ -158,10 +162,24 @@ data class SoundConfig(
                 val mapObj = obj.get("sounds")?.takeIf { it.isJsonObject }?.asJsonObject
                     ?: obj.get("map")?.takeIf { it.isJsonObject }?.asJsonObject
                     ?: return SoundConfig()
+                val validPresent = SoundEffect.entries.mapNotNull { eff ->
+                    if (!mapObj.has(eff.id)) return@mapNotNull null
+                    val rawId = mapObj.get(eff.id)?.takeIf { it.isJsonPrimitive }?.asString
+                    rawId?.takeIf { id -> SoundPack.entries.any { it.id == id } }?.let { SoundPack.fromId(it) }
+                }
+                val missingFallback = validPresent
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key ?: SoundPack.CLASSIC
                 val parsedMap = mutableMapOf<SoundEffect, SoundPack>()
                 for (effect in SoundEffect.entries) {
-                    val packId = mapObj.get(effect.id)?.takeIf { it.isJsonPrimitive }?.asString
-                    parsedMap[effect] = SoundPack.fromId(packId)
+                    if (!mapObj.has(effect.id)) {
+                        parsedMap[effect] = missingFallback
+                    } else {
+                        val packId = mapObj.get(effect.id)?.takeIf { it.isJsonPrimitive }?.asString
+                        parsedMap[effect] = SoundPack.fromId(packId)
+                    }
                 }
                 val normalized = if (parsedMap.values.all { it == SoundPack.CLASSIC }) emptyMap() else parsedMap
                 val rawName = obj.get("name")?.takeIf { it.isJsonPrimitive }?.asString
