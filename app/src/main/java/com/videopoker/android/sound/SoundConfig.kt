@@ -54,7 +54,9 @@ enum class SoundPack(val id: String, val displayName: String) {
     TEXAS("texas", "Texas"),
     BARSTOOL("barstool", "Barstool"),
     ACES("aces", "Aces"),
-    MEMORY("memory", "Memory");
+    MEMORY("memory", "Memory"),
+    BEACON("beacon", "Beacon"),
+    PERK("perk", "Perk");
 
     fun next(): SoundPack = entries[(ordinal + 1) % entries.size]
 

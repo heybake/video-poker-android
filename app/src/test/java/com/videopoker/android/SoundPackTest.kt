@@ -26,9 +26,11 @@ class SoundPackTest {
         assertEquals(SoundPack.CLASSIC, SoundPack.fromId("unknown_pack"))
         assertEquals(SoundPack.NONE, SoundPack.fromId("none"))
         assertEquals(SoundPack.ACES, SoundPack.fromId("aces"))
+        assertEquals(SoundPack.BEACON, SoundPack.fromId("beacon"))
+        assertEquals(SoundPack.PERK, SoundPack.fromId("perk"))
 
-        assertEquals(SoundPack.MEMORY, SoundPack.CLASSIC.previous())
-        assertEquals(SoundPack.CLASSIC, SoundPack.MEMORY.next())
+        assertEquals(SoundPack.PERK, SoundPack.CLASSIC.previous())
+        assertEquals(SoundPack.CLASSIC, SoundPack.PERK.next())
         assertEquals(SoundPack.NONE, SoundPack.CLASSIC.next())
         assertEquals(SoundPack.KNOCK, SoundPack.NONE.next())
     }
@@ -47,7 +49,7 @@ class SoundPackTest {
         val legacyFiles = soundsRoot.listFiles { f -> f.isFile && f.name.startsWith("new_") }.orEmpty()
         assertTrue("Legacy new_*.mp3 files still present: ${legacyFiles.map { it.name }}", legacyFiles.isEmpty())
 
-        assertEquals(18, SoundPack.entries.size)
+        assertEquals(20, SoundPack.entries.size)
         assertEquals(11, SoundEffect.entries.size)
         assertNull(SoundEffect.fromId("made_hand"))
         assertNull(SoundEffect.fromId("no_win"))
