@@ -133,18 +133,18 @@ data class SoundConfig(
         val SAMPLE_HAND_SEQUENCE: List<Pair<SoundEffect, Long>> = listOf(
             SoundEffect.BET to 0L,
             SoundEffect.DEAL to 450L,
-            SoundEffect.HOLD to 1350L,
-            SoundEffect.HOLD to 1650L,
-            SoundEffect.RELEASE to 1950L,
-            SoundEffect.DRAW to 2400L,
-            SoundEffect.WIN_MEDIUM to 3100L,
-            SoundEffect.COUNT_TICK to 5000L,
-            SoundEffect.COUNT_TICK to 5090L,
-            SoundEffect.COUNT_TICK to 5180L,
-            SoundEffect.COUNT_TICK to 5270L
+            SoundEffect.HOLD to 1000L,
+            SoundEffect.HOLD to 1300L,
+            SoundEffect.RELEASE to 1600L,
+            SoundEffect.DRAW to 2050L,
+            SoundEffect.WIN_MEDIUM to 2600L,
+            SoundEffect.COUNT_TICK to 4500L,
+            SoundEffect.COUNT_TICK to 4590L,
+            SoundEffect.COUNT_TICK to 4680L,
+            SoundEffect.COUNT_TICK to 4770L
         )
 
-        const val SAMPLE_HAND_DURATION_MS: Long = 5500L
+        const val SAMPLE_HAND_DURATION_MS: Long = 5000L
 
         fun assetPathFor(pack: SoundPack, effect: SoundEffect): String =
             "sounds/${pack.id}/${effect.assetName}"

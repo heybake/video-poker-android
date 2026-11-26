@@ -345,8 +345,8 @@ class SoundManager(private val context: Context) {
         SoundEffect.WIN_MEDIUM -> 2000L
         SoundEffect.WIN_BIG -> 2900L
         SoundEffect.WIN_ROYAL -> 4700L
-        SoundEffect.DRAW -> 500L
-        SoundEffect.DEAL -> 950L
+        SoundEffect.DRAW -> 200L
+        SoundEffect.DEAL -> 230L
         SoundEffect.COUNT_TICK -> 120L
         SoundEffect.CASH_OUT -> 3250L
         else -> 220L
