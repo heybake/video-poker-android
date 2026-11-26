@@ -316,13 +316,12 @@ class SoundManager(private val context: Context) {
 
     companion object {
         fun mixGainFor(effect: SoundEffect): Float = when (effect) {
-            SoundEffect.DRAW -> 0.20f
-            SoundEffect.RELEASE, SoundEffect.DEAL -> 0.22f
-            SoundEffect.BET -> 0.24f
+            SoundEffect.DRAW -> 0.08f
+            SoundEffect.DEAL -> 0.09f
+            SoundEffect.BET -> 0.18f
+            SoundEffect.COUNT_TICK -> 0.20f
+            SoundEffect.RELEASE -> 0.22f
             SoundEffect.HOLD -> 0.25f
-            SoundEffect.COUNT_TICK -> 0.26f
-            SoundEffect.NO_WIN -> 0.30f
-            SoundEffect.MADE_HAND -> 0.65f
             SoundEffect.WIN_SMALL -> 0.78f
             SoundEffect.WIN_MEDIUM -> 0.90f
             SoundEffect.CASH_OUT -> 0.95f
@@ -348,16 +347,14 @@ class SoundManager(private val context: Context) {
         SoundEffect.WIN_ROYAL -> 4700L
         SoundEffect.DRAW -> 500L
         SoundEffect.DEAL -> 950L
-        SoundEffect.MADE_HAND -> 850L
         SoundEffect.COUNT_TICK -> 120L
-        SoundEffect.NO_WIN -> 900L
         SoundEffect.CASH_OUT -> 3250L
         else -> 220L
     }
 
     fun playWinByPayout(coinsWon: Int) {
         when {
-            coinsWon <= 0 -> play(SoundEffect.NO_WIN)
+            coinsWon <= 0 -> Unit
             coinsWon < 10 -> play(SoundEffect.WIN_SMALL)
             coinsWon < 50 -> play(SoundEffect.WIN_MEDIUM)
             coinsWon < 800 -> play(SoundEffect.WIN_BIG)

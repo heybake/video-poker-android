@@ -34,7 +34,7 @@ class SoundPackTest {
     }
 
     @Test
-    fun everyPackContainsAll13SoundAssetsAndNoLegacyPrefixFiles() {
+    fun everyPackContainsAll11SoundAssetsAndNoLegacyPrefixFiles() {
         val assetsRoot = listOf(
             File("src/main/assets"),
             File("app/src/main/assets")
@@ -48,7 +48,9 @@ class SoundPackTest {
         assertTrue("Legacy new_*.mp3 files still present: ${legacyFiles.map { it.name }}", legacyFiles.isEmpty())
 
         assertEquals(18, SoundPack.entries.size)
-        assertEquals(13, SoundEffect.entries.size)
+        assertEquals(11, SoundEffect.entries.size)
+        assertNull(SoundEffect.fromId("made_hand"))
+        assertNull(SoundEffect.fromId("no_win"))
         assertNull(SoundEffect.fromId("option_button"))
         assertNull(SoundEffect.fromId("add_money"))
         assertNull(SoundEffect.fromId("coin_size"))
@@ -132,9 +134,9 @@ class SoundPackTest {
         assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.uniformPack())
         assertEquals("None", vm.uiState.value.soundConfig.summaryText())
 
-        vm.onPerSoundPackSelect(SoundEffect.NO_WIN, SoundPack.NONE)
+        vm.onPerSoundPackSelect(SoundEffect.COUNT_TICK, SoundPack.NONE)
         vm.onPerSoundPackSelect(SoundEffect.DEAL, SoundPack.ACES)
-        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.NO_WIN))
+        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.COUNT_TICK))
         assertEquals(SoundPack.ACES, vm.uiState.value.soundConfig.packFor(SoundEffect.DEAL))
     }
 
@@ -142,9 +144,7 @@ class SoundPackTest {
     fun soundMixGainsKeepEverydaySoundsQuieterThanFanfare() {
         assertTrue(SoundManager.mixGainFor(SoundEffect.DRAW) <= SoundManager.mixGainFor(SoundEffect.DEAL))
         assertTrue(SoundManager.mixGainFor(SoundEffect.DEAL) <= SoundManager.mixGainFor(SoundEffect.HOLD))
-        assertTrue(SoundManager.mixGainFor(SoundEffect.HOLD) < SoundManager.mixGainFor(SoundEffect.NO_WIN))
-        assertTrue(SoundManager.mixGainFor(SoundEffect.NO_WIN) < SoundManager.mixGainFor(SoundEffect.MADE_HAND))
-        assertTrue(SoundManager.mixGainFor(SoundEffect.MADE_HAND) < SoundManager.mixGainFor(SoundEffect.WIN_SMALL))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.HOLD) < SoundManager.mixGainFor(SoundEffect.WIN_SMALL))
         assertTrue(SoundManager.mixGainFor(SoundEffect.WIN_SMALL) < SoundManager.mixGainFor(SoundEffect.WIN_MEDIUM))
         assertTrue(SoundManager.mixGainFor(SoundEffect.WIN_MEDIUM) < SoundManager.mixGainFor(SoundEffect.CASH_OUT))
         assertTrue(SoundManager.mixGainFor(SoundEffect.CASH_OUT) < SoundManager.mixGainFor(SoundEffect.WIN_BIG))

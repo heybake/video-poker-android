@@ -7,7 +7,6 @@ import com.google.gson.JsonParser
 enum class SoundGroup(val displayName: String) {
     BUTTONS("Buttons"),
     DEALING("Dealing"),
-    HANDS("Hands"),
     WINS("Wins"),
     OTHER("Other")
 }
@@ -24,13 +23,11 @@ enum class SoundEffect(
     RELEASE("release", "release.mp3", "Release", "A held card is let go", SoundGroup.BUTTONS),
     DEAL("deal", "deal.mp3", "Deal", "The five cards come out", SoundGroup.DEALING),
     DRAW("draw", "draw.mp3", "Draw", "Replacement cards come out", SoundGroup.DEALING),
-    MADE_HAND("made_hand", "made_hand.mp3", "Made hand", "The deal already pays", SoundGroup.HANDS),
     WIN_SMALL("win_small", "win_small.mp3", "Small win", "Pays under 3 times the bet", SoundGroup.WINS),
     WIN_MEDIUM("win_medium", "win_medium.mp3", "Medium win", "3 to 8 times the bet", SoundGroup.WINS),
     WIN_BIG("win_big", "win_big.mp3", "Big win", "8 times the bet or more", SoundGroup.WINS),
     WIN_ROYAL("win_royal", "win_royal.mp3", "Royal flush", "The jackpot hand", SoundGroup.WINS),
     COUNT_TICK("count_tick", "count_tick.mp3", "Count-up tick", "The credit meter counting up", SoundGroup.OTHER),
-    NO_WIN("no_win", "no_win.mp3", "No win", "A losing hand", SoundGroup.OTHER),
     CASH_OUT("cash_out", "cash_out.mp3", "Cash out", "Cash out voucher", SoundGroup.OTHER);
 
     companion object {
@@ -136,19 +133,18 @@ data class SoundConfig(
         val SAMPLE_HAND_SEQUENCE: List<Pair<SoundEffect, Long>> = listOf(
             SoundEffect.BET to 0L,
             SoundEffect.DEAL to 450L,
-            SoundEffect.MADE_HAND to 1300L,
-            SoundEffect.HOLD to 2250L,
-            SoundEffect.HOLD to 2550L,
-            SoundEffect.RELEASE to 2850L,
-            SoundEffect.DRAW to 3300L,
-            SoundEffect.WIN_MEDIUM to 4000L,
-            SoundEffect.COUNT_TICK to 5900L,
-            SoundEffect.COUNT_TICK to 5990L,
-            SoundEffect.COUNT_TICK to 6080L,
-            SoundEffect.COUNT_TICK to 6170L
+            SoundEffect.HOLD to 1350L,
+            SoundEffect.HOLD to 1650L,
+            SoundEffect.RELEASE to 1950L,
+            SoundEffect.DRAW to 2400L,
+            SoundEffect.WIN_MEDIUM to 3100L,
+            SoundEffect.COUNT_TICK to 5000L,
+            SoundEffect.COUNT_TICK to 5090L,
+            SoundEffect.COUNT_TICK to 5180L,
+            SoundEffect.COUNT_TICK to 5270L
         )
 
-        const val SAMPLE_HAND_DURATION_MS: Long = 6400L
+        const val SAMPLE_HAND_DURATION_MS: Long = 5500L
 
         fun assetPathFor(pack: SoundPack, effect: SoundEffect): String =
             "sounds/${pack.id}/${effect.assetName}"

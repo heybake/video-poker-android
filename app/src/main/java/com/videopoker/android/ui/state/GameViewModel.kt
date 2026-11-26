@@ -258,9 +258,6 @@ class GameViewModel @JvmOverloads constructor(
                             handRank = currentRank
                         )
                     }
-                    if (currentRank != HandRank.NOTHING) {
-                        soundManager?.play(SoundEffect.MADE_HAND)
-                    }
                 }
             }
             DealState.DEALT_CHOOSING_HOLDS -> {
@@ -443,7 +440,6 @@ class GameViewModel @JvmOverloads constructor(
                     }
 
                     if (dealtWin > 0) {
-                        soundManager?.play(SoundEffect.MADE_HAND)
                         dealtDockJob = viewModelScope.launch {
                             delay(1100L)
                             _uiState.update { s ->
@@ -509,9 +505,16 @@ class GameViewModel @JvmOverloads constructor(
 
                 multiRevealJob?.cancel()
                 multiRevealJob = viewModelScope.launch {
-                    if (unheldIndices.isNotEmpty()) {
-                        soundManager?.play(SoundEffect.DRAW)
+                    val drawAudioDurMs = if (
+                        unheldIndices.isNotEmpty() &&
+                        _uiState.value.soundVolume > 0.01f &&
+                        _uiState.value.soundConfig.packFor(SoundEffect.DRAW) != SoundPack.NONE
+                    ) {
+                        soundManager?.playWithDuration(SoundEffect.DRAW) ?: 450L
+                    } else {
+                        0L
                     }
+                    val drawStartedAt = System.currentTimeMillis()
                     val mainLine = allLines.last()
                     val mainFinal = mainLine.cards.filterNotNull()
                     val workingMain = dealtCards.toMutableList()
@@ -556,6 +559,15 @@ class GameViewModel @JvmOverloads constructor(
 
                     var runningWin = 0
                     val mainEffect = soundManager?.winEffectForLine(mainLine.rank, mainLine.winCredits, betPerHand)
+                    val firstUpperWinIdx = upperRevealOrder(hands).firstOrNull { li ->
+                        val line = allLines[li]
+                        soundManager?.winEffectForLine(line.rank, line.winCredits, betPerHand) != null
+                    }
+                    if (drawAudioDurMs > 0L && (mainEffect != null || firstUpperWinIdx != null)) {
+                        val elapsed = (System.currentTimeMillis() - drawStartedAt).coerceAtLeast(0L)
+                        val remaining = (drawAudioDurMs - elapsed).coerceAtLeast(0L)
+                        if (remaining > 0L) delay(remaining + 40L)
+                    }
                     if (mainEffect != null) {
                         runningWin += mainLine.winCredits
                     }
@@ -601,9 +613,6 @@ class GameViewModel @JvmOverloads constructor(
                         }
                     }
 
-                    if (totalWinCredits == 0) {
-                        soundManager?.play(SoundEffect.NO_WIN)
-                    }
                     commitPendingMultiSettlement(settlement)
                 }
             }
@@ -1303,8 +1312,6 @@ class GameViewModel @JvmOverloads constructor(
 
         if (isWin) {
             soundManager?.playWinByPayout(payoutCredits)
-        } else {
-            soundManager?.play(SoundEffect.NO_WIN)
         }
 
         val currentSnapshot = _uiState.value
