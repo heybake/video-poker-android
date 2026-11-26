@@ -211,10 +211,13 @@ class SoundManager(private val context: Context) {
 
     private fun playKey(key: SoundKey, isPreview: Boolean) {
         if (key.pack == SoundPack.NONE || volume <= 0.01f) {
-            if (isPreview) stopPreview()
+            if (isPreview) stopPreview() else stopActiveStreamsOnly()
             return
         }
-        val existingId = synchronized(this) { soundMap[key] }
+        val existingId = synchronized(this) {
+            pendingPlay.clear()
+            soundMap[key]
+        }
         if (existingId != null) {
             val ready = synchronized(this) {
                 if (existingId in readyIds) true
@@ -241,9 +244,27 @@ class SoundManager(private val context: Context) {
         }
     }
 
+    private fun stopActiveStreamsOnly() {
+        previewStreamId = null
+        val toStop = synchronized(activeStreams) {
+            activeStreams.toList().also {
+                activeStreams.clear()
+                streamMixGain.clear()
+            }
+        }
+        for (streamId in toStop) {
+            try {
+                soundPool.stop(streamId)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private fun playLoadedSample(soundId: Int, isPreview: Boolean) {
         if (volume <= 0.01f) return
         try {
+            // Strict single-voice playback so consecutive sounds never stack on top of each other
+            stopActiveStreamsOnly()
             // Quadratic perceptual curve provides smooth audible attenuation across the full slider range
             val mix = synchronized(this) { sampleMixGain[soundId] ?: 1.0f }
             val perceivedVol = perceivedVolume(volume) * mix
@@ -253,10 +274,6 @@ class SoundManager(private val context: Context) {
                     previewStreamId = streamId
                 }
                 synchronized(activeStreams) {
-                    if (activeStreams.size > 24) {
-                        val dropped = activeStreams.removeAt(0)
-                        streamMixGain.remove(dropped)
-                    }
                     activeStreams.add(streamId)
                     streamMixGain[streamId] = mix
                 }
@@ -299,13 +316,14 @@ class SoundManager(private val context: Context) {
 
     companion object {
         fun mixGainFor(effect: SoundEffect): Float = when (effect) {
-            SoundEffect.RELEASE -> 0.22f
+            SoundEffect.DRAW -> 0.20f
+            SoundEffect.RELEASE, SoundEffect.DEAL -> 0.22f
+            SoundEffect.BET -> 0.24f
             SoundEffect.HOLD -> 0.25f
-            SoundEffect.DRAW -> 0.32f
-            SoundEffect.DEAL, SoundEffect.BET -> 0.35f
-            SoundEffect.COUNT_TICK, SoundEffect.NO_WIN -> 0.45f
-            SoundEffect.MADE_HAND -> 0.72f
-            SoundEffect.WIN_SMALL -> 0.80f
+            SoundEffect.COUNT_TICK -> 0.26f
+            SoundEffect.NO_WIN -> 0.30f
+            SoundEffect.MADE_HAND -> 0.65f
+            SoundEffect.WIN_SMALL -> 0.78f
             SoundEffect.WIN_MEDIUM -> 0.90f
             SoundEffect.CASH_OUT -> 0.95f
             SoundEffect.WIN_BIG, SoundEffect.WIN_ROYAL -> 1.00f

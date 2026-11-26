@@ -269,7 +269,9 @@ class GameViewModel @JvmOverloads constructor(
                 val unheldIndices = (0 until 5).filter { !state.heldMask.getOrElse(it) { false } }
 
                 viewModelScope.launch {
-                    soundManager?.play(SoundEffect.DRAW)
+                    if (unheldIndices.isNotEmpty()) {
+                        soundManager?.play(SoundEffect.DRAW)
+                    }
 
                     if (unheldIndices.isEmpty()) {
                         // All 5 cards held (pat hand)
@@ -507,7 +509,9 @@ class GameViewModel @JvmOverloads constructor(
 
                 multiRevealJob?.cancel()
                 multiRevealJob = viewModelScope.launch {
-                    soundManager?.play(SoundEffect.DRAW)
+                    if (unheldIndices.isNotEmpty()) {
+                        soundManager?.play(SoundEffect.DRAW)
+                    }
                     val mainLine = allLines.last()
                     val mainFinal = mainLine.cards.filterNotNull()
                     val workingMain = dealtCards.toMutableList()
@@ -784,7 +788,6 @@ class GameViewModel @JvmOverloads constructor(
     fun onBetMax() {
         if (_uiState.value.isAnimating || _uiState.value.dealState == DealState.DEALT_CHOOSING_HOLDS) return
         _uiState.update { it.copy(currentBet = 5) }
-        soundManager?.play(SoundEffect.BET)
         onDealDraw()
     }
 

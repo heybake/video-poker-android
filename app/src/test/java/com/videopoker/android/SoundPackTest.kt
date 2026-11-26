@@ -140,10 +140,9 @@ class SoundPackTest {
 
     @Test
     fun soundMixGainsKeepEverydaySoundsQuieterThanFanfare() {
-        assertTrue(SoundManager.mixGainFor(SoundEffect.RELEASE) <= SoundManager.mixGainFor(SoundEffect.HOLD))
-        assertTrue(SoundManager.mixGainFor(SoundEffect.HOLD) < SoundManager.mixGainFor(SoundEffect.DRAW))
         assertTrue(SoundManager.mixGainFor(SoundEffect.DRAW) <= SoundManager.mixGainFor(SoundEffect.DEAL))
-        assertTrue(SoundManager.mixGainFor(SoundEffect.DEAL) < SoundManager.mixGainFor(SoundEffect.MADE_HAND))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.DEAL) <= SoundManager.mixGainFor(SoundEffect.HOLD))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.HOLD) < SoundManager.mixGainFor(SoundEffect.NO_WIN))
         assertTrue(SoundManager.mixGainFor(SoundEffect.NO_WIN) < SoundManager.mixGainFor(SoundEffect.MADE_HAND))
         assertTrue(SoundManager.mixGainFor(SoundEffect.MADE_HAND) < SoundManager.mixGainFor(SoundEffect.WIN_SMALL))
         assertTrue(SoundManager.mixGainFor(SoundEffect.WIN_SMALL) < SoundManager.mixGainFor(SoundEffect.WIN_MEDIUM))
