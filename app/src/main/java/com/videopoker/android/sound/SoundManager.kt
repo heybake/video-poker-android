@@ -306,7 +306,6 @@ class SoundManager(private val context: Context) {
         SoundEffect.COUNT_TICK -> 120L
         SoundEffect.NO_WIN -> 900L
         SoundEffect.CASH_OUT -> 3250L
-        SoundEffect.ADD_MONEY -> 480L
         else -> 220L
     }
 

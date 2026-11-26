@@ -1431,9 +1431,9 @@ private fun OptionsSoundsPane(
     if (!isMixView) {
         Text(
             text = if (uniPack != null) {
-                "Pick one theme to set all 16 game sounds at once."
+                "Pick one theme to set all 13 game sounds at once."
             } else {
-                "Currently using a custom mix. Tap any theme below to set all 16 sounds to it."
+                "Currently using a custom mix. Tap any theme below to set all 13 sounds to it."
             },
             color = palette.overlayTextDimColor,
             fontSize = (9.5f * scale).sp

@@ -13,8 +13,8 @@ android {
         applicationId = "com.videopoker.android"
         minSdk = 26
         targetSdk = 37
-        versionCode = 41
-        versionName = "1.5.1"
+        versionCode = 42
+        versionName = "1.5.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

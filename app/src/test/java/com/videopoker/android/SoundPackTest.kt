@@ -33,7 +33,7 @@ class SoundPackTest {
     }
 
     @Test
-    fun everyPackContainsAll16SoundAssetsAndNoLegacyPrefixFiles() {
+    fun everyPackContainsAll13SoundAssetsAndNoLegacyPrefixFiles() {
         val assetsRoot = listOf(
             File("src/main/assets"),
             File("app/src/main/assets")
@@ -47,7 +47,10 @@ class SoundPackTest {
         assertTrue("Legacy new_*.mp3 files still present: ${legacyFiles.map { it.name }}", legacyFiles.isEmpty())
 
         assertEquals(18, SoundPack.entries.size)
-        assertEquals(16, SoundEffect.entries.size)
+        assertEquals(13, SoundEffect.entries.size)
+        assertNull(SoundEffect.fromId("option_button"))
+        assertNull(SoundEffect.fromId("add_money"))
+        assertNull(SoundEffect.fromId("coin_size"))
 
         for (pack in SoundPack.entries) {
             if (pack == SoundPack.NONE) continue
@@ -88,7 +91,7 @@ class SoundPackTest {
         val fallback = SoundConfig.fromJson("""{"sounds":{"deal":"memory","bet":"missing_pack"}}""")
         assertEquals(SoundPack.MEMORY, fallback.packFor(SoundEffect.DEAL))
         assertEquals(SoundPack.CLASSIC, fallback.packFor(SoundEffect.BET))
-        assertEquals(SoundPack.MEMORY, fallback.packFor(SoundEffect.OPTION_BUTTON))
+        assertEquals(SoundPack.MEMORY, fallback.packFor(SoundEffect.DRAW))
     }
 
     @Test
@@ -128,9 +131,9 @@ class SoundPackTest {
         assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.uniformPack())
         assertEquals("None", vm.uiState.value.soundConfig.summaryText())
 
-        vm.onPerSoundPackSelect(SoundEffect.OPTION_BUTTON, SoundPack.NONE)
+        vm.onPerSoundPackSelect(SoundEffect.NO_WIN, SoundPack.NONE)
         vm.onPerSoundPackSelect(SoundEffect.DEAL, SoundPack.ACES)
-        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.OPTION_BUTTON))
+        assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.NO_WIN))
         assertEquals(SoundPack.ACES, vm.uiState.value.soundConfig.packFor(SoundEffect.DEAL))
     }
 }
