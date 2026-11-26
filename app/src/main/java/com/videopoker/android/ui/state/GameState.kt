@@ -102,7 +102,7 @@ data class GameState(
             !(isRecordingSession && recordedHandsCount > 0)
 
     companion object {
-        const val APP_VERSION = "1.5.2"
+        const val APP_VERSION = "1.5.3"
         val SUPPORTED_HANDS_OPTIONS = listOf(1, 3, 5, 10)
     }
 }

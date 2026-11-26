@@ -3,6 +3,7 @@ package com.videopoker.android
 import com.videopoker.android.data.export.SoundPresetStorage
 import com.videopoker.android.sound.SoundConfig
 import com.videopoker.android.sound.SoundEffect
+import com.videopoker.android.sound.SoundManager
 import com.videopoker.android.sound.SoundPack
 import com.videopoker.android.ui.state.GameViewModel
 import org.junit.Assert.assertEquals
@@ -135,5 +136,19 @@ class SoundPackTest {
         vm.onPerSoundPackSelect(SoundEffect.DEAL, SoundPack.ACES)
         assertEquals(SoundPack.NONE, vm.uiState.value.soundConfig.packFor(SoundEffect.NO_WIN))
         assertEquals(SoundPack.ACES, vm.uiState.value.soundConfig.packFor(SoundEffect.DEAL))
+    }
+
+    @Test
+    fun soundMixGainsKeepEverydaySoundsQuieterThanFanfare() {
+        assertTrue(SoundManager.mixGainFor(SoundEffect.RELEASE) <= SoundManager.mixGainFor(SoundEffect.HOLD))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.HOLD) < SoundManager.mixGainFor(SoundEffect.DRAW))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.DRAW) <= SoundManager.mixGainFor(SoundEffect.DEAL))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.DEAL) < SoundManager.mixGainFor(SoundEffect.MADE_HAND))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.NO_WIN) < SoundManager.mixGainFor(SoundEffect.MADE_HAND))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.MADE_HAND) < SoundManager.mixGainFor(SoundEffect.WIN_SMALL))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.WIN_SMALL) < SoundManager.mixGainFor(SoundEffect.WIN_MEDIUM))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.WIN_MEDIUM) < SoundManager.mixGainFor(SoundEffect.CASH_OUT))
+        assertTrue(SoundManager.mixGainFor(SoundEffect.CASH_OUT) < SoundManager.mixGainFor(SoundEffect.WIN_BIG))
+        assertEquals(1.0f, SoundManager.mixGainFor(SoundEffect.WIN_ROYAL), 0.0001f)
     }
 }

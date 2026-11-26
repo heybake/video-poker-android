@@ -18,6 +18,8 @@ class SoundManager(private val context: Context) {
     private val readyIds = mutableSetOf<Int>()
     private val pendingPlay = mutableMapOf<Int, Boolean>()
     private val durationMsMap = mutableMapOf<SoundKey, Long>()
+    private val sampleMixGain = mutableMapOf<Int, Float>()
+    private val streamMixGain = mutableMapOf<Int, Float>()
     private val activeStreams = mutableListOf<Int>()
     private var previewStreamId: Int? = null
     private var currentConfig: SoundConfig = SoundConfig()
@@ -113,6 +115,7 @@ class SoundManager(private val context: Context) {
                 val soundId = soundPool.load(afd, 1)
                 synchronized(this) {
                     soundMap[key] = soundId
+                    sampleMixGain[soundId] = mixGainFor(key.effect)
                 }
                 if (retriever != null) {
                     try {
@@ -141,6 +144,7 @@ class SoundManager(private val context: Context) {
             if (id != null) {
                 readyIds.remove(id)
                 pendingPlay.remove(id)
+                sampleMixGain.remove(id)
             }
             id
         }
@@ -172,10 +176,13 @@ class SoundManager(private val context: Context) {
     fun setVolume(vol: Float) {
         this.volume = vol.coerceIn(0f, 1f)
         val perceived = perceivedVolume(this.volume)
-        val streams = synchronized(activeStreams) { activeStreams.toList() }
-        for (streamId in streams) {
+        val streams = synchronized(activeStreams) {
+            activeStreams.map { id -> id to (streamMixGain[id] ?: 1.0f) }
+        }
+        for ((streamId, mix) in streams) {
+            val scaled = perceived * mix
             try {
-                soundPool.setVolume(streamId, perceived, perceived)
+                soundPool.setVolume(streamId, scaled, scaled)
             } catch (_: Exception) {
             }
         }
@@ -238,15 +245,20 @@ class SoundManager(private val context: Context) {
         if (volume <= 0.01f) return
         try {
             // Quadratic perceptual curve provides smooth audible attenuation across the full slider range
-            val perceivedVol = perceivedVolume(volume)
+            val mix = synchronized(this) { sampleMixGain[soundId] ?: 1.0f }
+            val perceivedVol = perceivedVolume(volume) * mix
             val streamId = soundPool.play(soundId, perceivedVol, perceivedVol, 1, 0, 1.0f)
             if (streamId != 0) {
                 if (isPreview) {
                     previewStreamId = streamId
                 }
                 synchronized(activeStreams) {
-                    if (activeStreams.size > 24) activeStreams.removeAt(0)
+                    if (activeStreams.size > 24) {
+                        val dropped = activeStreams.removeAt(0)
+                        streamMixGain.remove(dropped)
+                    }
                     activeStreams.add(streamId)
+                    streamMixGain[streamId] = mix
                 }
             }
         } catch (e: Exception) {
@@ -269,7 +281,10 @@ class SoundManager(private val context: Context) {
             pendingPlay.clear()
         }
         val toStop = synchronized(activeStreams) {
-            activeStreams.toList().also { activeStreams.clear() }
+            activeStreams.toList().also {
+                activeStreams.clear()
+                streamMixGain.clear()
+            }
         }
         for (streamId in toStop) {
             try {
@@ -283,6 +298,19 @@ class SoundManager(private val context: Context) {
         Companion.winEffectForLine(rank, perHandWinCredits, betPerHand)
 
     companion object {
+        fun mixGainFor(effect: SoundEffect): Float = when (effect) {
+            SoundEffect.RELEASE -> 0.22f
+            SoundEffect.HOLD -> 0.25f
+            SoundEffect.DRAW -> 0.32f
+            SoundEffect.DEAL, SoundEffect.BET -> 0.35f
+            SoundEffect.COUNT_TICK, SoundEffect.NO_WIN -> 0.45f
+            SoundEffect.MADE_HAND -> 0.72f
+            SoundEffect.WIN_SMALL -> 0.80f
+            SoundEffect.WIN_MEDIUM -> 0.90f
+            SoundEffect.CASH_OUT -> 0.95f
+            SoundEffect.WIN_BIG, SoundEffect.WIN_ROYAL -> 1.00f
+        }
+
         fun winEffectForLine(rank: HandRank, perHandWinCredits: Int, betPerHand: Int): SoundEffect? {
             if (perHandWinCredits <= 0) return null
             if (rank == HandRank.ROYAL_FLUSH) return SoundEffect.WIN_ROYAL
