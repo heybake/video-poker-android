@@ -1,5 +1,6 @@
 package com.videopoker.android.ui.state
 
+import com.videopoker.android.BuildConfig
 import com.videopoker.android.data.export.RecordedSessionInfo
 import com.videopoker.android.data.export.SavedSoundPreset
 import com.videopoker.android.data.models.Card
@@ -102,7 +103,7 @@ data class GameState(
             !(isRecordingSession && recordedHandsCount > 0)
 
     companion object {
-        const val APP_VERSION = "1.5.8"
+        val APP_VERSION: String = BuildConfig.VERSION_NAME
         val SUPPORTED_HANDS_OPTIONS = listOf(1, 3, 5, 10)
     }
 }
