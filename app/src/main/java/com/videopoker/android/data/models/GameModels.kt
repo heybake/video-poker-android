@@ -47,7 +47,8 @@ data class PayTableRow(
 data class StrategyRule(
     val id: String,
     val hold: String,
-    val query: JsonObject
+    val query: JsonObject,
+    val ev: Double? = null
 )
 
 /**
@@ -62,5 +63,6 @@ data class HoldChoice(
     val description: String,
     val expectedValue: Double,
     val isTopChoice: Boolean,
-    val slot: Int = 0
+    val slot: Int = 0,
+    val hasEv: Boolean = false
 )

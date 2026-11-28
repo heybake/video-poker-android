@@ -1,10 +1,17 @@
 package com.videopoker.android.ui.state
 
+import com.videopoker.android.data.models.HoldChoice
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+
+enum class MistakeSeverity {
+    MINOR,
+    MODERATE,
+    MAJOR
+}
 
 /**
  * A settled point on the Session Bankroll timeline at [handNumber].
@@ -19,7 +26,8 @@ data class BankrollPoint(
     val totalBuyInDollars: Double,
     val balanceBeforeInsert: Double? = null,
     val buyInBeforeInsert: Double? = null,
-    val isSuboptimalHold: Boolean = false
+    val isSuboptimalHold: Boolean = false,
+    val mistakeSeverity: MistakeSeverity? = null
 )
 
 /**
@@ -61,12 +69,49 @@ data class BankrollViewport(
 data class MistakeStats(
     val mistakeCount: Int,
     val completedHands: Int,
-    val mistakePercent: Double
+    val mistakePercent: Double,
+    val minorCount: Int = 0,
+    val moderateCount: Int = 0,
+    val majorCount: Int = 0
 )
 
 object SessionBankrollTracker {
 
     const val DEFAULT_WINDOW_HANDS = 20
+    const val EV_LOSS_MODERATE_THRESHOLD = 0.10
+    const val EV_LOSS_MAJOR_THRESHOLD = 0.50
+    const val OFF_LIST_DISCARD_FACTOR = 0.75
+
+    fun classifyEvLoss(evLoss: Double?): MistakeSeverity {
+        if (evLoss == null || !evLoss.isFinite()) return MistakeSeverity.MAJOR
+        return when {
+            evLoss < EV_LOSS_MODERATE_THRESHOLD -> MistakeSeverity.MINOR
+            evLoss < EV_LOSS_MAJOR_THRESHOLD -> MistakeSeverity.MODERATE
+            else -> MistakeSeverity.MAJOR
+        }
+    }
+
+    fun evaluateMistakeSeverity(
+        topChoice: HoldChoice?,
+        matchedChoice: HoldChoice?,
+        discardAllEv: Double?
+    ): MistakeSeverity {
+        if (topChoice == null || !topChoice.hasEv || !topChoice.expectedValue.isFinite()) {
+            return MistakeSeverity.MAJOR
+        }
+        val evLoss = if (matchedChoice != null) {
+            if (!matchedChoice.hasEv || !matchedChoice.expectedValue.isFinite()) {
+                return MistakeSeverity.MAJOR
+            }
+            max(0.0, topChoice.expectedValue - matchedChoice.expectedValue)
+        } else {
+            if (discardAllEv == null || !discardAllEv.isFinite()) {
+                return MistakeSeverity.MAJOR
+            }
+            max(0.0, topChoice.expectedValue - OFF_LIST_DISCARD_FACTOR * discardAllEv)
+        }
+        return classifyEvLoss(evLoss)
+    }
 
     fun onCashInserted(
         history: List<BankrollPoint>,
@@ -103,16 +148,19 @@ object SessionBankrollTracker {
     fun onHandSettled(
         history: List<BankrollPoint>,
         settledBalanceDollars: Double,
-        isSuboptimalHold: Boolean
+        isSuboptimalHold: Boolean,
+        mistakeSeverity: MistakeSeverity? = if (isSuboptimalHold) MistakeSeverity.MAJOR else null
     ): List<BankrollPoint> {
         val clampedBalance = settledBalanceDollars.coerceAtLeast(0.0)
+        val effSeverity = if (isSuboptimalHold) (mistakeSeverity ?: MistakeSeverity.MAJOR) else null
         if (history.isEmpty()) {
             return listOf(
                 BankrollPoint(
                     handNumber = 1,
                     balanceDollars = clampedBalance,
                     totalBuyInDollars = clampedBalance,
-                    isSuboptimalHold = isSuboptimalHold
+                    isSuboptimalHold = isSuboptimalHold,
+                    mistakeSeverity = effSeverity
                 )
             )
         }
@@ -121,7 +169,8 @@ object SessionBankrollTracker {
             handNumber = last.handNumber + 1,
             balanceDollars = clampedBalance,
             totalBuyInDollars = last.totalBuyInDollars,
-            isSuboptimalHold = isSuboptimalHold
+            isSuboptimalHold = isSuboptimalHold,
+            mistakeSeverity = effSeverity
         )
     }
 
@@ -206,12 +255,26 @@ object SessionBankrollTracker {
 
     fun calculateMistakeStats(points: List<BankrollPoint>): MistakeStats {
         val completed = points.count { it.handNumber >= 1 }
-        val mistakes = points.count { it.handNumber >= 1 && it.isSuboptimalHold }
+        var minor = 0
+        var moderate = 0
+        var major = 0
+        for (pt in points) {
+            if (pt.handNumber < 1 || !pt.isSuboptimalHold) continue
+            when (pt.mistakeSeverity ?: MistakeSeverity.MAJOR) {
+                MistakeSeverity.MINOR -> minor++
+                MistakeSeverity.MODERATE -> moderate++
+                MistakeSeverity.MAJOR -> major++
+            }
+        }
+        val mistakes = minor + moderate + major
         val pct = if (completed > 0) (mistakes.toDouble() / completed.toDouble()) * 100.0 else 0.0
         return MistakeStats(
             mistakeCount = mistakes,
             completedHands = completed,
-            mistakePercent = pct
+            mistakePercent = pct,
+            minorCount = minor,
+            moderateCount = moderate,
+            majorCount = major
         )
     }
 

@@ -1,6 +1,9 @@
 package com.videopoker.android
 
+import com.videopoker.android.data.models.Card
+import com.videopoker.android.data.models.HoldChoice
 import com.videopoker.android.ui.state.BankrollTargets
+import com.videopoker.android.ui.state.MistakeSeverity
 import com.videopoker.android.ui.state.SessionBankrollTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -120,5 +123,100 @@ class SessionBankrollTest {
         assertEquals(2, stats.completedHands)
         assertEquals(0.0, stats.mistakePercent, 1e-6)
         assertEquals("Mistakes: 0 (0.0%)", SessionBankrollTracker.formatMistakesLabel(history))
+    }
+
+    @Test
+    fun `severity classification thresholds off-list baseline and fallback match spec`() {
+        assertEquals(MistakeSeverity.MAJOR, SessionBankrollTracker.classifyEvLoss(null))
+        assertEquals(MistakeSeverity.MAJOR, SessionBankrollTracker.classifyEvLoss(Double.NaN))
+        assertEquals(MistakeSeverity.MINOR, SessionBankrollTracker.classifyEvLoss(0.0))
+        assertEquals(MistakeSeverity.MINOR, SessionBankrollTracker.classifyEvLoss(0.099))
+        assertEquals(MistakeSeverity.MODERATE, SessionBankrollTracker.classifyEvLoss(0.10))
+        assertEquals(MistakeSeverity.MODERATE, SessionBankrollTracker.classifyEvLoss(0.499))
+        assertEquals(MistakeSeverity.MAJOR, SessionBankrollTracker.classifyEvLoss(0.50))
+
+        fun choice(ruleId: String, ev: Double, hasEv: Boolean = true) = HoldChoice(
+            row = 1,
+            ruleId = ruleId,
+            holdMask = listOf(false, false, false, false, false),
+            keptIndexes = emptyList(),
+            keptCards = emptyList<Card>(),
+            description = ruleId,
+            expectedValue = ev,
+            isTopChoice = false,
+            slot = 1,
+            hasEv = hasEv
+        )
+
+        // Matched choices: minor, moderate, major
+        assertEquals(
+            MistakeSeverity.MINOR,
+            SessionBankrollTracker.evaluateMistakeSeverity(
+                choice("suited_kt", 0.45),
+                choice("single_queen", 0.42),
+                0.34
+            )
+        )
+        assertEquals(
+            MistakeSeverity.MODERATE,
+            SessionBankrollTracker.evaluateMistakeSeverity(
+                choice("low_pair", 0.82),
+                choice("suited_ak", 0.53),
+                0.34
+            )
+        )
+        assertEquals(
+            MistakeSeverity.MAJOR,
+            SessionBankrollTracker.evaluateMistakeSeverity(
+                choice("3_to_royal_flush", 1.36),
+                choice("qj_unsuited", 0.50),
+                0.34
+            )
+        )
+
+        // Off-list holds: dead hand stays MINOR, pair thrown away becomes MAJOR
+        assertEquals(
+            MistakeSeverity.MINOR,
+            SessionBankrollTracker.evaluateMistakeSeverity(choice("discard_all", 0.34), null, 0.34)
+        )
+        assertEquals(
+            MistakeSeverity.MAJOR,
+            SessionBankrollTracker.evaluateMistakeSeverity(choice("low_pair", 0.82), null, 0.34)
+        )
+
+        // Missing EVs fall back to MAJOR
+        assertEquals(
+            MistakeSeverity.MAJOR,
+            SessionBankrollTracker.evaluateMistakeSeverity(
+                choice("low_pair", 0.0, hasEv = false),
+                choice("single_queen", 0.0, hasEv = false),
+                null
+            )
+        )
+    }
+
+    @Test
+    fun `mistake stats track per-tier counts and preserve fallback major`() {
+        var history = SessionBankrollTracker.onCashInserted(emptyList(), 20.0, 20.0)
+        history = SessionBankrollTracker.onHandSettled(history, 18.75, isSuboptimalHold = false)
+        history = SessionBankrollTracker.onHandSettled(
+            history, 17.50, isSuboptimalHold = true, mistakeSeverity = MistakeSeverity.MINOR
+        )
+        history = SessionBankrollTracker.onHandSettled(
+            history, 16.25, isSuboptimalHold = true, mistakeSeverity = MistakeSeverity.MODERATE
+        )
+        history = SessionBankrollTracker.onHandSettled(history, 15.00, isSuboptimalHold = true)
+
+        assertNull(history[1].mistakeSeverity)
+        assertEquals(MistakeSeverity.MINOR, history[2].mistakeSeverity)
+        assertEquals(MistakeSeverity.MODERATE, history[3].mistakeSeverity)
+        assertEquals(MistakeSeverity.MAJOR, history[4].mistakeSeverity)
+
+        val stats = SessionBankrollTracker.calculateMistakeStats(history)
+        assertEquals(3, stats.mistakeCount)
+        assertEquals(1, stats.minorCount)
+        assertEquals(1, stats.moderateCount)
+        assertEquals(1, stats.majorCount)
+        assertEquals("Mistakes: 3 (75.0%)", SessionBankrollTracker.formatMistakesLabel(history))
     }
 }

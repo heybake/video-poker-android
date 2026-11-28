@@ -64,7 +64,11 @@ object StrategyEngine {
                 val id = rObj.get("id")?.asString ?: ""
                 val hold = rObj.get("hold")?.asString ?: "matching_group"
                 val query = rObj.getAsJsonObject("query") ?: JsonObject()
-                rules.add(StrategyRule(id, hold, query))
+                val ev = rObj.get("ev")
+                    ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }
+                    ?.asDouble
+                    ?.takeIf { it.isFinite() && it >= 0.0 }
+                rules.add(StrategyRule(id, hold, query, ev))
             }
         }
 
@@ -113,9 +117,10 @@ object StrategyEngine {
                             keptIndexes = keptIndices,
                             keptCards = keptCards,
                             description = desc,
-                            expectedValue = 0.0, // calculated or ranked
+                            expectedValue = rule.ev ?: 0.0,
                             isTopChoice = isTop,
-                            slot = ruleIndex + 1
+                            slot = ruleIndex + 1,
+                            hasEv = (rule.ev != null)
                         )
                     )
 
@@ -127,9 +132,9 @@ object StrategyEngine {
         // If no rule matched, fallback to Discard All
         if (choices.isEmpty()) {
             val mask = listOf(false, false, false, false, false)
-            val discardSlot = gameConfig.strategyRules.indexOfFirst { it.id == "discard_all" }.let {
-                if (it >= 0) it + 1 else gameConfig.strategyRules.size + 1
-            }
+            val discardIdx = gameConfig.strategyRules.indexOfFirst { it.id == "discard_all" }
+            val discardRule = if (discardIdx >= 0) gameConfig.strategyRules[discardIdx] else null
+            val discardSlot = if (discardIdx >= 0) discardIdx + 1 else gameConfig.strategyRules.size + 1
             choices.add(
                 HoldChoice(
                     row = 1,
@@ -138,9 +143,10 @@ object StrategyEngine {
                     keptIndexes = emptyList(),
                     keptCards = emptyList(),
                     description = "Discard All",
-                    expectedValue = 0.0,
+                    expectedValue = discardRule?.ev ?: 0.0,
                     isTopChoice = true,
-                    slot = discardSlot
+                    slot = discardSlot,
+                    hasEv = (discardRule?.ev != null)
                 )
             )
         }

@@ -646,6 +646,13 @@ class GameViewModel @JvmOverloads constructor(
 
         val topChoice = pendingAllHoldChoices.firstOrNull()
         val isSuboptimal = (topChoice != null && settlement.heldMask != topChoice.holdMask)
+        val mistakeSeverity = if (isSuboptimal) {
+            val matchedChoice = pendingAllHoldChoices.firstOrNull { it.holdMask == settlement.heldMask }
+            val discardAllEv = settlement.game.strategyRules.lastOrNull { it.id == "discard_all" }?.ev
+            SessionBankrollTracker.evaluateMistakeSeverity(topChoice, matchedChoice, discardAllEv)
+        } else {
+            null
+        }
 
         if (currentSnapshot.isRecordingSession) {
             logSessionHand(
@@ -688,7 +695,8 @@ class GameViewModel @JvmOverloads constructor(
                 bankrollHistory = SessionBankrollTracker.onHandSettled(
                     history = s.bankrollHistory,
                     settledBalanceDollars = settledBalance,
-                    isSuboptimalHold = isSuboptimal
+                    isSuboptimalHold = isSuboptimal,
+                    mistakeSeverity = mistakeSeverity
                 )
             )
         }
@@ -1315,9 +1323,16 @@ class GameViewModel @JvmOverloads constructor(
         }
 
         val currentSnapshot = _uiState.value
-        val topChoice = currentSnapshot.holdChoices.firstOrNull()
+        val topChoice = pendingAllHoldChoices.firstOrNull() ?: currentSnapshot.holdChoices.firstOrNull()
         val didMakeTopChoice = (topChoice != null && heldMask == topChoice.holdMask)
         val isSuboptimal = (topChoice != null && !didMakeTopChoice)
+        val mistakeSeverity = if (isSuboptimal) {
+            val matchedChoice = pendingAllHoldChoices.firstOrNull { it.holdMask == heldMask }
+            val discardAllEv = game.strategyRules.lastOrNull { it.id == "discard_all" }?.ev
+            SessionBankrollTracker.evaluateMistakeSeverity(topChoice, matchedChoice, discardAllEv)
+        } else {
+            null
+        }
 
         val newCashBalance = currentSnapshot.cashBalance + wonCash
         val minDenom = game.denominations.minOrNull() ?: denom
@@ -1357,7 +1372,8 @@ class GameViewModel @JvmOverloads constructor(
                 bankrollHistory = SessionBankrollTracker.onHandSettled(
                     history = state.bankrollHistory,
                     settledBalanceDollars = settledBalance,
-                    isSuboptimalHold = isSuboptimal
+                    isSuboptimalHold = isSuboptimal,
+                    mistakeSeverity = mistakeSeverity
                 )
             )
         }

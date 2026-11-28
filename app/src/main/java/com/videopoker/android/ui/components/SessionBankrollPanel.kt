@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videopoker.android.ui.state.BankrollPoint
 import com.videopoker.android.ui.state.BankrollTargets
+import com.videopoker.android.ui.state.MistakeSeverity
 import com.videopoker.android.ui.state.SessionBankrollTracker
 import com.videopoker.android.ui.theme.LocalResponsiveMetrics
 import com.videopoker.android.ui.theme.ThemePalette
@@ -91,7 +92,9 @@ fun SessionBankrollPanel(
     val buyInColor = if (isLightPanel) Color(0xFF64748B) else Color(0xFFCBD5E1)
     val winGoalColor = if (isLightPanel) Color(0xFF15803D) else Color(0xFF4ADE80)
     val stopLossColor = if (isLightPanel) Color(0xFFB91C1C) else Color(0xFFF87171)
-    val suboptimalDotColor = Color(0xFFEF4444)
+    val minorDotColor = if (isLightPanel) Color(0xFFCA8A04) else Color(0xFFFDE047)
+    val moderateDotColor = if (isLightPanel) Color(0xFFEA580C) else Color(0xFFF97316)
+    val majorDotColor = if (isLightPanel) Color(0xFFDC2626) else Color(0xFFEF4444)
 
     val latestHand = points.lastOrNull()?.handNumber ?: 0
     var requestedEndHand by remember { mutableStateOf<Float?>(null) }
@@ -261,14 +264,11 @@ fun SessionBankrollPanel(
                 }
 
                 if (showMistakesSummary) {
-                    ChartLegendItem(
+                    MistakesLegendSummary(
                         label = SessionBankrollTracker.formatMistakesLabel(points),
-                        color = suboptimalDotColor,
-                        isDashed = false,
-                        isDot = true,
+                        dotColors = listOf(minorDotColor, moderateDotColor, majorDotColor),
                         scale = scale,
                         fontSize = legendSp,
-                        lineWidth = legendLineW,
                         dotSize = legendDotD,
                         textColor = palette.payTableTextColor
                     )
@@ -529,20 +529,70 @@ fun SessionBankrollPanel(
                             center = Offset(lastX, lastY)
                         )
 
-                        val haloR = (4.4f * scale).dp.toPx()
-                        val dotR = (3.1f * scale).dp.toPx()
+                        val haloPadPx = (1.3f * scale).dp.toPx()
                         points.forEach { pt ->
                             if (showMistakesSummary && pt.isSuboptimalHold) {
+                                val sev = pt.mistakeSeverity ?: MistakeSeverity.MAJOR
+                                val dotColor = when (sev) {
+                                    MistakeSeverity.MINOR -> minorDotColor
+                                    MistakeSeverity.MODERATE -> moderateDotColor
+                                    MistakeSeverity.MAJOR -> majorDotColor
+                                }
+                                val dotR = when (sev) {
+                                    MistakeSeverity.MINOR -> 2.6f
+                                    MistakeSeverity.MODERATE -> 3.0f
+                                    MistakeSeverity.MAJOR -> 3.5f
+                                } * scale * density
                                 val px = mapX(pt.handNumber.toFloat())
                                 val py = mapY(pt.balanceBeforeInsert ?: pt.balanceDollars)
-                                drawCircle(color = palette.panelColor, radius = haloR, center = Offset(px, py))
-                                drawCircle(color = suboptimalDotColor, radius = dotR, center = Offset(px, py))
+                                drawCircle(color = palette.panelColor, radius = dotR + haloPadPx, center = Offset(px, py))
+                                drawCircle(color = dotColor, radius = dotR, center = Offset(px, py))
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MistakesLegendSummary(
+    label: String,
+    dotColors: List<Color>,
+    scale: Float,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    dotSize: Dp,
+    textColor: Color
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy((3f * scale).dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy((1.5f * scale).dp)
+        ) {
+            dotColors.forEach { col ->
+                Box(
+                    modifier = Modifier
+                        .size(dotSize)
+                        .clip(CircleShape)
+                        .background(col)
+                )
+            }
+        }
+        Text(
+            text = label,
+            color = textColor,
+            maxLines = 1,
+            softWrap = false,
+            style = TextStyle(
+                fontSize = fontSize,
+                fontWeight = FontWeight.SemiBold,
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            )
+        )
     }
 }
 

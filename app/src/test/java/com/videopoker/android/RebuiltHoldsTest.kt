@@ -37,6 +37,7 @@ class RebuiltHoldsTest {
             val config = loadGame(file.name)
             assertTrue("${file.name} has no rules", config.strategyRules.isNotEmpty())
             for (rule in config.strategyRules) {
+                assertTrue("${file.name} missing EV for ${rule.id}", rule.ev != null && rule.ev!! >= 0.0)
                 val info = HoldCatalogue.getInfo(rule.id)
                 assertTrue("${file.name} missing shortLabel for ${rule.id}", info.shortLabel.isNotBlank())
                 if (rule.id != "discard_all") {
